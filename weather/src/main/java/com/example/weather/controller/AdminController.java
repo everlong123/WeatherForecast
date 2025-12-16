@@ -1,5 +1,8 @@
 package com.example.weather.controller;
 
+import com.example.weather.dto.AdminActionDTO;
+import com.example.weather.dto.UserDTO;
+import com.example.weather.dto.WeatherAlertDTO;
 import com.example.weather.entity.AdminAction;
 import com.example.weather.entity.IncidentType;
 import com.example.weather.entity.User;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin")
@@ -166,8 +170,12 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userRepository.findAll());
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        List<UserDTO> userDTOs = users.stream()
+                .map(UserDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(userDTOs);
     }
 
     @PostMapping("/alerts")
@@ -203,8 +211,12 @@ public class AdminController {
     }
 
     @GetMapping("/alerts")
-    public ResponseEntity<List<WeatherAlert>> getAllAlerts() {
-        return ResponseEntity.ok(alertRepository.findAll());
+    public ResponseEntity<List<WeatherAlertDTO>> getAllAlerts() {
+        List<WeatherAlert> alerts = alertRepository.findAll();
+        List<WeatherAlertDTO> alertDTOs = alerts.stream()
+                .map(WeatherAlertDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(alertDTOs);
     }
 
     @PutMapping("/alerts/{id}")
@@ -319,8 +331,12 @@ public class AdminController {
     }
 
     @GetMapping("/actions")
-    public ResponseEntity<List<AdminAction>> getAdminActions() {
-        return ResponseEntity.ok(adminActionRepository.findAll());
+    public ResponseEntity<List<AdminActionDTO>> getAdminActions() {
+        List<AdminAction> actions = adminActionRepository.findAll();
+        List<AdminActionDTO> actionDTOs = actions.stream()
+                .map(AdminActionDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(actionDTOs);
     }
 
     // Incident Types
@@ -333,10 +349,10 @@ public class AdminController {
     public ResponseEntity<IncidentType> createIncidentType(@RequestBody Map<String, Object> typeData) {
         String name = (String) typeData.get("name");
         if (name == null || name.trim().isEmpty()) {
-            throw new RuntimeException("Tên loại sự cố không được để trống");
+            throw new RuntimeException("TÃªn loáº¡i sá»± cá»‘ khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng");
         }
         if (incidentTypeRepository.existsByName(name)) {
-            throw new RuntimeException("Loại sự cố '" + name + "' đã tồn tại");
+            throw new RuntimeException("Loáº¡i sá»± cá»‘ '" + name + "' Ä‘Ã£ tá»“n táº¡i");
         }
         
         IncidentType type = new IncidentType();
@@ -350,13 +366,13 @@ public class AdminController {
     @PutMapping("/incident-types/{id}")
     public ResponseEntity<IncidentType> updateIncidentType(@PathVariable Long id, @RequestBody Map<String, Object> typeData) {
         IncidentType type = incidentTypeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Loại sự cố không tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Loáº¡i sá»± cá»‘ khÃ´ng tá»“n táº¡i"));
         
         if (typeData.get("name") != null) {
             String newName = (String) typeData.get("name");
-            // Kiểm tra nếu tên mới khác tên cũ và đã tồn tại
+            // Kiá»ƒm tra náº¿u tÃªn má»›i khÃ¡c tÃªn cÅ© vÃ  Ä‘Ã£ tá»“n táº¡i
             if (!newName.equals(type.getName()) && incidentTypeRepository.existsByName(newName)) {
-                throw new RuntimeException("Loại sự cố '" + newName + "' đã tồn tại");
+                throw new RuntimeException("Loáº¡i sá»± cá»‘ '" + newName + "' Ä‘Ã£ tá»“n táº¡i");
             }
             type.setName(newName);
         }
@@ -366,10 +382,4 @@ public class AdminController {
         return ResponseEntity.ok(incidentTypeRepository.save(type));
     }
 
-    @DeleteMapping("/incident-types/{id}")
-    public ResponseEntity<Void> deleteIncidentType(@PathVariable Long id) {
-        incidentTypeRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
-    }
 }
-

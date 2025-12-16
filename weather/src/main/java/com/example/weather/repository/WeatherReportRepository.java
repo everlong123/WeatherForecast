@@ -22,13 +22,3 @@ public interface WeatherReportRepository extends JpaRepository<WeatherReport, Lo
     List<WeatherReport> findByDateRange(@Param("start") LocalDateTime start, 
                                         @Param("end") LocalDateTime end);
 }
-
-
-
-
-
-
-
-
-
-

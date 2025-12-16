@@ -1,48 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { adminAPI, reportAPI } from '../utils/api';
+import { adminAPI, reportAPI, incidentTypeAPI } from '../utils/api';
 import { isAdmin } from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
 import { 
   FiCheck, FiX, FiCheckCircle, FiShield, FiUsers, FiAlertCircle, 
   FiSettings, FiBarChart2, FiEdit, FiTrash2, FiPlus, FiDownload,
-  FiToggleLeft, FiToggleRight, FiList, FiActivity
+  FiToggleLeft, FiToggleRight, FiActivity
 } from 'react-icons/fi';
 import './Admin.css';
 
 const Admin = () => {
   const [reports, setReports] = useState([]);
   const [users, setUsers] = useState([]);
-  const [alerts, setAlerts] = useState([]);
-  const [incidentTypes, setIncidentTypes] = useState([]);
   const [stats, setStats] = useState(null);
-  const [actions, setActions] = useState([]);
+  const [incidentTypes, setIncidentTypes] = useState([]); // Chỉ dùng cho dropdown trong form báo cáo
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [showAlertForm, setShowAlertForm] = useState(false);
-  const [showIncidentForm, setShowIncidentForm] = useState(false);
   const [showUserForm, setShowUserForm] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
-  const [editingAlert, setEditingAlert] = useState(null);
-  const [editingIncident, setEditingIncident] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [editingReport, setEditingReport] = useState(null);
   const navigate = useNavigate();
-
-  const [alertForm, setAlertForm] = useState({
-    title: '',
-    message: '',
-    level: 'INFO',
-    district: '',
-    startTime: new Date().toISOString().slice(0, 16),
-    endTime: '',
-  });
-
-  const [incidentForm, setIncidentForm] = useState({
-    name: '',
-    description: '',
-    icon: '',
-    color: '#001f3f',
-  });
 
   const [userForm, setUserForm] = useState({
     username: '',
@@ -76,34 +54,39 @@ const Admin = () => {
       return;
     }
     fetchData();
+    fetchIncidentTypes();
   }, []);
+
+  const fetchIncidentTypes = async () => {
+    try {
+      const response = await incidentTypeAPI.getAll();
+      setIncidentTypes(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Error fetching incident types:', error);
+      setIncidentTypes([]);
+    }
+  };
 
   const fetchData = async () => {
     try {
       console.log('Fetching admin data...');
-      const [reportsRes, usersRes, alertsRes, typesRes, statsRes, actionsRes] = await Promise.all([
+      const [reportsRes, usersRes, statsRes] = await Promise.all([
         reportAPI.getAll(),
         adminAPI.getAllUsers(),
-        adminAPI.getAllAlerts(),
-        adminAPI.getIncidentTypes(),
         adminAPI.getStats(),
-        adminAPI.getActions(),
       ]);
       console.log('Fetched data:', {
         reports: reportsRes.data?.length || 0,
         users: usersRes.data?.length || 0,
-        alerts: alertsRes.data?.length || 0,
-        types: typesRes.data?.length || 0,
         stats: statsRes.data,
-        actions: actionsRes.data?.length || 0,
       });
+      console.log('Raw users response:', usersRes);
+      console.log('Users data type:', typeof usersRes.data);
+      console.log('Is array?', Array.isArray(usersRes.data));
+      console.log('Users data:', usersRes.data);
       setReports(Array.isArray(reportsRes.data) ? reportsRes.data : []);
       setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
-      setAlerts(Array.isArray(alertsRes.data) ? alertsRes.data : []);
-      setIncidentTypes(Array.isArray(typesRes.data) ? typesRes.data : []);
       setStats(statsRes.data || null);
-      const actionsData = Array.isArray(actionsRes.data) ? actionsRes.data : [];
-      setActions(actionsData.slice(0, 50)); // Last 50 actions
     } catch (error) {
       console.error('Error fetching admin data:', error);
       console.error('Error response:', error.response);
@@ -116,9 +99,6 @@ const Admin = () => {
       // Set empty arrays on error to prevent map errors
       setReports([]);
       setUsers([]);
-      setAlerts([]);
-      setIncidentTypes([]);
-      setActions([]);
     } finally {
       setLoading(false);
     }
@@ -169,88 +149,6 @@ const Admin = () => {
     }
   };
 
-  const handleSaveAlert = async (e) => {
-    e.preventDefault();
-    try {
-      if (editingAlert) {
-        await adminAPI.updateAlert(editingAlert.id, alertForm);
-      } else {
-        await adminAPI.createAlert(alertForm);
-      }
-      setShowAlertForm(false);
-      setEditingAlert(null);
-      setAlertForm({ title: '', message: '', level: 'INFO', district: '', startTime: new Date().toISOString().slice(0, 16), endTime: '' });
-      fetchData();
-    } catch (error) {
-      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
-    }
-  };
-
-  const handleDeleteAlert = async (id) => {
-    if (window.confirm('Bạn có chắc muốn xóa cảnh báo này?')) {
-      try {
-        await adminAPI.deleteAlert(id);
-        fetchData();
-      } catch (error) {
-        alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
-      }
-    }
-  };
-
-  const handleSaveIncidentType = async (e) => {
-    e.preventDefault();
-    try {
-      console.log('Saving incident type:', incidentForm);
-      if (editingIncident) {
-        await adminAPI.updateIncidentType(editingIncident.id, incidentForm);
-      } else {
-        await adminAPI.createIncidentType(incidentForm);
-      }
-      setShowIncidentForm(false);
-      setEditingIncident(null);
-      setIncidentForm({ name: '', description: '', icon: '', color: '#001f3f' });
-      fetchData();
-    } catch (error) {
-      console.error('Error saving incident type:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Đã xảy ra lỗi';
-      alert('Lỗi: ' + errorMessage);
-    }
-  };
-
-  const handleDeleteIncidentType = async (id) => {
-    if (window.confirm('Bạn có chắc muốn xóa loại sự cố này?')) {
-      try {
-        await adminAPI.deleteIncidentType(id);
-        fetchData();
-      } catch (error) {
-        alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
-      }
-    }
-  };
-
-  const handleEditAlert = (alert) => {
-    setEditingAlert(alert);
-    setAlertForm({
-      title: alert.title,
-      message: alert.message,
-      level: alert.level,
-      district: alert.district || '',
-      startTime: alert.startTime ? alert.startTime.slice(0, 16) : new Date().toISOString().slice(0, 16),
-      endTime: alert.endTime ? alert.endTime.slice(0, 16) : '',
-    });
-    setShowAlertForm(true);
-  };
-
-  const handleEditIncident = (type) => {
-    setEditingIncident(type);
-    setIncidentForm({
-      name: type.name,
-      description: type.description || '',
-      icon: type.icon || '',
-      color: type.color || '#001f3f',
-    });
-    setShowIncidentForm(true);
-  };
 
   const handleSaveUser = async (e) => {
     e.preventDefault();
@@ -352,10 +250,6 @@ const Admin = () => {
         data = users;
         filename = 'users.json';
         break;
-      case 'alerts':
-        data = alerts;
-        filename = 'alerts.json';
-        break;
       default:
         return;
     }
@@ -405,24 +299,6 @@ const Admin = () => {
             onClick={() => setActiveTab('users')}
           >
             <FiUsers /> Người dùng
-          </button>
-          <button
-            className={`tab-button ${activeTab === 'alerts' ? 'active' : ''}`}
-            onClick={() => setActiveTab('alerts')}
-          >
-            <FiAlertCircle /> Cảnh báo
-          </button>
-          <button
-            className={`tab-button ${activeTab === 'incidents' ? 'active' : ''}`}
-            onClick={() => setActiveTab('incidents')}
-          >
-            <FiList /> Loại sự cố
-          </button>
-          <button
-            className={`tab-button ${activeTab === 'actions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('actions')}
-          >
-            <FiActivity /> Lịch sử
           </button>
         </div>
 
@@ -587,244 +463,6 @@ const Admin = () => {
           </div>
         )}
 
-        {activeTab === 'alerts' && (
-          <div className="admin-content">
-            <div className="section-header">
-              <h2>Quản lý Cảnh báo</h2>
-              <div>
-                <button className="btn btn-primary" onClick={() => {
-                  setEditingAlert(null);
-                  setAlertForm({ title: '', message: '', level: 'INFO', district: '', startTime: new Date().toISOString().slice(0, 16), endTime: '' });
-                  setShowAlertForm(true);
-                }}>
-                  <FiPlus /> Tạo cảnh báo
-                </button>
-                <button className="btn btn-secondary" onClick={() => exportData('alerts')}>
-                  <FiDownload /> Xuất dữ liệu
-                </button>
-              </div>
-            </div>
-            <div className="alerts-list">
-              {alerts.length === 0 ? (
-                <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
-                  <p>Chưa có cảnh báo nào. Hãy tạo cảnh báo mới.</p>
-                </div>
-              ) : (
-                alerts.map((alert) => (
-                <div key={alert.id} className="alert-card card card-navy fade-in">
-                  <div className="alert-header">
-                    <h3>{alert.title}</h3>
-                    <div className="alert-actions">
-                      <button className="btn-icon" onClick={() => handleEditAlert(alert)}>
-                        <FiEdit />
-                      </button>
-                      <button className="btn-icon" onClick={() => handleDeleteAlert(alert.id)}>
-                        <FiTrash2 />
-                      </button>
-                    </div>
-                  </div>
-                  <p>{alert.message}</p>
-                  <div className="alert-meta">
-                    <span>Mức độ: {alert.level}</span>
-                    <span>Khu vực: {alert.district || 'Toàn quốc'}</span>
-                    <span>Trạng thái: {alert.active ? 'Hoạt động' : 'Đã tắt'}</span>
-                    <span>Bắt đầu: {new Date(alert.startTime).toLocaleString('vi-VN')}</span>
-                  </div>
-                </div>
-              )))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'incidents' && (
-          <div className="admin-content">
-            <div className="section-header">
-              <h2>Quản lý Loại Sự cố</h2>
-              <button className="btn btn-primary" onClick={() => {
-                setEditingIncident(null);
-                setIncidentForm({ name: '', description: '', icon: '', color: '#001f3f' });
-                setShowIncidentForm(true);
-              }}>
-                <FiPlus /> Thêm loại sự cố
-              </button>
-            </div>
-            <div className="incidents-grid grid grid-3">
-              {incidentTypes.length === 0 ? (
-                <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888', gridColumn: '1 / -1' }}>
-                  <p>Chưa có loại sự cố nào. Hãy thêm loại sự cố mới.</p>
-                </div>
-              ) : (
-                incidentTypes.map((type) => (
-                <div key={type.id} className="incident-card card card-navy fade-in">
-                  <div className="incident-header">
-                    <div className="incident-icon" style={{ color: type.color }}>
-                      {type.icon || '⚠️'}
-                    </div>
-                    <div className="incident-actions">
-                      <button className="btn-icon" onClick={() => handleEditIncident(type)}>
-                        <FiEdit />
-                      </button>
-                      <button className="btn-icon" onClick={() => handleDeleteIncidentType(type.id)}>
-                        <FiTrash2 />
-                      </button>
-                    </div>
-                  </div>
-                  <h3>{type.name}</h3>
-                  <p>{type.description || 'Không có mô tả'}</p>
-                  <div className="incident-color" style={{ backgroundColor: type.color }}></div>
-                </div>
-              )))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'actions' && (
-          <div className="admin-content">
-            <div className="section-header">
-              <h2>Lịch sử Hoạt động</h2>
-            </div>
-            <div className="actions-list">
-              {actions.length === 0 ? (
-                <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
-                  <p>Chưa có hoạt động nào.</p>
-                </div>
-              ) : (
-                actions.map((action) => (
-                <div key={action.id} className="action-card card card-navy fade-in">
-                  <div className="action-header">
-                    <span className={`action-type type-${action.actionType.toLowerCase()}`}>
-                      {action.actionType}
-                    </span>
-                    <span className="action-time">
-                      {new Date(action.createdAt).toLocaleString('vi-VN')}
-                    </span>
-                  </div>
-                  <div className="action-details">
-                    <span>Admin: {action.admin?.username || 'N/A'}</span>
-                    <span>Báo cáo: {action.report?.title || 'N/A'}</span>
-                    {action.comment && <p>Ghi chú: {action.comment}</p>}
-                  </div>
-                </div>
-              )))}
-            </div>
-          </div>
-        )}
-
-        {showAlertForm && (
-          <div className="modal-overlay" onClick={() => {
-            setShowAlertForm(false);
-            setEditingAlert(null);
-          }}>
-            <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
-              <h2>{editingAlert ? 'Chỉnh sửa Cảnh báo' : 'Tạo Cảnh báo mới'}</h2>
-              <form onSubmit={handleSaveAlert}>
-                <input
-                  type="text"
-                  placeholder="Tiêu đề"
-                  value={alertForm.title}
-                  onChange={(e) => setAlertForm({ ...alertForm, title: e.target.value })}
-                  required
-                  className="input"
-                />
-                <textarea
-                  placeholder="Nội dung"
-                  value={alertForm.message}
-                  onChange={(e) => setAlertForm({ ...alertForm, message: e.target.value })}
-                  required
-                  className="input"
-                  rows="4"
-                />
-                <select
-                  value={alertForm.level}
-                  onChange={(e) => setAlertForm({ ...alertForm, level: e.target.value })}
-                  className="input"
-                >
-                  <option value="INFO">Thông tin</option>
-                  <option value="WARNING">Cảnh báo</option>
-                  <option value="DANGER">Nguy hiểm</option>
-                  <option value="CRITICAL">Nghiêm trọng</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="Quận/Huyện (tùy chọn)"
-                  value={alertForm.district}
-                  onChange={(e) => setAlertForm({ ...alertForm, district: e.target.value })}
-                  className="input"
-                />
-                <input
-                  type="datetime-local"
-                  value={alertForm.startTime}
-                  onChange={(e) => setAlertForm({ ...alertForm, startTime: e.target.value })}
-                  required
-                  className="input"
-                />
-                <input
-                  type="datetime-local"
-                  placeholder="Thời gian kết thúc (tùy chọn)"
-                  value={alertForm.endTime}
-                  onChange={(e) => setAlertForm({ ...alertForm, endTime: e.target.value })}
-                  className="input"
-                />
-                <div className="form-actions">
-                  <button type="submit" className="btn btn-primary">Lưu</button>
-                  <button type="button" className="btn btn-secondary" onClick={() => {
-                    setShowAlertForm(false);
-                    setEditingAlert(null);
-                  }}>Hủy</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {showIncidentForm && (
-          <div className="modal-overlay" onClick={() => {
-            setShowIncidentForm(false);
-            setEditingIncident(null);
-          }}>
-            <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
-              <h2>{editingIncident ? 'Chỉnh sửa Loại Sự cố' : 'Thêm Loại Sự cố mới'}</h2>
-              <form onSubmit={handleSaveIncidentType}>
-                <input
-                  type="text"
-                  placeholder="Tên loại sự cố"
-                  value={incidentForm.name}
-                  onChange={(e) => setIncidentForm({ ...incidentForm, name: e.target.value })}
-                  required
-                  className="input"
-                />
-                <textarea
-                  placeholder="Mô tả"
-                  value={incidentForm.description}
-                  onChange={(e) => setIncidentForm({ ...incidentForm, description: e.target.value })}
-                  className="input"
-                  rows="3"
-                />
-                <input
-                  type="text"
-                  placeholder="Icon (emoji hoặc text)"
-                  value={incidentForm.icon}
-                  onChange={(e) => setIncidentForm({ ...incidentForm, icon: e.target.value })}
-                  className="input"
-                />
-                <input
-                  type="color"
-                  value={incidentForm.color}
-                  onChange={(e) => setIncidentForm({ ...incidentForm, color: e.target.value })}
-                  className="input"
-                />
-                <div className="form-actions">
-                  <button type="submit" className="btn btn-primary">Lưu</button>
-                  <button type="button" className="btn btn-secondary" onClick={() => {
-                    setShowIncidentForm(false);
-                    setEditingIncident(null);
-                  }}>Hủy</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
         {showUserForm && (
           <div className="modal-overlay" onClick={() => {
             setShowUserForm(false);
@@ -833,65 +471,77 @@ const Admin = () => {
             <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
               <h2>{editingUser ? 'Chỉnh sửa Người dùng' : 'Tạo Người dùng mới'}</h2>
               <form onSubmit={handleSaveUser}>
+                <label className="form-label">Username <span className="required">*</span></label>
                 <input
                   type="text"
-                  placeholder="Username *"
+                  placeholder="Nhập tên đăng nhập"
                   value={userForm.username}
                   onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
                   required
                   className="input"
                 />
+                <label className="form-label">Email <span className="required">*</span></label>
                 <input
                   type="email"
-                  placeholder="Email *"
+                  placeholder="Nhập địa chỉ email"
                   value={userForm.email}
                   onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
                   required
                   className="input"
                 />
+                <label className="form-label">
+                  Mật khẩu {!editingUser && <span className="required">*</span>}
+                  {editingUser && <span style={{fontSize: '12px', fontWeight: 'normal', color: '#666'}}> (để trống nếu không đổi)</span>}
+                </label>
                 <input
                   type="password"
-                  placeholder={editingUser ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu *"}
+                  placeholder={editingUser ? "Nhập mật khẩu mới (để trống nếu không đổi)" : "Nhập mật khẩu"}
                   value={userForm.password}
                   onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
                   required={!editingUser}
                   className="input"
                 />
+                <label className="form-label">Họ tên</label>
                 <input
                   type="text"
-                  placeholder="Họ tên"
+                  placeholder="Nhập họ và tên"
                   value={userForm.fullName}
                   onChange={(e) => setUserForm({ ...userForm, fullName: e.target.value })}
                   className="input"
                 />
+                <label className="form-label">Số điện thoại</label>
                 <input
                   type="text"
-                  placeholder="Số điện thoại"
+                  placeholder="Nhập số điện thoại"
                   value={userForm.phone}
                   onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
                   className="input"
                 />
+                <label className="form-label">Địa chỉ</label>
                 <input
                   type="text"
-                  placeholder="Địa chỉ"
+                  placeholder="Nhập địa chỉ"
                   value={userForm.address}
                   onChange={(e) => setUserForm({ ...userForm, address: e.target.value })}
                   className="input"
                 />
+                <label className="form-label">Quận/Huyện</label>
                 <input
                   type="text"
-                  placeholder="Quận/Huyện"
+                  placeholder="Nhập quận/huyện"
                   value={userForm.district}
                   onChange={(e) => setUserForm({ ...userForm, district: e.target.value })}
                   className="input"
                 />
+                <label className="form-label">Phường/Xã</label>
                 <input
                   type="text"
-                  placeholder="Phường/Xã"
+                  placeholder="Nhập phường/xã"
                   value={userForm.ward}
                   onChange={(e) => setUserForm({ ...userForm, ward: e.target.value })}
                   className="input"
                 />
+                <label className="form-label">Vai trò</label>
                 <select
                   value={userForm.role}
                   onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
@@ -928,33 +578,37 @@ const Admin = () => {
             <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
               <h2>Chỉnh sửa Báo cáo</h2>
               <form onSubmit={handleSaveReport}>
+                <label className="form-label">Tiêu đề <span className="required">*</span></label>
                 <input
                   type="text"
-                  placeholder="Tiêu đề *"
+                  placeholder="Nhập tiêu đề báo cáo"
                   value={reportForm.title}
                   onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })}
                   required
                   className="input"
                 />
+                <label className="form-label">Mô tả <span className="required">*</span></label>
                 <textarea
-                  placeholder="Mô tả *"
+                  placeholder="Mô tả chi tiết về sự cố"
                   value={reportForm.description}
                   onChange={(e) => setReportForm({ ...reportForm, description: e.target.value })}
                   required
                   className="input"
                   rows="4"
                 />
+                <label className="form-label">Loại sự cố <span className="required">*</span></label>
                 <select
                   value={reportForm.incidentTypeId}
                   onChange={(e) => setReportForm({ ...reportForm, incidentTypeId: e.target.value })}
                   required
                   className="input"
                 >
-                  <option value="">Chọn loại sự cố *</option>
+                  <option value="">-- Chọn loại sự cố --</option>
                   {incidentTypes.map((type) => (
                     <option key={type.id} value={type.id}>{type.icon || '⚠️'} {type.name}</option>
                   ))}
                 </select>
+                <label className="form-label">Mức độ</label>
                 <select
                   value={reportForm.severity}
                   onChange={(e) => setReportForm({ ...reportForm, severity: e.target.value })}
@@ -965,6 +619,7 @@ const Admin = () => {
                   <option value="HIGH">Cao</option>
                   <option value="CRITICAL">Nghiêm trọng</option>
                 </select>
+                <label className="form-label">Trạng thái</label>
                 <select
                   value={reportForm.status}
                   onChange={(e) => setReportForm({ ...reportForm, status: e.target.value })}
@@ -975,34 +630,39 @@ const Admin = () => {
                   <option value="REJECTED">Từ chối</option>
                   <option value="RESOLVED">Đã xử lý</option>
                 </select>
+                <label className="form-label">Địa chỉ chi tiết</label>
                 <input
                   type="text"
-                  placeholder="Địa chỉ"
+                  placeholder="Nhập địa chỉ cụ thể"
                   value={reportForm.address}
                   onChange={(e) => setReportForm({ ...reportForm, address: e.target.value })}
                   className="input"
                 />
+                <label className="form-label">Quận/Huyện</label>
                 <input
                   type="text"
-                  placeholder="Quận/Huyện"
+                  placeholder="Nhập quận/huyện"
                   value={reportForm.district}
                   onChange={(e) => setReportForm({ ...reportForm, district: e.target.value })}
                   className="input"
                 />
+                <label className="form-label">Phường/Xã</label>
                 <input
                   type="text"
-                  placeholder="Phường/Xã"
+                  placeholder="Nhập phường/xã"
                   value={reportForm.ward}
                   onChange={(e) => setReportForm({ ...reportForm, ward: e.target.value })}
                   className="input"
                 />
+                <label className="form-label">Tỉnh/Thành phố</label>
                 <input
                   type="text"
-                  placeholder="Tỉnh/Thành phố"
+                  placeholder="Nhập tỉnh/thành phố"
                   value={reportForm.city}
                   onChange={(e) => setReportForm({ ...reportForm, city: e.target.value })}
                   className="input"
                 />
+                <label className="form-label">Thời gian sự cố</label>
                 <input
                   type="datetime-local"
                   value={reportForm.incidentTime}

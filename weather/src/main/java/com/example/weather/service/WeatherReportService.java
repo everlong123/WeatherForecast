@@ -73,7 +73,7 @@ public class WeatherReportService {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
-        // Kiểm tra quyền sở hữu
+        // Kiá»ƒm tra quyá»n sá»Ÿ há»¯u
         if (!report.getUser().getUsername().equals(username)) {
             throw new RuntimeException("You don't have permission to update this report");
         }
@@ -102,7 +102,7 @@ public class WeatherReportService {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
-        // Kiểm tra quyền sở hữu
+        // Kiá»ƒm tra quyá»n sá»Ÿ há»¯u
         if (!report.getUser().getUsername().equals(username)) {
             throw new RuntimeException("You don't have permission to delete this report");
         }

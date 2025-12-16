@@ -26,13 +26,3 @@ public class WeatherReportDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-
-
-
-
-
-
-
-
-
-

@@ -227,4 +227,3 @@ export const getIncidentTypesByCategory = () => {
 export const getCategories = () => {
   return [...new Set(incidentTypes.map(type => type.category))];
 };
-

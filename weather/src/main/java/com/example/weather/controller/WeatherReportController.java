@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -31,18 +32,13 @@ public class WeatherReportController {
     }
 
     @PostMapping
-    public ResponseEntity<WeatherReportDTO> createReport(
-            @RequestBody WeatherReportDTO dto,
-            Authentication authentication) {
-        return ResponseEntity.ok(reportService.createReport(dto, authentication.getName()));
+    public ResponseEntity<WeatherReportDTO> createReport(@Valid @RequestBody WeatherReportDTO reportDTO, Authentication authentication) {
+        return ResponseEntity.status(201).body(reportService.createReport(reportDTO, authentication.getName()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<WeatherReportDTO> updateReport(
-            @PathVariable Long id,
-            @RequestBody WeatherReportDTO dto,
-            Authentication authentication) {
-        return ResponseEntity.ok(reportService.updateReport(id, dto, authentication.getName()));
+    public ResponseEntity<WeatherReportDTO> updateReport(@PathVariable Long id, @Valid @RequestBody WeatherReportDTO reportDTO, Authentication authentication) {
+        return ResponseEntity.ok(reportService.updateReport(id, reportDTO, authentication.getName()));
     }
 
     @DeleteMapping("/{id}")
@@ -51,13 +47,3 @@ public class WeatherReportController {
         return ResponseEntity.noContent().build();
     }
 }
-
-
-
-
-
-
-
-
-
-

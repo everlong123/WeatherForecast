@@ -66,19 +66,17 @@
   border: 2px solid var(--navy-primary);
 }
 
-.btn-secondary:hover {
-  background: var(--white-light);
-  transform: translateY(-2px);
-}
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 2px solid white;
+  background: var(--gradient-navy);
+  color: var(--white);
+  box-shadow: 0 4px 15px rgba(0, 31, 63, 0.4);
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 31, 63, 0.6);
+  background: var(--gradient-navy-light);
 }
 
 /* Input Styles */

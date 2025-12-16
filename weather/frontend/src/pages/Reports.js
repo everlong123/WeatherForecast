@@ -1,10 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { reportAPI, incidentTypeAPI } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock } from 'react-icons/fi';
 import { getProvinces, getDistricts, getWards } from '../data/locations';
 import { incidentTypes as defaultIncidentTypes, getCategories, getIncidentTypesByCategory } from '../data/incidentTypes';
 import './Reports.css';
+
+// Memoized component for incident type select to prevent re-rendering
+const IncidentTypeSelect = React.memo(({ value, onChange, incidentTypes, required }) => {
+  const options = useMemo(() => {
+    if (!incidentTypes || incidentTypes.length === 0) {
+      return <option value="" disabled>Đang tải danh sách loại sự cố...</option>;
+    }
+
+    const hasCategory = incidentTypes[0]?.category;
+    if (hasCategory) {
+      const categories = [...new Set(incidentTypes.map(t => t.category).filter(Boolean))];
+      return categories.map(category => {
+        const typesInCategory = incidentTypes.filter(t => t.category === category);
+        return (
+          <optgroup key={category} label={category}>
+            {typesInCategory.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.icon || '⚠️'} {type.name}
+              </option>
+            ))}
+          </optgroup>
+        );
+      });
+    } else {
+      return incidentTypes.map((type) => (
+        <option key={type.id} value={type.id}>
+          {type.icon || '⚠️'} {type.name}
+        </option>
+      ));
+    }
+  }, [incidentTypes]);
+
+  return (
+    <select
+      value={value}
+      onChange={onChange}
+      required={required}
+      className="input"
+    >
+      <option value="">-- Chọn loại sự cố --</option>
+      {options}
+    </select>
+  );
+});
+
+IncidentTypeSelect.displayName = 'IncidentTypeSelect';
 
 const Reports = () => {
   const [reports, setReports] = useState([]);
@@ -52,23 +98,14 @@ const Reports = () => {
 
   const fetchIncidentTypes = async () => {
     try {
-      console.log('Fetching incident types...');
       const response = await incidentTypeAPI.getAll();
-      console.log('Incident types response:', response);
-      console.log('Incident types data:', response.data);
       if (response.data && Array.isArray(response.data) && response.data.length > 0) {
         setIncidentTypes(response.data);
-        console.log('Incident types set:', response.data.length, 'items');
       } else {
-        // Sử dụng danh sách mặc định nếu API không trả về dữ liệu
-        console.log('Using default incident types');
         setIncidentTypes(defaultIncidentTypes);
       }
     } catch (error) {
       console.error('Error fetching incident types:', error);
-      console.error('Error details:', error.response?.data || error.message);
-      // Sử dụng danh sách mặc định khi có lỗi
-      console.log('Using default incident types due to error');
       setIncidentTypes(defaultIncidentTypes);
     }
   };
@@ -82,26 +119,27 @@ const Reports = () => {
     }
   };
 
-  const handleProvinceChange = async (e) => {
+  const handleProvinceChange = useCallback(async (e) => {
     const province = e.target.value;
-    setFormData({ ...formData, city: province, district: '', ward: '' });
+    setFormData(prev => ({ ...prev, city: province, district: '', ward: '' }));
     setDistricts([]);
     setWards([]);
     if (province) {
       const data = await getDistricts(province);
       setDistricts(data);
     }
-  };
+  }, []);
 
-  const handleDistrictChange = async (e) => {
+  const handleDistrictChange = useCallback(async (e) => {
     const district = e.target.value;
-    setFormData({ ...formData, district, ward: '' });
+    setFormData(prev => {
+      if (district && prev.city) {
+        getWards(prev.city, district).then(setWards);
+      }
+      return { ...prev, district, ward: '' };
+    });
     setWards([]);
-    if (district && formData.city) {
-      const data = await getWards(formData.city, district);
-      setWards(data);
-    }
-  };
+  }, []);
 
 
   const handleSubmit = async (e) => {
@@ -313,17 +351,19 @@ const Reports = () => {
               <h2>{editingReport ? 'Chỉnh sửa Báo cáo' : 'Tạo Báo cáo mới'}</h2>
               {error && <div className="error-message">{error}</div>}
               <form onSubmit={handleSubmit}>
+                <label className="form-label">Tiêu đề <span className="required">*</span></label>
                 <input
                   type="text"
-                  placeholder="Tiêu đề *"
+                  placeholder="Nhập tiêu đề báo cáo"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
                   className="input"
                 />
 
+                <label className="form-label">Mô tả chi tiết <span className="required">*</span></label>
                 <textarea
-                  placeholder="Mô tả chi tiết *"
+                  placeholder="Mô tả chi tiết về sự cố"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   required
@@ -331,46 +371,15 @@ const Reports = () => {
                   rows="4"
                 />
 
-                <select
+                <label className="form-label">Loại sự cố <span className="required">*</span></label>
+                <IncidentTypeSelect
                   value={formData.incidentTypeId}
                   onChange={(e) => setFormData({ ...formData, incidentTypeId: e.target.value })}
+                  incidentTypes={incidentTypes}
                   required
-                  className="input"
-                >
-                  <option value="">Chọn loại sự cố * ({incidentTypes.length} loại có sẵn)</option>
-                  {incidentTypes && incidentTypes.length > 0 ? (
-                    (() => {
-                      // Kiểm tra xem có category không (dữ liệu từ API có thể không có category)
-                      const hasCategory = incidentTypes[0]?.category;
-                      if (hasCategory) {
-                        // Hiển thị theo category với optgroup
-                        const categories = [...new Set(incidentTypes.map(t => t.category).filter(Boolean))];
-                        return categories.map(category => {
-                          const typesInCategory = incidentTypes.filter(t => t.category === category);
-                          return (
-                            <optgroup key={category} label={category}>
-                              {typesInCategory.map((type) => (
-                                <option key={type.id} value={type.id}>
-                                  {type.icon || '⚠️'} {type.name}
-                                </option>
-                              ))}
-                            </optgroup>
-                          );
-                        });
-                      } else {
-                        // Hiển thị danh sách đơn giản nếu không có category
-                        return incidentTypes.map((type) => (
-                          <option key={type.id} value={type.id}>
-                            {type.icon || '⚠️'} {type.name}
-                          </option>
-                        ));
-                      }
-                    })()
-                  ) : (
-                    <option value="" disabled>Đang tải danh sách loại sự cố...</option>
-                  )}
-                </select>
+                />
 
+                <label className="form-label">Mức độ</label>
                 <select
                   value={formData.severity}
                   onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
@@ -382,12 +391,13 @@ const Reports = () => {
                   <option value="CRITICAL">Nghiêm trọng</option>
                 </select>
 
+                <label className="form-label">Tỉnh/Thành phố</label>
                 <select
                   value={formData.city}
                   onChange={handleProvinceChange}
                   className="input"
                 >
-                  <option value="">Chọn tỉnh/thành phố</option>
+                  <option value="">-- Chọn tỉnh/thành phố --</option>
                   {provinces.map((province, index) => (
                     <option key={index} value={province}>
                       {province}
@@ -395,13 +405,14 @@ const Reports = () => {
                   ))}
                 </select>
 
+                <label className="form-label">Quận/Huyện</label>
                 <select
                   value={formData.district}
                   onChange={handleDistrictChange}
                   className="input"
                   disabled={!formData.city}
                 >
-                  <option value="">Chọn quận/huyện</option>
+                  <option value="">-- Chọn quận/huyện --</option>
                   {districts.map((district, index) => (
                     <option key={index} value={district}>
                       {district}
@@ -409,13 +420,14 @@ const Reports = () => {
                   ))}
                 </select>
 
+                <label className="form-label">Phường/Xã</label>
                 <select
                   value={formData.ward}
                   onChange={(e) => setFormData({ ...formData, ward: e.target.value })}
                   className="input"
                   disabled={!formData.district}
                 >
-                  <option value="">Chọn phường/xã</option>
+                  <option value="">-- Chọn phường/xã --</option>
                   {wards.map((ward, index) => (
                     <option key={index} value={ward}>
                       {ward}
@@ -423,15 +435,16 @@ const Reports = () => {
                   ))}
                 </select>
 
+                <label className="form-label">Địa chỉ chi tiết</label>
                 <input
                   type="text"
-                  placeholder="Địa chỉ chi tiết"
+                  placeholder="Nhập địa chỉ cụ thể (tên đường, số nhà...)"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="input"
                 />
 
-
+                <label className="form-label">Thời gian sự cố <span className="required">*</span></label>
                 <input
                   type="datetime-local"
                   value={formData.incidentTime}

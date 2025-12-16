@@ -18,14 +18,5 @@ public class DashboardController {
     public ResponseEntity<DashboardStatsDTO> getStats() {
         return ResponseEntity.ok(dashboardService.getDashboardStats());
     }
+
 }
-
-
-
-
-
-
-
-
-
-

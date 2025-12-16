@@ -40,16 +40,6 @@ public class AdminAction {
     }
 
     public enum ActionType {
-        APPROVE, REJECT, RESOLVE, UPDATE, DELETE
+        APPROVE, REJECT, RESOLVE, DELETE
     }
 }
-
-
-
-
-
-
-
-
-
-

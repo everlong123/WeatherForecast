@@ -24,9 +24,9 @@ public class GlobalExceptionHandler {
         });
         Map<String, String> response = new HashMap<>();
         if (!errors.isEmpty()) {
-            response.put("message", "Dữ liệu không hợp lệ: " + errors.values().iterator().next());
+            response.put("message", "Dá»¯ liá»‡u khÃ´ng há»£p lá»‡: " + errors.values().iterator().next());
         } else {
-            response.put("message", "Dữ liệu không hợp lệ");
+            response.put("message", "Dá»¯ liá»‡u khÃ´ng há»£p lá»‡");
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
@@ -38,20 +38,20 @@ public class GlobalExceptionHandler {
         
         if (message != null) {
             if (message.contains("Username already exists")) {
-                response.put("message", "Tên đăng nhập đã tồn tại");
+                response.put("message", "TÃªn Ä‘Äƒng nháº­p Ä‘Ã£ tá»“n táº¡i");
             } else if (message.contains("Email already exists")) {
-                response.put("message", "Email đã được sử dụng");
+                response.put("message", "Email Ä‘Ã£ Ä‘Æ°á»£c sá»­ dá»¥ng");
             } else if (message.contains("User not found")) {
-                response.put("message", "Người dùng không tồn tại");
-            } else if (message.contains("đã tồn tại")) {
+                response.put("message", "NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i");
+            } else if (message.contains("Ä‘Ã£ tá»“n táº¡i")) {
                 response.put("message", message);
             } else if (message.contains("not found")) {
-                response.put("message", message.replace("not found", "không tồn tại"));
+                response.put("message", message.replace("not found", "khÃ´ng tá»“n táº¡i"));
             } else {
                 response.put("message", message);
             }
         } else {
-            response.put("message", "Đã xảy ra lỗi");
+            response.put("message", "ÄÃ£ xáº£y ra lá»—i");
         }
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -66,20 +66,20 @@ public class GlobalExceptionHandler {
             if (message.contains("Duplicate entry") && message.contains("incident_types")) {
                 // Extract the duplicate value from error message
                 String duplicateValue = extractDuplicateValue(message);
-                response.put("message", "Loại sự cố '" + duplicateValue + "' đã tồn tại. Vui lòng chọn tên khác.");
+                response.put("message", "Loáº¡i sá»± cá»‘ '" + duplicateValue + "' Ä‘Ã£ tá»“n táº¡i. Vui lÃ²ng chá»n tÃªn khÃ¡c.");
             } else if (message.contains("Duplicate entry") && message.contains("users")) {
                 if (message.contains("username")) {
-                    response.put("message", "Tên đăng nhập đã tồn tại");
+                    response.put("message", "TÃªn Ä‘Äƒng nháº­p Ä‘Ã£ tá»“n táº¡i");
                 } else if (message.contains("email")) {
-                    response.put("message", "Email đã được sử dụng");
+                    response.put("message", "Email Ä‘Ã£ Ä‘Æ°á»£c sá»­ dá»¥ng");
                 } else {
-                    response.put("message", "Dữ liệu trùng lặp");
+                    response.put("message", "Dá»¯ liá»‡u trÃ¹ng láº·p");
                 }
             } else {
-                response.put("message", "Dữ liệu không hợp lệ hoặc đã tồn tại");
+                response.put("message", "Dá»¯ liá»‡u khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ tá»“n táº¡i");
             }
         } else {
-            response.put("message", "Dữ liệu không hợp lệ");
+            response.put("message", "Dá»¯ liá»‡u khÃ´ng há»£p lá»‡");
         }
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -87,7 +87,7 @@ public class GlobalExceptionHandler {
     
     private String extractDuplicateValue(String message) {
         // Try to extract the duplicate value from error message
-        // Example: "Duplicate entry 'Gió' for key 'UKp186ha71urs7fo0vt1r2rbcrm'"
+        // Example: "Duplicate entry 'GiÃ³' for key 'UKp186ha71urs7fo0vt1r2rbcrm'"
         try {
             int start = message.indexOf("'") + 1;
             int end = message.indexOf("'", start);
@@ -97,7 +97,7 @@ public class GlobalExceptionHandler {
         } catch (Exception e) {
             // Ignore extraction error
         }
-        return "này";
+        return "nÃ y";
     }
 
     @ExceptionHandler(Exception.class)
@@ -107,22 +107,12 @@ public class GlobalExceptionHandler {
         
         // Don't expose internal error details, just show user-friendly message
         if (errorMessage != null && (errorMessage.contains("Duplicate entry") || errorMessage.contains("constraint"))) {
-            response.put("message", "Dữ liệu trùng lặp hoặc không hợp lệ");
+            response.put("message", "Dá»¯ liá»‡u trÃ¹ng láº·p hoáº·c khÃ´ng há»£p lá»‡");
         } else {
-            response.put("message", "Đã xảy ra lỗi. Vui lòng thử lại sau.");
+            response.put("message", "ÄÃ£ xáº£y ra lá»—i. Vui lÃ²ng thá»­ láº¡i sau.");
         }
         
         ex.printStackTrace(); // Log for debugging
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }
-
-
-
-
-
-
-
-
-
-
