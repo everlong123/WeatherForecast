@@ -1,0 +1,140 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--gradient-navy);
+}
+
+.login-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.weather-icon-cloud,
+.weather-icon-sun,
+.weather-icon-rain {
+  position: absolute;
+  font-size: 200px;
+  opacity: 0.1;
+  color: white;
+  animation: float 20s infinite;
+}
+
+.weather-icon-cloud {
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.weather-icon-sun {
+  top: 60%;
+  right: 15%;
+  animation-delay: 5s;
+}
+
+.weather-icon-rain {
+  bottom: 10%;
+  left: 50%;
+  animation-delay: 10s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-30px) rotate(10deg);
+  }
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 30px;
+  padding: 40px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-header h1 {
+  font-size: 36px;
+  background: var(--gradient-navy);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+
+.login-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.error-message {
+  background: rgba(255, 107, 107, 0.2);
+  color: #d32f2f;
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 107, 107, 0.5);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.login-footer {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.toggle-link {
+  background: none;
+  border: none;
+  color: var(--navy-primary);
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+}
+
+.toggle-link:hover {
+  color: var(--navy-light);
+}
+
+.input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: white;
+  color: #333;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--navy-primary);
+  box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.1);
+}
+
+.input::placeholder {
+  color: #999;
+}
+

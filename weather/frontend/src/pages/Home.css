@@ -1,0 +1,247 @@
+.home-container {
+  min-height: 100vh;
+  padding-bottom: 50px;
+}
+
+.hero-section {
+  background: var(--gradient-navy);
+  padding: 100px 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+  opacity: 0.3;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 48px;
+  color: white;
+  margin-bottom: 20px;
+  line-height: 1.2;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #e9ecef 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 40px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.weather-card {
+  margin: 40px auto;
+  max-width: 1000px;
+}
+
+.weather-header {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.weather-icon-large {
+  font-size: 120px;
+  animation: pulse 3s infinite;
+}
+
+.weather-info h2 {
+  font-size: 32px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.temperature {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.temp-value {
+  font-size: 64px;
+  font-weight: bold;
+  background: var(--gradient-navy);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.temp-feels {
+  color: #666;
+  font-size: 16px;
+}
+
+.weather-desc {
+  font-size: 18px;
+  color: #666;
+  text-transform: capitalize;
+  margin-top: 10px;
+}
+
+.weather-details {
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #555;
+}
+
+.reports-section {
+  margin-top: 60px;
+}
+
+.section-title {
+  font-size: 32px;
+  color: white;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.reports-grid {
+  margin-bottom: 40px;
+}
+
+.report-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.report-card:hover {
+  transform: translateY(-10px) scale(1.02);
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.report-status {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: rgba(255, 193, 7, 0.2);
+  color: #f57c00;
+}
+
+.status-approved {
+  background: rgba(76, 175, 80, 0.2);
+  color: #388e3c;
+}
+
+.status-rejected {
+  background: rgba(244, 67, 54, 0.2);
+  color: #d32f2f;
+}
+
+.status-resolved {
+  background: rgba(33, 150, 243, 0.2);
+  color: #1976d2;
+}
+
+.report-type {
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
+}
+
+.report-title {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.report-description {
+  color: #666;
+  margin-bottom: 15px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.report-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #999;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.report-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.section-footer {
+  text-align: center;
+  margin-top: 30px;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 32px;
+  }
+  
+  .hero-subtitle {
+    font-size: 16px;
+  }
+  
+  .weather-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .temp-value {
+    font-size: 48px;
+  }
+}
+

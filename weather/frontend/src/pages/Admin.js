@@ -1,0 +1,639 @@
+import React, { useState, useEffect } from 'react';
+import { adminAPI, reportAPI } from '../utils/api';
+import { isAdmin } from '../utils/auth';
+import { useNavigate } from 'react-router-dom';
+import { 
+  FiCheck, FiX, FiCheckCircle, FiShield, FiUsers, FiAlertCircle, 
+  FiSettings, FiBarChart2, FiEdit, FiTrash2, FiPlus, FiDownload,
+  FiToggleLeft, FiToggleRight, FiList, FiActivity
+} from 'react-icons/fi';
+import './Admin.css';
+
+const Admin = () => {
+  const [reports, setReports] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [incidentTypes, setIncidentTypes] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [actions, setActions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [showAlertForm, setShowAlertForm] = useState(false);
+  const [showIncidentForm, setShowIncidentForm] = useState(false);
+  const [editingAlert, setEditingAlert] = useState(null);
+  const [editingIncident, setEditingIncident] = useState(null);
+  const navigate = useNavigate();
+
+  const [alertForm, setAlertForm] = useState({
+    title: '',
+    message: '',
+    level: 'INFO',
+    district: '',
+    startTime: new Date().toISOString().slice(0, 16),
+    endTime: '',
+  });
+
+  const [incidentForm, setIncidentForm] = useState({
+    name: '',
+    description: '',
+    icon: '',
+    color: '#001f3f',
+  });
+
+  useEffect(() => {
+    if (!isAdmin()) {
+      navigate('/');
+      return;
+    }
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [reportsRes, usersRes, alertsRes, typesRes, statsRes, actionsRes] = await Promise.all([
+        reportAPI.getAll(),
+        adminAPI.getAllUsers(),
+        adminAPI.getAllAlerts(),
+        adminAPI.getIncidentTypes(),
+        adminAPI.getStats(),
+        adminAPI.getActions(),
+      ]);
+      setReports(reportsRes.data);
+      setUsers(usersRes.data);
+      setAlerts(alertsRes.data);
+      setIncidentTypes(typesRes.data);
+      setStats(statsRes.data);
+      setActions(actionsRes.data.slice(0, 50)); // Last 50 actions
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async (id) => {
+    try {
+      await adminAPI.approveReport(id);
+      fetchData();
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+    }
+  };
+
+  const handleReject = async (id) => {
+    try {
+      await adminAPI.rejectReport(id);
+      fetchData();
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+    }
+  };
+
+  const handleResolve = async (id) => {
+    try {
+      await adminAPI.resolveReport(id);
+      fetchData();
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+    }
+  };
+
+  const handleToggleUser = async (id) => {
+    try {
+      await adminAPI.toggleUserStatus(id);
+      fetchData();
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+    }
+  };
+
+  const handleChangeUserRole = async (id, role) => {
+    try {
+      await adminAPI.updateUserRole(id, role);
+      fetchData();
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+    }
+  };
+
+  const handleSaveAlert = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingAlert) {
+        await adminAPI.updateAlert(editingAlert.id, alertForm);
+      } else {
+        await adminAPI.createAlert(alertForm);
+      }
+      setShowAlertForm(false);
+      setEditingAlert(null);
+      setAlertForm({ title: '', message: '', level: 'INFO', district: '', startTime: new Date().toISOString().slice(0, 16), endTime: '' });
+      fetchData();
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+    }
+  };
+
+  const handleDeleteAlert = async (id) => {
+    if (window.confirm('Bạn có chắc muốn xóa cảnh báo này?')) {
+      try {
+        await adminAPI.deleteAlert(id);
+        fetchData();
+      } catch (error) {
+        alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+      }
+    }
+  };
+
+  const handleSaveIncidentType = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingIncident) {
+        await adminAPI.updateIncidentType(editingIncident.id, incidentForm);
+      } else {
+        await adminAPI.createIncidentType(incidentForm);
+      }
+      setShowIncidentForm(false);
+      setEditingIncident(null);
+      setIncidentForm({ name: '', description: '', icon: '', color: '#001f3f' });
+      fetchData();
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+    }
+  };
+
+  const handleDeleteIncidentType = async (id) => {
+    if (window.confirm('Bạn có chắc muốn xóa loại sự cố này?')) {
+      try {
+        await adminAPI.deleteIncidentType(id);
+        fetchData();
+      } catch (error) {
+        alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+      }
+    }
+  };
+
+  const handleEditAlert = (alert) => {
+    setEditingAlert(alert);
+    setAlertForm({
+      title: alert.title,
+      message: alert.message,
+      level: alert.level,
+      district: alert.district || '',
+      startTime: alert.startTime ? alert.startTime.slice(0, 16) : new Date().toISOString().slice(0, 16),
+      endTime: alert.endTime ? alert.endTime.slice(0, 16) : '',
+    });
+    setShowAlertForm(true);
+  };
+
+  const handleEditIncident = (type) => {
+    setEditingIncident(type);
+    setIncidentForm({
+      name: type.name,
+      description: type.description || '',
+      icon: type.icon || '',
+      color: type.color || '#001f3f',
+    });
+    setShowIncidentForm(true);
+  };
+
+  const exportData = (type) => {
+    let data, filename;
+    switch (type) {
+      case 'reports':
+        data = reports;
+        filename = 'reports.json';
+        break;
+      case 'users':
+        data = users;
+        filename = 'users.json';
+        break;
+      case 'alerts':
+        data = alerts;
+        filename = 'alerts.json';
+        break;
+      default:
+        return;
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  const pendingReports = reports.filter((r) => r.status === 'PENDING');
+
+  return (
+    <div className="admin-page">
+      <div className="container">
+        <div className="admin-header">
+          <h1>
+            <FiShield /> Trang Quản trị
+          </h1>
+        </div>
+
+        <div className="admin-tabs">
+          <button
+            className={`tab-button ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            <FiBarChart2 /> Dashboard
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'reports' ? 'active' : ''}`}
+            onClick={() => setActiveTab('reports')}
+          >
+            <FiAlertCircle /> Báo cáo ({pendingReports.length})
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            <FiUsers /> Người dùng
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'alerts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('alerts')}
+          >
+            <FiAlertCircle /> Cảnh báo
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'incidents' ? 'active' : ''}`}
+            onClick={() => setActiveTab('incidents')}
+          >
+            <FiList /> Loại sự cố
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'actions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('actions')}
+          >
+            <FiActivity /> Lịch sử
+          </button>
+        </div>
+
+        {activeTab === 'dashboard' && stats && (
+          <div className="admin-content">
+            <div className="stats-grid grid grid-4">
+              <div className="stat-card card card-navy fade-in">
+                <div className="stat-icon"><FiUsers /></div>
+                <div className="stat-content">
+                  <div className="stat-label">Tổng người dùng</div>
+                  <div className="stat-value">{stats.totalUsers}</div>
+                </div>
+              </div>
+              <div className="stat-card card card-navy fade-in">
+                <div className="stat-icon"><FiAlertCircle /></div>
+                <div className="stat-content">
+                  <div className="stat-label">Tổng báo cáo</div>
+                  <div className="stat-value">{stats.totalReports}</div>
+                </div>
+              </div>
+              <div className="stat-card card card-navy fade-in">
+                <div className="stat-icon"><FiAlertCircle /></div>
+                <div className="stat-content">
+                  <div className="stat-label">Chờ duyệt</div>
+                  <div className="stat-value">{stats.pendingReports}</div>
+                </div>
+              </div>
+              <div className="stat-card card card-navy fade-in">
+                <div className="stat-icon"><FiShield /></div>
+                <div className="stat-content">
+                  <div className="stat-label">Cảnh báo hoạt động</div>
+                  <div className="stat-value">{stats.activeAlerts}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="admin-content">
+            <div className="section-header">
+              <h2>Quản lý Báo cáo</h2>
+              <button className="btn btn-secondary" onClick={() => exportData('reports')}>
+                <FiDownload /> Xuất dữ liệu
+              </button>
+            </div>
+            <div className="reports-table">
+              {reports.map((report) => (
+                <div key={report.id} className="admin-report-card card card-navy fade-in">
+                  <div className="report-info">
+                    <h3>{report.title}</h3>
+                    <p>{report.description}</p>
+                    <div className="report-meta">
+                      <span>Loại: {report.incidentTypeName}</span>
+                      <span>Mức độ: {report.severity}</span>
+                      <span>Địa điểm: {report.district || 'N/A'}</span>
+                      <span>Người báo: {report.username}</span>
+                      <span>Thời gian: {new Date(report.createdAt).toLocaleString('vi-VN')}</span>
+                    </div>
+                    <div className={`report-status status-${report.status.toLowerCase()}`}>
+                      {report.status}
+                    </div>
+                  </div>
+                  {report.status === 'PENDING' && (
+                    <div className="report-actions">
+                      <button className="btn btn-approve" onClick={() => handleApprove(report.id)}>
+                        <FiCheck /> Duyệt
+                      </button>
+                      <button className="btn btn-reject" onClick={() => handleReject(report.id)}>
+                        <FiX /> Từ chối
+                      </button>
+                    </div>
+                  )}
+                  {report.status === 'APPROVED' && (
+                    <button className="btn btn-resolve" onClick={() => handleResolve(report.id)}>
+                      <FiCheckCircle /> Đánh dấu đã xử lý
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'users' && (
+          <div className="admin-content">
+            <div className="section-header">
+              <h2>Quản lý Người dùng</h2>
+              <button className="btn btn-secondary" onClick={() => exportData('users')}>
+                <FiDownload /> Xuất dữ liệu
+              </button>
+            </div>
+            <div className="users-table">
+              {users.map((user) => (
+                <div key={user.id} className="user-card card card-navy fade-in">
+                  <div className="user-info">
+                    <h3>{user.username}</h3>
+                    <p>{user.email}</p>
+                    <div className="user-meta">
+                      <span>Họ tên: {user.fullName || 'N/A'}</span>
+                      <span>Địa chỉ: {user.address || 'N/A'}</span>
+                      <span>Quận: {user.district || 'N/A'}</span>
+                      <span>Đăng ký: {new Date(user.createdAt).toLocaleDateString('vi-VN')}</span>
+                    </div>
+                    <div className="user-actions">
+                      <div className={`user-role role-${user.role.toLowerCase()}`}>
+                        {user.role}
+                      </div>
+                      <select
+                        className="role-select"
+                        value={user.role}
+                        onChange={(e) => handleChangeUserRole(user.id, e.target.value)}
+                      >
+                        <option value="USER">USER</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                      <button
+                        className={`btn-toggle ${user.enabled ? 'enabled' : 'disabled'}`}
+                        onClick={() => handleToggleUser(user.id)}
+                        title={user.enabled ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                      >
+                        {user.enabled ? <FiToggleRight /> : <FiToggleLeft />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'alerts' && (
+          <div className="admin-content">
+            <div className="section-header">
+              <h2>Quản lý Cảnh báo</h2>
+              <div>
+                <button className="btn btn-primary" onClick={() => {
+                  setEditingAlert(null);
+                  setAlertForm({ title: '', message: '', level: 'INFO', district: '', startTime: new Date().toISOString().slice(0, 16), endTime: '' });
+                  setShowAlertForm(true);
+                }}>
+                  <FiPlus /> Tạo cảnh báo
+                </button>
+                <button className="btn btn-secondary" onClick={() => exportData('alerts')}>
+                  <FiDownload /> Xuất dữ liệu
+                </button>
+              </div>
+            </div>
+            <div className="alerts-list">
+              {alerts.map((alert) => (
+                <div key={alert.id} className="alert-card card card-navy fade-in">
+                  <div className="alert-header">
+                    <h3>{alert.title}</h3>
+                    <div className="alert-actions">
+                      <button className="btn-icon" onClick={() => handleEditAlert(alert)}>
+                        <FiEdit />
+                      </button>
+                      <button className="btn-icon" onClick={() => handleDeleteAlert(alert.id)}>
+                        <FiTrash2 />
+                      </button>
+                    </div>
+                  </div>
+                  <p>{alert.message}</p>
+                  <div className="alert-meta">
+                    <span>Mức độ: {alert.level}</span>
+                    <span>Khu vực: {alert.district || 'Toàn quốc'}</span>
+                    <span>Trạng thái: {alert.active ? 'Hoạt động' : 'Đã tắt'}</span>
+                    <span>Bắt đầu: {new Date(alert.startTime).toLocaleString('vi-VN')}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'incidents' && (
+          <div className="admin-content">
+            <div className="section-header">
+              <h2>Quản lý Loại Sự cố</h2>
+              <button className="btn btn-primary" onClick={() => {
+                setEditingIncident(null);
+                setIncidentForm({ name: '', description: '', icon: '', color: '#001f3f' });
+                setShowIncidentForm(true);
+              }}>
+                <FiPlus /> Thêm loại sự cố
+              </button>
+            </div>
+            <div className="incidents-grid grid grid-3">
+              {incidentTypes.map((type) => (
+                <div key={type.id} className="incident-card card card-navy fade-in">
+                  <div className="incident-header">
+                    <div className="incident-icon" style={{ color: type.color }}>
+                      {type.icon || '⚠️'}
+                    </div>
+                    <div className="incident-actions">
+                      <button className="btn-icon" onClick={() => handleEditIncident(type)}>
+                        <FiEdit />
+                      </button>
+                      <button className="btn-icon" onClick={() => handleDeleteIncidentType(type.id)}>
+                        <FiTrash2 />
+                      </button>
+                    </div>
+                  </div>
+                  <h3>{type.name}</h3>
+                  <p>{type.description || 'Không có mô tả'}</p>
+                  <div className="incident-color" style={{ backgroundColor: type.color }}></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'actions' && (
+          <div className="admin-content">
+            <div className="section-header">
+              <h2>Lịch sử Hoạt động</h2>
+            </div>
+            <div className="actions-list">
+              {actions.map((action) => (
+                <div key={action.id} className="action-card card card-navy fade-in">
+                  <div className="action-header">
+                    <span className={`action-type type-${action.actionType.toLowerCase()}`}>
+                      {action.actionType}
+                    </span>
+                    <span className="action-time">
+                      {new Date(action.createdAt).toLocaleString('vi-VN')}
+                    </span>
+                  </div>
+                  <div className="action-details">
+                    <span>Admin: {action.admin?.username || 'N/A'}</span>
+                    <span>Báo cáo: {action.report?.title || 'N/A'}</span>
+                    {action.comment && <p>Ghi chú: {action.comment}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {showAlertForm && (
+          <div className="modal-overlay" onClick={() => {
+            setShowAlertForm(false);
+            setEditingAlert(null);
+          }}>
+            <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
+              <h2>{editingAlert ? 'Chỉnh sửa Cảnh báo' : 'Tạo Cảnh báo mới'}</h2>
+              <form onSubmit={handleSaveAlert}>
+                <input
+                  type="text"
+                  placeholder="Tiêu đề"
+                  value={alertForm.title}
+                  onChange={(e) => setAlertForm({ ...alertForm, title: e.target.value })}
+                  required
+                  className="input"
+                />
+                <textarea
+                  placeholder="Nội dung"
+                  value={alertForm.message}
+                  onChange={(e) => setAlertForm({ ...alertForm, message: e.target.value })}
+                  required
+                  className="input"
+                  rows="4"
+                />
+                <select
+                  value={alertForm.level}
+                  onChange={(e) => setAlertForm({ ...alertForm, level: e.target.value })}
+                  className="input"
+                >
+                  <option value="INFO">Thông tin</option>
+                  <option value="WARNING">Cảnh báo</option>
+                  <option value="DANGER">Nguy hiểm</option>
+                  <option value="CRITICAL">Nghiêm trọng</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Quận/Huyện (tùy chọn)"
+                  value={alertForm.district}
+                  onChange={(e) => setAlertForm({ ...alertForm, district: e.target.value })}
+                  className="input"
+                />
+                <input
+                  type="datetime-local"
+                  value={alertForm.startTime}
+                  onChange={(e) => setAlertForm({ ...alertForm, startTime: e.target.value })}
+                  required
+                  className="input"
+                />
+                <input
+                  type="datetime-local"
+                  placeholder="Thời gian kết thúc (tùy chọn)"
+                  value={alertForm.endTime}
+                  onChange={(e) => setAlertForm({ ...alertForm, endTime: e.target.value })}
+                  className="input"
+                />
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary">Lưu</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => {
+                    setShowAlertForm(false);
+                    setEditingAlert(null);
+                  }}>Hủy</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {showIncidentForm && (
+          <div className="modal-overlay" onClick={() => {
+            setShowIncidentForm(false);
+            setEditingIncident(null);
+          }}>
+            <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
+              <h2>{editingIncident ? 'Chỉnh sửa Loại Sự cố' : 'Thêm Loại Sự cố mới'}</h2>
+              <form onSubmit={handleSaveIncidentType}>
+                <input
+                  type="text"
+                  placeholder="Tên loại sự cố"
+                  value={incidentForm.name}
+                  onChange={(e) => setIncidentForm({ ...incidentForm, name: e.target.value })}
+                  required
+                  className="input"
+                />
+                <textarea
+                  placeholder="Mô tả"
+                  value={incidentForm.description}
+                  onChange={(e) => setIncidentForm({ ...incidentForm, description: e.target.value })}
+                  className="input"
+                  rows="3"
+                />
+                <input
+                  type="text"
+                  placeholder="Icon (emoji hoặc text)"
+                  value={incidentForm.icon}
+                  onChange={(e) => setIncidentForm({ ...incidentForm, icon: e.target.value })}
+                  className="input"
+                />
+                <input
+                  type="color"
+                  value={incidentForm.color}
+                  onChange={(e) => setIncidentForm({ ...incidentForm, color: e.target.value })}
+                  className="input"
+                />
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary">Lưu</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => {
+                    setShowIncidentForm(false);
+                    setEditingIncident(null);
+                  }}>Hủy</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Admin;

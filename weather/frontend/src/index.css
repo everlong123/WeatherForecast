@@ -1,0 +1,90 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #001f3f 0%, #003d7a 50%, #0056b3 100%);
+  min-height: 100vh;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Navy & White Color Theme */
+:root {
+  --navy-primary: #001f3f;
+  --navy-secondary: #003d7a;
+  --navy-light: #0056b3;
+  --navy-accent: #0074d9;
+  --white: #ffffff;
+  --white-light: #f8f9fa;
+  --white-gray: #e9ecef;
+  --gradient-navy: linear-gradient(135deg, #001f3f 0%, #003d7a 50%, #0056b3 100%);
+  --gradient-navy-light: linear-gradient(135deg, #003d7a 0%, #0056b3 50%, #0074d9 100%);
+  --shadow: 0 10px 30px rgba(0, 31, 63, 0.3);
+  --shadow-hover: 0 15px 40px rgba(0, 31, 63, 0.4);
+  --text-navy: #001f3f;
+  --text-white: #ffffff;
+  --border-navy: rgba(0, 31, 63, 0.2);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.slide-in {
+  animation: slideIn 0.5s ease-out;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
