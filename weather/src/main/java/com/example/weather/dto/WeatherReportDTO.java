@@ -15,8 +15,6 @@ public class WeatherReportDTO {
     private String incidentTypeName;
     private String title;
     private String description;
-    private Double latitude;
-    private Double longitude;
     private String address;
     private String district;
     private String ward;

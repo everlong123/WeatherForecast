@@ -15,13 +15,6 @@ public interface WeatherReportRepository extends JpaRepository<WeatherReport, Lo
     List<WeatherReport> findByUser(User user);
     List<WeatherReport> findByStatus(WeatherReport.ReportStatus status);
     
-    @Query("SELECT r FROM WeatherReport r WHERE r.latitude BETWEEN :minLat AND :maxLat " +
-           "AND r.longitude BETWEEN :minLng AND :maxLng")
-    List<WeatherReport> findByLocationRange(@Param("minLat") Double minLat, 
-                                             @Param("maxLat") Double maxLat,
-                                             @Param("minLng") Double minLng, 
-                                             @Param("maxLng") Double maxLng);
-    
     @Query("SELECT r FROM WeatherReport r WHERE r.district = :district")
     List<WeatherReport> findByDistrict(@Param("district") String district);
     

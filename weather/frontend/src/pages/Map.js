@@ -159,27 +159,8 @@ const Map = () => {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
-            {reports.map((report) => (
-              <Marker
-                key={report.id}
-                position={[report.latitude, report.longitude]}
-                icon={createCustomIcon(getMarkerColor(report.status, report.severity))}
-                eventHandlers={{
-                  click: () => setSelectedReport(report),
-                }}
-              >
-                <Popup>
-                  <div className="marker-popup">
-                    <h3>{report.title}</h3>
-                    <p><strong>Loại:</strong> {report.incidentTypeName}</p>
-                    <p><strong>Trạng thái:</strong> {report.status}</p>
-                    <p><strong>Mức độ:</strong> {report.severity}</p>
-                    <p><strong>Địa điểm:</strong> {report.district || 'N/A'}</p>
-                    <p>{report.description}</p>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+            {/* Markers không còn được hiển thị vì đã bỏ latitude/longitude */}
+            {/* Có thể sử dụng danh sách báo cáo ở bên trái để xem chi tiết */}
           </MapContainer>
         </div>
       </div>

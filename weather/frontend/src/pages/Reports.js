@@ -3,11 +3,12 @@ import { reportAPI, incidentTypeAPI } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock } from 'react-icons/fi';
 import { getProvinces, getDistricts, getWards } from '../data/locations';
+import { incidentTypes as defaultIncidentTypes, getCategories, getIncidentTypesByCategory } from '../data/incidentTypes';
 import './Reports.css';
 
 const Reports = () => {
   const [reports, setReports] = useState([]);
-  const [incidentTypes, setIncidentTypes] = useState([]);
+  const [incidentTypes, setIncidentTypes] = useState(defaultIncidentTypes);
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
@@ -22,8 +23,6 @@ const Reports = () => {
     description: '',
     incidentTypeId: '',
     severity: 'LOW',
-    latitude: '',
-    longitude: '',
     address: '',
     city: '',
     district: '',
@@ -57,18 +56,20 @@ const Reports = () => {
       const response = await incidentTypeAPI.getAll();
       console.log('Incident types response:', response);
       console.log('Incident types data:', response.data);
-      if (response.data && Array.isArray(response.data)) {
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
         setIncidentTypes(response.data);
         console.log('Incident types set:', response.data.length, 'items');
       } else {
-        console.warn('Response data is not an array:', response.data);
-        setIncidentTypes([]);
+        // Sử dụng danh sách mặc định nếu API không trả về dữ liệu
+        console.log('Using default incident types');
+        setIncidentTypes(defaultIncidentTypes);
       }
     } catch (error) {
       console.error('Error fetching incident types:', error);
       console.error('Error details:', error.response?.data || error.message);
-      setError('Không thể tải danh sách loại sự cố. Vui lòng thử lại sau.');
-      setIncidentTypes([]);
+      // Sử dụng danh sách mặc định khi có lỗi
+      console.log('Using default incident types due to error');
+      setIncidentTypes(defaultIncidentTypes);
     }
   };
 
@@ -102,24 +103,6 @@ const Reports = () => {
     }
   };
 
-  const handleGetLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setFormData({
-            ...formData,
-            latitude: position.coords.latitude.toString(),
-            longitude: position.coords.longitude.toString(),
-          });
-        },
-        (error) => {
-          alert('Không thể lấy vị trí. Vui lòng nhập thủ công.');
-        }
-      );
-    } else {
-      alert('Trình duyệt không hỗ trợ định vị.');
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -128,8 +111,6 @@ const Reports = () => {
     try {
       const submitData = {
         ...formData,
-        latitude: parseFloat(formData.latitude) || null,
-        longitude: parseFloat(formData.longitude) || null,
         incidentTypeId: parseInt(formData.incidentTypeId) || null,
       };
 
@@ -156,8 +137,6 @@ const Reports = () => {
       description: report.description || '',
       incidentTypeId: report.incidentTypeId?.toString() || '',
       severity: report.severity || 'LOW',
-      latitude: report.latitude?.toString() || '',
-      longitude: report.longitude?.toString() || '',
       address: report.address || '',
       city: report.city || '',
       district: report.district || '',
@@ -195,8 +174,6 @@ const Reports = () => {
       description: '',
       incidentTypeId: '',
       severity: 'LOW',
-      latitude: '',
-      longitude: '',
       address: '',
       city: '',
       district: '',
@@ -362,11 +339,33 @@ const Reports = () => {
                 >
                   <option value="">Chọn loại sự cố * ({incidentTypes.length} loại có sẵn)</option>
                   {incidentTypes && incidentTypes.length > 0 ? (
-                    incidentTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.icon || '⚠️'} {type.name}
-                      </option>
-                    ))
+                    (() => {
+                      // Kiểm tra xem có category không (dữ liệu từ API có thể không có category)
+                      const hasCategory = incidentTypes[0]?.category;
+                      if (hasCategory) {
+                        // Hiển thị theo category với optgroup
+                        const categories = [...new Set(incidentTypes.map(t => t.category).filter(Boolean))];
+                        return categories.map(category => {
+                          const typesInCategory = incidentTypes.filter(t => t.category === category);
+                          return (
+                            <optgroup key={category} label={category}>
+                              {typesInCategory.map((type) => (
+                                <option key={type.id} value={type.id}>
+                                  {type.icon || '⚠️'} {type.name}
+                                </option>
+                              ))}
+                            </optgroup>
+                          );
+                        });
+                      } else {
+                        // Hiển thị danh sách đơn giản nếu không có category
+                        return incidentTypes.map((type) => (
+                          <option key={type.id} value={type.id}>
+                            {type.icon || '⚠️'} {type.name}
+                          </option>
+                        ));
+                      }
+                    })()
                   ) : (
                     <option value="" disabled>Đang tải danh sách loại sự cố...</option>
                   )}
@@ -432,31 +431,6 @@ const Reports = () => {
                   className="input"
                 />
 
-                <div className="location-inputs">
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Vĩ độ (Latitude)"
-                    value={formData.latitude}
-                    onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                    className="input"
-                  />
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Kinh độ (Longitude)"
-                    value={formData.longitude}
-                    onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                    className="input"
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={handleGetLocation}
-                  >
-                    <FiMapPin /> Lấy vị trí hiện tại
-                  </button>
-                </div>
 
                 <input
                   type="datetime-local"

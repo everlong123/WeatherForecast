@@ -25,15 +25,6 @@ public class WeatherReportController {
         return ResponseEntity.ok(reportService.getUserReports(authentication.getName()));
     }
 
-    @GetMapping("/location")
-    public ResponseEntity<List<WeatherReportDTO>> getReportsByLocation(
-            @RequestParam Double minLat,
-            @RequestParam Double maxLat,
-            @RequestParam Double minLng,
-            @RequestParam Double maxLng) {
-        return ResponseEntity.ok(reportService.getReportsByLocation(minLat, maxLat, minLng, maxLng));
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<WeatherReportDTO> getReportById(@PathVariable Long id) {
         return ResponseEntity.ok(reportService.getReportById(id));
