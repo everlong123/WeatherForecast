@@ -9,6 +9,7 @@ import java.util.Optional;
 @Repository
 public interface IncidentTypeRepository extends JpaRepository<IncidentType, Long> {
     Optional<IncidentType> findByName(String name);
+    Boolean existsByName(String name);
 }
 
 

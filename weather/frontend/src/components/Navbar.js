@@ -29,9 +29,11 @@ const Navbar = () => {
           <Link to="/map" className="navbar-item">
             <FiMap /> Bản đồ
           </Link>
-          <Link to="/dashboard" className="navbar-item">
-            <FiBarChart2 /> Thống kê
-          </Link>
+          {admin && (
+            <Link to="/dashboard" className="navbar-item">
+              <FiBarChart2 /> Thống kê
+            </Link>
+          )}
           {user && (
             <Link to="/reports" className="navbar-item">
               <FiUser /> Báo cáo của tôi

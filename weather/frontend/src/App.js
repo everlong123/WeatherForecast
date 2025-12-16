@@ -7,11 +7,21 @@ import Map from './pages/Map';
 import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
 import Admin from './pages/Admin';
-import { isAuthenticated } from './utils/auth';
+import { isAuthenticated, isAdmin } from './utils/auth';
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
   return isAuthenticated() ? children : <Navigate to="/login" />;
+};
+
+const AdminRoute = ({ children }) => {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" />;
+  }
+  if (!isAdmin()) {
+    return <Navigate to="/" />;
+  }
+  return children;
 };
 
 function App() {
@@ -23,7 +33,14 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/map" element={<Map />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/dashboard"
+            element={
+              <AdminRoute>
+                <Dashboard />
+              </AdminRoute>
+            }
+          />
           <Route
             path="/reports"
             element={
@@ -35,9 +52,9 @@ function App() {
           <Route
             path="/admin"
             element={
-              <PrivateRoute>
+              <AdminRoute>
                 <Admin />
-              </PrivateRoute>
+              </AdminRoute>
             }
           />
         </Routes>

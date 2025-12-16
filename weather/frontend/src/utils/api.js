@@ -44,12 +44,13 @@ export const authAPI = {
 export const reportAPI = {
   getAll: () => api.get('/reports'),
   getMyReports: () => api.get('/reports/my-reports'),
-  getByLocation: (minLat, maxLat, minLng, maxLng) =>
-    api.get('/reports/location', { params: { minLat, maxLat, minLng, maxLng } }),
   getById: (id) => api.get(`/reports/${id}`),
   create: (data) => api.post('/reports', data),
   update: (id, data) => api.put(`/reports/${id}`, data),
   delete: (id) => api.delete(`/reports/${id}`),
+  // Admin endpoints
+  updateReport: (id, data) => api.put(`/admin/reports/${id}`, data),
+  deleteReport: (id) => api.delete(`/admin/reports/${id}`),
 };
 
 export const weatherAPI = {
@@ -79,6 +80,9 @@ export const adminAPI = {
   getAllUsers: () => api.get('/admin/users'),
   toggleUserStatus: (id) => api.put(`/admin/users/${id}/toggle`),
   updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
+  createUser: (data) => api.post('/admin/users', data),
+  updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
   createAlert: (data) => api.post('/admin/alerts', data),
   updateAlert: (id, data) => api.put(`/admin/alerts/${id}`, data),
   deleteAlert: (id) => api.delete(`/admin/alerts/${id}`),

@@ -26,10 +26,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        // Skip JWT filter for public endpoints
+        // Skip JWT filter for OPTIONS requests (CORS preflight)
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            chain.doFilter(request, response);
+            return;
+        }
+        
+        // Skip JWT filter for public endpoints (context path is /api, so paths don't include /api)
         String path = request.getRequestURI();
-        if (path.startsWith("/api/auth/") || path.startsWith("/api/public/") || 
-            path.startsWith("/api/weather/current") || path.startsWith("/api/incident-types")) {
+        if (path.startsWith("/auth/") || path.startsWith("/public/") || 
+            path.startsWith("/weather/current") || path.startsWith("/incident-types") ||
+            path.startsWith("/locations/")) {
             chain.doFilter(request, response);
             return;
         }

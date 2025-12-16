@@ -1,9 +1,12 @@
 package com.example.weather.config;
 
 import com.example.weather.entity.IncidentType;
+import com.example.weather.entity.User;
 import com.example.weather.repository.IncidentTypeRepository;
+import com.example.weather.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -14,6 +17,12 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private IncidentTypeRepository incidentTypeRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
@@ -58,6 +67,19 @@ public class DataInitializer implements CommandLineRunner {
             
             incidentTypeRepository.saveAll(defaultTypes);
             System.out.println("Đã khởi tạo " + defaultTypes.size() + " loại sự cố mặc định vào database");
+        }
+
+        // Tạo admin user nếu chưa có
+        if (!userRepository.findByUsername("admin").isPresent()) {
+            User admin = new User();
+            admin.setUsername("admin");
+            admin.setEmail("admin@weather.com");
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setFullName("Administrator");
+            admin.setRole(User.Role.ADMIN);
+            admin.setEnabled(true);
+            userRepository.save(admin);
+            System.out.println("Đã tạo admin user: username=admin, password=admin123");
         }
     }
 

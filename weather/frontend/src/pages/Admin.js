@@ -20,8 +20,12 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAlertForm, setShowAlertForm] = useState(false);
   const [showIncidentForm, setShowIncidentForm] = useState(false);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
   const [editingAlert, setEditingAlert] = useState(null);
   const [editingIncident, setEditingIncident] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editingReport, setEditingReport] = useState(null);
   const navigate = useNavigate();
 
   const [alertForm, setAlertForm] = useState({
@@ -40,6 +44,32 @@ const Admin = () => {
     color: '#001f3f',
   });
 
+  const [userForm, setUserForm] = useState({
+    username: '',
+    email: '',
+    password: '',
+    fullName: '',
+    phone: '',
+    address: '',
+    district: '',
+    ward: '',
+    role: 'USER',
+    enabled: true,
+  });
+
+  const [reportForm, setReportForm] = useState({
+    title: '',
+    description: '',
+    incidentTypeId: '',
+    severity: 'LOW',
+    status: 'PENDING',
+    address: '',
+    district: '',
+    ward: '',
+    city: '',
+    incidentTime: new Date().toISOString().slice(0, 16),
+  });
+
   useEffect(() => {
     if (!isAdmin()) {
       navigate('/');
@@ -50,6 +80,7 @@ const Admin = () => {
 
   const fetchData = async () => {
     try {
+      console.log('Fetching admin data...');
       const [reportsRes, usersRes, alertsRes, typesRes, statsRes, actionsRes] = await Promise.all([
         reportAPI.getAll(),
         adminAPI.getAllUsers(),
@@ -58,14 +89,36 @@ const Admin = () => {
         adminAPI.getStats(),
         adminAPI.getActions(),
       ]);
-      setReports(reportsRes.data);
-      setUsers(usersRes.data);
-      setAlerts(alertsRes.data);
-      setIncidentTypes(typesRes.data);
-      setStats(statsRes.data);
-      setActions(actionsRes.data.slice(0, 50)); // Last 50 actions
+      console.log('Fetched data:', {
+        reports: reportsRes.data?.length || 0,
+        users: usersRes.data?.length || 0,
+        alerts: alertsRes.data?.length || 0,
+        types: typesRes.data?.length || 0,
+        stats: statsRes.data,
+        actions: actionsRes.data?.length || 0,
+      });
+      setReports(Array.isArray(reportsRes.data) ? reportsRes.data : []);
+      setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
+      setAlerts(Array.isArray(alertsRes.data) ? alertsRes.data : []);
+      setIncidentTypes(Array.isArray(typesRes.data) ? typesRes.data : []);
+      setStats(statsRes.data || null);
+      const actionsData = Array.isArray(actionsRes.data) ? actionsRes.data : [];
+      setActions(actionsData.slice(0, 50)); // Last 50 actions
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching admin data:', error);
+      console.error('Error response:', error.response);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        alert('Bạn không có quyền truy cập. Vui lòng đăng nhập lại với tài khoản admin.');
+        navigate('/login');
+      } else {
+        alert('Lỗi khi tải dữ liệu: ' + (error.response?.data?.message || error.message || 'Đã xảy ra lỗi'));
+      }
+      // Set empty arrays on error to prevent map errors
+      setReports([]);
+      setUsers([]);
+      setAlerts([]);
+      setIncidentTypes([]);
+      setActions([]);
     } finally {
       setLoading(false);
     }
@@ -147,6 +200,7 @@ const Admin = () => {
   const handleSaveIncidentType = async (e) => {
     e.preventDefault();
     try {
+      console.log('Saving incident type:', incidentForm);
       if (editingIncident) {
         await adminAPI.updateIncidentType(editingIncident.id, incidentForm);
       } else {
@@ -157,7 +211,9 @@ const Admin = () => {
       setIncidentForm({ name: '', description: '', icon: '', color: '#001f3f' });
       fetchData();
     } catch (error) {
-      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+      console.error('Error saving incident type:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+      alert('Lỗi: ' + errorMessage);
     }
   };
 
@@ -194,6 +250,95 @@ const Admin = () => {
       color: type.color || '#001f3f',
     });
     setShowIncidentForm(true);
+  };
+
+  const handleSaveUser = async (e) => {
+    e.preventDefault();
+    try {
+      console.log('Saving user:', userForm);
+      if (editingUser) {
+        await adminAPI.updateUser(editingUser.id, userForm);
+      } else {
+        await adminAPI.createUser(userForm);
+      }
+      setShowUserForm(false);
+      setEditingUser(null);
+      setUserForm({ username: '', email: '', password: '', fullName: '', phone: '', address: '', district: '', ward: '', role: 'USER', enabled: true });
+      fetchData();
+    } catch (error) {
+      console.error('Error saving user:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+      alert('Lỗi: ' + errorMessage);
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (window.confirm('Bạn có chắc muốn xóa người dùng này?')) {
+      try {
+        await adminAPI.deleteUser(id);
+        fetchData();
+      } catch (error) {
+        alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+      }
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setUserForm({
+      username: user.username || '',
+      email: user.email || '',
+      password: '', // Don't show password
+      fullName: user.fullName || '',
+      phone: user.phone || '',
+      address: user.address || '',
+      district: user.district || '',
+      ward: user.ward || '',
+      role: user.role || 'USER',
+      enabled: user.enabled !== undefined ? user.enabled : true,
+    });
+    setShowUserForm(true);
+  };
+
+  const handleSaveReport = async (e) => {
+    e.preventDefault();
+    try {
+      await reportAPI.updateReport(editingReport.id, reportForm);
+      setShowReportForm(false);
+      setEditingReport(null);
+      setReportForm({ title: '', description: '', incidentTypeId: '', severity: 'LOW', status: 'PENDING', address: '', district: '', ward: '', city: '', incidentTime: new Date().toISOString().slice(0, 16) });
+      fetchData();
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+    }
+  };
+
+  const handleDeleteReport = async (id) => {
+    if (window.confirm('Bạn có chắc muốn xóa báo cáo này?')) {
+      try {
+        await reportAPI.deleteReport(id);
+        fetchData();
+      } catch (error) {
+        alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+      }
+    }
+  };
+
+  const handleEditReport = (report) => {
+    setEditingReport(report);
+    setReportForm({
+      title: report.title || '',
+      description: report.description || '',
+      incidentTypeId: report.incidentTypeId || '',
+      severity: report.severity || 'LOW',
+      status: report.status || 'PENDING',
+      address: report.address || '',
+      district: report.district || '',
+      ward: report.ward || '',
+      city: report.city || '',
+      incidentTime: report.incidentTime ? new Date(report.incidentTime).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+    });
+    setShowReportForm(true);
   };
 
   const exportData = (type) => {
@@ -325,7 +470,12 @@ const Admin = () => {
               </button>
             </div>
             <div className="reports-table">
-              {reports.map((report) => (
+              {reports.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
+                  <p>Chưa có báo cáo nào.</p>
+                </div>
+              ) : (
+                reports.map((report) => (
                 <div key={report.id} className="admin-report-card card card-navy fade-in">
                   <div className="report-info">
                     <h3>{report.title}</h3>
@@ -341,23 +491,31 @@ const Admin = () => {
                       {report.status}
                     </div>
                   </div>
-                  {report.status === 'PENDING' && (
-                    <div className="report-actions">
-                      <button className="btn btn-approve" onClick={() => handleApprove(report.id)}>
-                        <FiCheck /> Duyệt
-                      </button>
-                      <button className="btn btn-reject" onClick={() => handleReject(report.id)}>
-                        <FiX /> Từ chối
-                      </button>
-                    </div>
-                  )}
-                  {report.status === 'APPROVED' && (
-                    <button className="btn btn-resolve" onClick={() => handleResolve(report.id)}>
-                      <FiCheckCircle /> Đánh dấu đã xử lý
+                  <div className="report-actions">
+                    <button className="btn-icon" onClick={() => handleEditReport(report)} title="Chỉnh sửa">
+                      <FiEdit />
                     </button>
-                  )}
+                    <button className="btn-icon btn-danger" onClick={() => handleDeleteReport(report.id)} title="Xóa">
+                      <FiTrash2 />
+                    </button>
+                    {report.status === 'PENDING' && (
+                      <>
+                        <button className="btn btn-approve" onClick={() => handleApprove(report.id)}>
+                          <FiCheck /> Duyệt
+                        </button>
+                        <button className="btn btn-reject" onClick={() => handleReject(report.id)}>
+                          <FiX /> Từ chối
+                        </button>
+                      </>
+                    )}
+                    {report.status === 'APPROVED' && (
+                      <button className="btn btn-resolve" onClick={() => handleResolve(report.id)}>
+                        <FiCheckCircle /> Đánh dấu đã xử lý
+                      </button>
+                    )}
+                  </div>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         )}
@@ -366,12 +524,26 @@ const Admin = () => {
           <div className="admin-content">
             <div className="section-header">
               <h2>Quản lý Người dùng</h2>
-              <button className="btn btn-secondary" onClick={() => exportData('users')}>
-                <FiDownload /> Xuất dữ liệu
-              </button>
+              <div>
+                <button className="btn btn-primary" onClick={() => {
+                  setEditingUser(null);
+                  setUserForm({ username: '', email: '', password: '', fullName: '', phone: '', address: '', district: '', ward: '', role: 'USER', enabled: true });
+                  setShowUserForm(true);
+                }}>
+                  <FiPlus /> Tạo người dùng
+                </button>
+                <button className="btn btn-secondary" onClick={() => exportData('users')}>
+                  <FiDownload /> Xuất dữ liệu
+                </button>
+              </div>
             </div>
             <div className="users-table">
-              {users.map((user) => (
+              {users.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
+                  <p>Chưa có người dùng nào. Hãy tạo người dùng mới.</p>
+                </div>
+              ) : (
+                users.map((user) => (
                 <div key={user.id} className="user-card card card-navy fade-in">
                   <div className="user-info">
                     <h3>{user.username}</h3>
@@ -386,6 +558,12 @@ const Admin = () => {
                       <div className={`user-role role-${user.role.toLowerCase()}`}>
                         {user.role}
                       </div>
+                      <button className="btn-icon" onClick={() => handleEditUser(user)} title="Chỉnh sửa">
+                        <FiEdit />
+                      </button>
+                      <button className="btn-icon btn-danger" onClick={() => handleDeleteUser(user.id)} title="Xóa">
+                        <FiTrash2 />
+                      </button>
                       <select
                         className="role-select"
                         value={user.role}
@@ -404,7 +582,7 @@ const Admin = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         )}
@@ -427,7 +605,12 @@ const Admin = () => {
               </div>
             </div>
             <div className="alerts-list">
-              {alerts.map((alert) => (
+              {alerts.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
+                  <p>Chưa có cảnh báo nào. Hãy tạo cảnh báo mới.</p>
+                </div>
+              ) : (
+                alerts.map((alert) => (
                 <div key={alert.id} className="alert-card card card-navy fade-in">
                   <div className="alert-header">
                     <h3>{alert.title}</h3>
@@ -448,7 +631,7 @@ const Admin = () => {
                     <span>Bắt đầu: {new Date(alert.startTime).toLocaleString('vi-VN')}</span>
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         )}
@@ -466,7 +649,12 @@ const Admin = () => {
               </button>
             </div>
             <div className="incidents-grid grid grid-3">
-              {incidentTypes.map((type) => (
+              {incidentTypes.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888', gridColumn: '1 / -1' }}>
+                  <p>Chưa có loại sự cố nào. Hãy thêm loại sự cố mới.</p>
+                </div>
+              ) : (
+                incidentTypes.map((type) => (
                 <div key={type.id} className="incident-card card card-navy fade-in">
                   <div className="incident-header">
                     <div className="incident-icon" style={{ color: type.color }}>
@@ -485,7 +673,7 @@ const Admin = () => {
                   <p>{type.description || 'Không có mô tả'}</p>
                   <div className="incident-color" style={{ backgroundColor: type.color }}></div>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         )}
@@ -496,7 +684,12 @@ const Admin = () => {
               <h2>Lịch sử Hoạt động</h2>
             </div>
             <div className="actions-list">
-              {actions.map((action) => (
+              {actions.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
+                  <p>Chưa có hoạt động nào.</p>
+                </div>
+              ) : (
+                actions.map((action) => (
                 <div key={action.id} className="action-card card card-navy fade-in">
                   <div className="action-header">
                     <span className={`action-type type-${action.actionType.toLowerCase()}`}>
@@ -512,7 +705,7 @@ const Admin = () => {
                     {action.comment && <p>Ghi chú: {action.comment}</p>}
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         )}
@@ -625,6 +818,202 @@ const Admin = () => {
                   <button type="button" className="btn btn-secondary" onClick={() => {
                     setShowIncidentForm(false);
                     setEditingIncident(null);
+                  }}>Hủy</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {showUserForm && (
+          <div className="modal-overlay" onClick={() => {
+            setShowUserForm(false);
+            setEditingUser(null);
+          }}>
+            <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
+              <h2>{editingUser ? 'Chỉnh sửa Người dùng' : 'Tạo Người dùng mới'}</h2>
+              <form onSubmit={handleSaveUser}>
+                <input
+                  type="text"
+                  placeholder="Username *"
+                  value={userForm.username}
+                  onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
+                  required
+                  className="input"
+                />
+                <input
+                  type="email"
+                  placeholder="Email *"
+                  value={userForm.email}
+                  onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                  required
+                  className="input"
+                />
+                <input
+                  type="password"
+                  placeholder={editingUser ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu *"}
+                  value={userForm.password}
+                  onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                  required={!editingUser}
+                  className="input"
+                />
+                <input
+                  type="text"
+                  placeholder="Họ tên"
+                  value={userForm.fullName}
+                  onChange={(e) => setUserForm({ ...userForm, fullName: e.target.value })}
+                  className="input"
+                />
+                <input
+                  type="text"
+                  placeholder="Số điện thoại"
+                  value={userForm.phone}
+                  onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                  className="input"
+                />
+                <input
+                  type="text"
+                  placeholder="Địa chỉ"
+                  value={userForm.address}
+                  onChange={(e) => setUserForm({ ...userForm, address: e.target.value })}
+                  className="input"
+                />
+                <input
+                  type="text"
+                  placeholder="Quận/Huyện"
+                  value={userForm.district}
+                  onChange={(e) => setUserForm({ ...userForm, district: e.target.value })}
+                  className="input"
+                />
+                <input
+                  type="text"
+                  placeholder="Phường/Xã"
+                  value={userForm.ward}
+                  onChange={(e) => setUserForm({ ...userForm, ward: e.target.value })}
+                  className="input"
+                />
+                <select
+                  value={userForm.role}
+                  onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                  className="input"
+                >
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={userForm.enabled}
+                    onChange={(e) => setUserForm({ ...userForm, enabled: e.target.checked })}
+                  />
+                  Kích hoạt tài khoản
+                </label>
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary">Lưu</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => {
+                    setShowUserForm(false);
+                    setEditingUser(null);
+                  }}>Hủy</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {showReportForm && editingReport && (
+          <div className="modal-overlay" onClick={() => {
+            setShowReportForm(false);
+            setEditingReport(null);
+          }}>
+            <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
+              <h2>Chỉnh sửa Báo cáo</h2>
+              <form onSubmit={handleSaveReport}>
+                <input
+                  type="text"
+                  placeholder="Tiêu đề *"
+                  value={reportForm.title}
+                  onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })}
+                  required
+                  className="input"
+                />
+                <textarea
+                  placeholder="Mô tả *"
+                  value={reportForm.description}
+                  onChange={(e) => setReportForm({ ...reportForm, description: e.target.value })}
+                  required
+                  className="input"
+                  rows="4"
+                />
+                <select
+                  value={reportForm.incidentTypeId}
+                  onChange={(e) => setReportForm({ ...reportForm, incidentTypeId: e.target.value })}
+                  required
+                  className="input"
+                >
+                  <option value="">Chọn loại sự cố *</option>
+                  {incidentTypes.map((type) => (
+                    <option key={type.id} value={type.id}>{type.icon || '⚠️'} {type.name}</option>
+                  ))}
+                </select>
+                <select
+                  value={reportForm.severity}
+                  onChange={(e) => setReportForm({ ...reportForm, severity: e.target.value })}
+                  className="input"
+                >
+                  <option value="LOW">Thấp</option>
+                  <option value="MEDIUM">Trung bình</option>
+                  <option value="HIGH">Cao</option>
+                  <option value="CRITICAL">Nghiêm trọng</option>
+                </select>
+                <select
+                  value={reportForm.status}
+                  onChange={(e) => setReportForm({ ...reportForm, status: e.target.value })}
+                  className="input"
+                >
+                  <option value="PENDING">Chờ duyệt</option>
+                  <option value="APPROVED">Đã duyệt</option>
+                  <option value="REJECTED">Từ chối</option>
+                  <option value="RESOLVED">Đã xử lý</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Địa chỉ"
+                  value={reportForm.address}
+                  onChange={(e) => setReportForm({ ...reportForm, address: e.target.value })}
+                  className="input"
+                />
+                <input
+                  type="text"
+                  placeholder="Quận/Huyện"
+                  value={reportForm.district}
+                  onChange={(e) => setReportForm({ ...reportForm, district: e.target.value })}
+                  className="input"
+                />
+                <input
+                  type="text"
+                  placeholder="Phường/Xã"
+                  value={reportForm.ward}
+                  onChange={(e) => setReportForm({ ...reportForm, ward: e.target.value })}
+                  className="input"
+                />
+                <input
+                  type="text"
+                  placeholder="Tỉnh/Thành phố"
+                  value={reportForm.city}
+                  onChange={(e) => setReportForm({ ...reportForm, city: e.target.value })}
+                  className="input"
+                />
+                <input
+                  type="datetime-local"
+                  value={reportForm.incidentTime}
+                  onChange={(e) => setReportForm({ ...reportForm, incidentTime: e.target.value })}
+                  className="input"
+                />
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary">Lưu</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => {
+                    setShowReportForm(false);
+                    setEditingReport(null);
                   }}>Hủy</button>
                 </div>
               </form>

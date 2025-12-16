@@ -66,8 +66,6 @@ Frontend sẽ chạy tại: http://localhost:3000
 
 - `weather/src/main/java` - Backend Java/Spring Boot code
 - `weather/frontend/src` - Frontend React code
-- `weather/python_service` - Python service (tùy chọn)
-- `tools` - Các công cụ hỗ trợ
 
 ## Tính năng
 
