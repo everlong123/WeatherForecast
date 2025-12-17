@@ -38,20 +38,20 @@ public class GlobalExceptionHandler {
         
         if (message != null) {
             if (message.contains("Username already exists")) {
-                response.put("message", "TÃªn Ä‘Äƒng nháº­p Ä‘Ã£ tá»“n táº¡i");
+                response.put("message", "Tên đăng nhập đã tồn tại");
             } else if (message.contains("Email already exists")) {
-                response.put("message", "Email Ä‘Ã£ Ä‘Æ°á»£c sá»­ dá»¥ng");
+                response.put("message", "Email đã được sử dụng");
             } else if (message.contains("User not found")) {
-                response.put("message", "NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i");
-            } else if (message.contains("Ä‘Ã£ tá»“n táº¡i")) {
+                response.put("message", "Người dùng không tồn tại");
+            } else if (message.contains("đã tồn tại")) {
                 response.put("message", message);
             } else if (message.contains("not found")) {
-                response.put("message", message.replace("not found", "khÃ´ng tá»“n táº¡i"));
+                response.put("message", message.replace("not found", "không tồn tại"));
             } else {
                 response.put("message", message);
             }
         } else {
-            response.put("message", "ÄÃ£ xáº£y ra lá»—i");
+            response.put("message", "Đã xảy ra lỗi");
         }
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -107,9 +107,9 @@ public class GlobalExceptionHandler {
         
         // Don't expose internal error details, just show user-friendly message
         if (errorMessage != null && (errorMessage.contains("Duplicate entry") || errorMessage.contains("constraint"))) {
-            response.put("message", "Dá»¯ liá»‡u trÃ¹ng láº·p hoáº·c khÃ´ng há»£p lá»‡");
+            response.put("message", "Dữ liệu trùng lặp hoặc không hợp lệ");
         } else {
-            response.put("message", "ÄÃ£ xáº£y ra lá»—i. Vui lÃ²ng thá»­ láº¡i sau.");
+            response.put("message", "Đã xảy ra lỗi. Vui lòng thử lại sau.");
         }
         
         ex.printStackTrace(); // Log for debugging

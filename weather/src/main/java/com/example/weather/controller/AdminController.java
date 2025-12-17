@@ -180,7 +180,14 @@ public class AdminController {
         // Lưu AdminAction trước khi xóa report
         adminActionRepository.saveAndFlush(action);
 
-        // Xóa report sau khi đã lưu action
+        // Update tất cả AdminAction có report_id = reportId để set report_id = NULL
+        // Điều này tránh foreign key constraint violation
+        entityManager.createQuery(
+            "UPDATE AdminAction a SET a.report = NULL WHERE a.report.id = :reportId"
+        ).setParameter("reportId", reportId).executeUpdate();
+        entityManager.flush();
+
+        // Xóa report sau khi đã update tất cả AdminAction
         reportRepository.delete(report);
         reportRepository.flush(); // Force flush để xử lý ngay
         

@@ -271,6 +271,7 @@ const Admin = () => {
   }
 
   const pendingReports = reports.filter((r) => r.status === 'PENDING');
+  const totalReports = reports.length;
 
   return (
     <div className="admin-page">
@@ -292,7 +293,7 @@ const Admin = () => {
             className={`tab-button ${activeTab === 'reports' ? 'active' : ''}`}
             onClick={() => setActiveTab('reports')}
           >
-            <FiAlertCircle /> Báo cáo ({pendingReports.length})
+            <FiAlertCircle /> Báo cáo ({totalReports})
           </button>
           <button
             className={`tab-button ${activeTab === 'users' ? 'active' : ''}`}
