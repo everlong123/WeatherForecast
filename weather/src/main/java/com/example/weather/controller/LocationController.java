@@ -1,6 +1,6 @@
 package com.example.weather.controller;
 
-import com.example.weather.service.LocationCoordinateService;
+import com.example.weather.service.NominatimService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +13,7 @@ import java.util.*;
 @RequestMapping("/locations")
 public class LocationController {
     @Autowired
-    private LocationCoordinateService locationCoordinateService;
+    private NominatimService nominatimService;
     
     private static Map<String, Map<String, List<String>>> locationsData;
 
@@ -72,7 +72,20 @@ public class LocationController {
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String district,
             @RequestParam(required = false) String ward) {
-        Map<String, Double> coords = locationCoordinateService.getWardCoordinates(city, district, ward);
+        Map<String, Double> coords = null;
+        
+        // Sử dụng Nominatim để lấy tọa độ
+        if (nominatimService != null && nominatimService.isAvailable()) {
+            coords = nominatimService.getCoordinatesFromLocation(city, district, ward);
+        }
+        
+        // Nếu không có kết quả, trả về tọa độ mặc định
+        if (coords == null) {
+            coords = new HashMap<>();
+            coords.put("lat", 16.0583);
+            coords.put("lng", 108.2772);
+        }
+        
         return ResponseEntity.ok(coords);
     }
 }

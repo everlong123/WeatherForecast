@@ -199,11 +199,15 @@ const Map = () => {
   };
 
   const confirmLocation = () => {
-    if (clickedPosition && window.onLocationSelected) {
-      window.onLocationSelected(clickedPosition.lat, clickedPosition.lng);
-      // Đóng cửa sổ nếu được mở từ form
-      if (window.opener) {
+    if (clickedPosition) {
+      // Nếu được mở từ window khác (window.opener), gọi callback của parent window
+      if (window.opener && window.opener.onLocationSelected) {
+        window.opener.onLocationSelected(clickedPosition.lat, clickedPosition.lng);
         window.close();
+      } 
+      // Nếu không có opener, thử gọi trực tiếp (cho trường hợp cùng window)
+      else if (window.onLocationSelected) {
+        window.onLocationSelected(clickedPosition.lat, clickedPosition.lng);
       }
     }
     setIsSelectingLocation(false);

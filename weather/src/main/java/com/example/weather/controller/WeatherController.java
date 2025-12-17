@@ -4,7 +4,7 @@ import com.example.weather.dto.WeatherDataDTO;
 import com.example.weather.service.WeatherDataService;
 import com.example.weather.service.MockWeatherService;
 import com.example.weather.service.WeatherPredictionService;
-import com.example.weather.service.LocationCoordinateService;
+import com.example.weather.service.NominatimService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,9 +26,9 @@ public class WeatherController {
     
     @Autowired(required = false)
     private com.example.weather.service.OpenWeatherService openWeatherService;
-
+    
     @Autowired
-    private LocationCoordinateService locationCoordinateService;
+    private NominatimService nominatimService;
 
     @GetMapping("/current")
     public ResponseEntity<WeatherDataDTO> getCurrentWeather(
@@ -38,20 +38,25 @@ public class WeatherController {
             @RequestParam(required = false) String district,
             @RequestParam(required = false) String ward) {
         
-        // Nếu không có lat/lng, lấy từ địa điểm bằng OpenWeatherMap Geocoding API
+        // Nếu không có lat/lng, lấy từ địa điểm bằng Nominatim
         if (lat == null || lng == null) {
-            if (openWeatherService != null && openWeatherService.isAvailable()) {
-                Map<String, Double> coords = openWeatherService.getCoordinatesFromLocation(city, district, ward);
-                if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
-                    lat = coords.get("lat");
-                    lng = coords.get("lng");
-                } else {
-                    // Fallback: tọa độ mặc định
-                    lat = 16.0583;
-                    lng = 108.2772;
-                }
+            Map<String, Double> coords = null;
+            
+            // Thử Nominatim (miễn phí, không cần API key)
+            if (nominatimService != null && nominatimService.isAvailable()) {
+                coords = nominatimService.getCoordinatesFromLocation(city, district, ward);
+            }
+            
+            // Nếu Nominatim không có kết quả, thử OpenWeather (nếu có API key) - chỉ cho geocoding
+            if (coords == null && openWeatherService != null && openWeatherService.isAvailable()) {
+                coords = openWeatherService.getCoordinatesFromLocation(city, district, ward);
+            }
+            
+            if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
+                lat = coords.get("lat");
+                lng = coords.get("lng");
             } else {
-                // Fallback: tọa độ mặc định
+                // Fallback: tọa độ mặc định (trung tâm Việt Nam)
                 lat = 16.0583;
                 lng = 108.2772;
             }

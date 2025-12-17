@@ -45,6 +45,7 @@ public class AdminAction {
         if (report != null && report.getId() != null) {
             reportIdBackup = report.getId();
         }
+        // Nếu reportIdBackup đã được set trực tiếp (như khi xóa report), giữ nguyên
     }
 
     public enum ActionType {

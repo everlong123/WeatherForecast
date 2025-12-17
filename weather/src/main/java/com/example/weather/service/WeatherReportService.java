@@ -28,6 +28,9 @@ public class WeatherReportService {
 
     @Autowired(required = false)
     private com.example.weather.service.OpenWeatherService openWeatherService;
+    
+    @Autowired
+    private NominatimService nominatimService;
 
     public List<WeatherReportDTO> getAllReports() {
         return reportRepository.findAll().stream()
@@ -65,22 +68,29 @@ public class WeatherReportService {
         report.setWard(dto.getWard());
         report.setCity(dto.getCity());
         
-        // Tự động lấy tọa độ từ địa điểm bằng OpenWeatherMap Geocoding API
+        // Tự động lấy tọa độ từ địa điểm bằng Nominatim
         if (dto.getLatitude() == null || dto.getLongitude() == null) {
-            if (openWeatherService != null && openWeatherService.isAvailable()) {
-                Map<String, Double> coords = openWeatherService.getCoordinatesFromLocation(
+            Map<String, Double> coords = null;
+            
+            // Thử Nominatim (miễn phí, không cần API key)
+            if (nominatimService != null && nominatimService.isAvailable()) {
+                coords = nominatimService.getCoordinatesFromLocation(
                     dto.getCity(), dto.getDistrict(), dto.getWard()
                 );
-                if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
-                    report.setLatitude(coords.get("lat"));
-                    report.setLongitude(coords.get("lng"));
-                } else {
-                    // Fallback: dùng tọa độ mặc định (trung tâm Việt Nam)
-                    report.setLatitude(16.0583);
-                    report.setLongitude(108.2772);
-                }
+            }
+            
+            // Nếu Nominatim không có kết quả, thử OpenWeather (nếu có API key) - chỉ cho geocoding
+            if (coords == null && openWeatherService != null && openWeatherService.isAvailable()) {
+                coords = openWeatherService.getCoordinatesFromLocation(
+                    dto.getCity(), dto.getDistrict(), dto.getWard()
+                );
+            }
+            
+            if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
+                report.setLatitude(coords.get("lat"));
+                report.setLongitude(coords.get("lng"));
             } else {
-                // Nếu API không khả dụng, dùng tọa độ mặc định
+                // Fallback: dùng tọa độ mặc định (trung tâm Việt Nam)
                 report.setLatitude(16.0583);
                 report.setLongitude(108.2772);
             }
@@ -120,19 +130,30 @@ public class WeatherReportService {
         if (dto.getWard() != null) report.setWard(dto.getWard());
         if (dto.getCity() != null) report.setCity(dto.getCity());
         
-        // Cập nhật tọa độ nếu địa điểm thay đổi hoặc chưa có
+        // Cập nhật tọa độ nếu địa điểm thay đổi hoặc chưa có bằng Nominatim
         if (dto.getLatitude() != null && dto.getLongitude() != null) {
             report.setLatitude(dto.getLatitude());
             report.setLongitude(dto.getLongitude());
         } else if (dto.getCity() != null || dto.getDistrict() != null || dto.getWard() != null) {
-            if (openWeatherService != null && openWeatherService.isAvailable()) {
-                Map<String, Double> coords = openWeatherService.getCoordinatesFromLocation(
+            Map<String, Double> coords = null;
+            
+            // Thử Nominatim (miễn phí, không cần API key)
+            if (nominatimService != null && nominatimService.isAvailable()) {
+                coords = nominatimService.getCoordinatesFromLocation(
                     report.getCity(), report.getDistrict(), report.getWard()
                 );
-                if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
-                    report.setLatitude(coords.get("lat"));
-                    report.setLongitude(coords.get("lng"));
-                }
+            }
+            
+            // Nếu Nominatim không có kết quả, thử OpenWeather (nếu có API key) - chỉ cho geocoding
+            if (coords == null && openWeatherService != null && openWeatherService.isAvailable()) {
+                coords = openWeatherService.getCoordinatesFromLocation(
+                    report.getCity(), report.getDistrict(), report.getWard()
+                );
+            }
+            
+            if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
+                report.setLatitude(coords.get("lat"));
+                report.setLongitude(coords.get("lng"));
             }
         }
         

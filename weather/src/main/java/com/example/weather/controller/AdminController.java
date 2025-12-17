@@ -165,28 +165,22 @@ public class AdminController {
         User admin = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-        // Đảm bảo report được quản lý trong persistence context
-        // Nếu report bị detached, merge nó vào persistence context
-        if (!entityManager.contains(report)) {
-            report = entityManager.merge(report);
-        }
-        
-        // Lưu reportIdBackup trước khi tạo AdminAction
+        // Lưu reportId trước khi xóa
         Long reportId = report.getId();
         
-        // Tạo AdminAction với report (đã được merge nên sẽ là managed entity)
+        // Tạo AdminAction với report = null để tránh constraint violation khi xóa
+        // Chỉ lưu reportIdBackup để có thể truy vết sau này
         AdminAction action = new AdminAction();
-        action.setReport(report);
+        action.setReport(null); // Set null để tránh reference đến entity sẽ bị xóa
         action.setAdmin(admin);
         action.setActionType(AdminAction.ActionType.DELETE);
         action.setComment("Report deleted by admin");
-        action.setReportIdBackup(reportId); // Set trực tiếp để đảm bảo
+        action.setReportIdBackup(reportId); // Lưu ID để truy vết
         
         // Lưu AdminAction trước khi xóa report
         adminActionRepository.saveAndFlush(action);
 
         // Xóa report sau khi đã lưu action
-        // Foreign key constraint sẽ được xử lý bởi database (ON DELETE SET NULL)
         reportRepository.delete(report);
         reportRepository.flush(); // Force flush để xử lý ngay
         
