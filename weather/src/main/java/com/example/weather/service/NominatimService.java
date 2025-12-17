@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.HashMap;
@@ -37,29 +36,29 @@ public class NominatimService {
     private static final String USER_AGENT = "WeatherForecastApp/1.0";
     
     /**
-     * Lấy tọa độ (lat/lng) từ tên địa điểm bằng Nominatim Geocoding API
+     * Chuẩn hóa tên địa điểm (bỏ tiền tố "Tỉnh", "Thành phố", "Huyện", "Thị xã", "Thị trấn", "Xã", "Phường")
      */
-    public Map<String, Double> getCoordinatesFromLocation(String city, String district, String ward) {
-        if (!enabled) {
-            return null;
+    private String normalizeLocation(String location) {
+        if (location == null || location.isEmpty()) {
+            return location;
         }
-        
+        return location
+            .replaceFirst("^Tỉnh\\s+", "")
+            .replaceFirst("^Thành phố\\s+", "")
+            .replaceFirst("^Huyện\\s+", "")
+            .replaceFirst("^Thị xã\\s+", "")
+            .replaceFirst("^Thị trấn\\s+", "")
+            .replaceFirst("^Xã\\s+", "")
+            .replaceFirst("^Phường\\s+", "")
+            .trim();
+    }
+    
+    /**
+     * Gọi Nominatim API với query cụ thể
+     */
+    private Map<String, Double> callNominatimAPI(String query) {
         try {
-            // Xây dựng query string từ địa điểm
-            // Luôn bao gồm "Vietnam" để tăng độ chính xác
-            String query = "";
-            if (ward != null && !ward.isEmpty() && district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
-                // Format: "Ward, District, City, Vietnam"
-                query = ward + ", " + district + ", " + city + ", Vietnam";
-            } else if (district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
-                // Format: "District, City, Vietnam"
-                query = district + ", " + city + ", Vietnam";
-            } else if (city != null && !city.isEmpty()) {
-                // Format: "City, Vietnam"
-                query = city + ", Vietnam";
-            } else {
-                return null;
-            }
+            System.out.println("Trying Nominatim query: " + query);
             
             // Xây dựng URL
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(NOMINATIM_API_URL)
@@ -99,21 +98,117 @@ public class NominatimService {
                     }
                     
                     if (coords.containsKey("lat") && coords.containsKey("lng")) {
-                        System.out.println("Nominatim geocoding result for '" + query + "': " + coords);
+                        System.out.println("Nominatim found coordinates for '" + query + "': " + coords);
                         return coords;
                     }
                 }
             }
             
             return null;
-        } catch (ResourceAccessException e) {
-            System.err.println("Không thể kết nối đến Nominatim API: " + e.getMessage());
-            return null;
         } catch (Exception e) {
-            System.err.println("Lỗi khi gọi Nominatim Geocoding API: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Error calling Nominatim with query '" + query + "': " + e.getMessage());
             return null;
         }
+    }
+    
+    /**
+     * Lấy tọa độ (lat/lng) từ tên địa điểm bằng Nominatim Geocoding API
+     * Thử nhiều format khác nhau để tăng khả năng tìm thấy
+     */
+    public Map<String, Double> getCoordinatesFromLocation(String city, String district, String ward) {
+        if (!enabled) {
+            return null;
+        }
+        
+        // Chuẩn hóa tên địa điểm
+        String normalizedCity = city != null ? normalizeLocation(city) : null;
+        String normalizedDistrict = district != null ? normalizeLocation(district) : null;
+        String normalizedWard = ward != null ? normalizeLocation(ward) : null;
+        
+        // Danh sách các query format để thử (theo thứ tự ưu tiên)
+        java.util.List<String> queries = new java.util.ArrayList<>();
+        
+        // Nếu có đầy đủ ward, district, city - thử nhiều format cho ward
+        if (normalizedWard != null && !normalizedWard.isEmpty() && 
+            normalizedDistrict != null && !normalizedDistrict.isEmpty() && 
+            normalizedCity != null && !normalizedCity.isEmpty()) {
+            // Format 1: Ward, District, City, Vietnam (chuẩn hóa)
+            queries.add(normalizedWard + ", " + normalizedDistrict + ", " + normalizedCity + ", Vietnam");
+            // Format 2: Ward, District, City (không có Vietnam)
+            queries.add(normalizedWard + ", " + normalizedDistrict + ", " + normalizedCity);
+            // Format 3: Xã/Phường Ward, District, City, Vietnam (với tiền tố ward)
+            if (ward != null && !ward.isEmpty()) {
+                queries.add(ward + ", " + normalizedDistrict + ", " + normalizedCity + ", Vietnam");
+                queries.add(ward + ", " + district + ", " + city + ", Vietnam");
+            }
+            // Format 4: Ward, Huyện District, Tỉnh City, Vietnam (đầy đủ tiền tố)
+            if (district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
+                queries.add(normalizedWard + ", " + district + ", " + city + ", Vietnam");
+            }
+            // Format 5: Thử chỉ với Ward và District (không có City)
+            queries.add(normalizedWard + ", " + normalizedDistrict + ", Vietnam");
+            queries.add(normalizedWard + ", " + normalizedDistrict);
+            // Format 6: Thử với ward có tiền tố và district
+            if (ward != null && !ward.isEmpty()) {
+                queries.add(ward + ", " + normalizedDistrict + ", Vietnam");
+            }
+            // Format 7: Fallback về District, City nếu không tìm thấy với ward
+            queries.add(normalizedDistrict + ", " + normalizedCity + ", Vietnam");
+        }
+        
+        // Nếu có district và city (không có ward hoặc ward không tìm thấy)
+        if (normalizedDistrict != null && !normalizedDistrict.isEmpty() && 
+            normalizedCity != null && !normalizedCity.isEmpty()) {
+            // Chỉ thêm nếu chưa có trong list (tránh duplicate)
+            String districtCityQuery = normalizedDistrict + ", " + normalizedCity + ", Vietnam";
+            if (!queries.contains(districtCityQuery)) {
+                queries.add(districtCityQuery);
+            }
+            queries.add(normalizedDistrict + ", " + normalizedCity);
+            // Thử với tên đầy đủ (có tiền tố)
+            if (district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
+                String fullDistrictCityQuery = district + ", " + city + ", Vietnam";
+                if (!queries.contains(fullDistrictCityQuery)) {
+                    queries.add(fullDistrictCityQuery);
+                }
+            }
+        }
+        
+        // Nếu chỉ có city (fallback cuối cùng)
+        if (normalizedCity != null && !normalizedCity.isEmpty()) {
+            String cityQuery = normalizedCity + ", Vietnam";
+            if (!queries.contains(cityQuery)) {
+                queries.add(cityQuery);
+            }
+            queries.add(normalizedCity);
+            // Thử với tên đầy đủ
+            if (city != null && !city.isEmpty()) {
+                String fullCityQuery = city + ", Vietnam";
+                if (!queries.contains(fullCityQuery)) {
+                    queries.add(fullCityQuery);
+                }
+            }
+        }
+        
+        // Thử từng query cho đến khi tìm thấy
+        for (String query : queries) {
+            Map<String, Double> coords = callNominatimAPI(query);
+            if (coords != null && !coords.isEmpty()) {
+                return coords;
+            }
+            
+            // Delay giữa các request để tránh rate limit (Nominatim: 1 request/second)
+            // Tăng delay lên 1100ms để đảm bảo không vượt quá rate limit
+            try {
+                Thread.sleep(1100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return null;
+            }
+        }
+        
+        System.out.println("Nominatim could not find coordinates for: city=" + city + ", district=" + district + ", ward=" + ward);
+        return null;
     }
     
     /**

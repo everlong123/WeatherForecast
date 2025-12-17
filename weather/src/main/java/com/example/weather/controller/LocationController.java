@@ -74,18 +74,43 @@ public class LocationController {
             @RequestParam(required = false) String ward) {
         Map<String, Double> coords = null;
         
+        // Log để debug
+        System.out.println("Getting coordinates for: city=" + city + ", district=" + district + ", ward=" + ward);
+        
         // Sử dụng Nominatim để lấy tọa độ
         if (nominatimService != null && nominatimService.isAvailable()) {
             coords = nominatimService.getCoordinatesFromLocation(city, district, ward);
+        } else {
+            System.out.println("Nominatim service is not available");
         }
         
-        // Nếu không có kết quả, trả về tọa độ mặc định
-        if (coords == null) {
+        // Nếu không có kết quả, trả về map rỗng (không có lat/lng)
+        if (coords == null || coords.isEmpty()) {
+            System.out.println("No coordinates found, returning empty map");
             coords = new HashMap<>();
-            coords.put("lat", 16.0583);
-            coords.put("lng", 108.2772);
+        } else {
+            System.out.println("Coordinates found: " + coords);
         }
         
         return ResponseEntity.ok(coords);
+    }
+
+    @GetMapping("/reverse")
+    public ResponseEntity<Map<String, String>> getLocationFromCoordinates(
+            @RequestParam Double lat,
+            @RequestParam Double lng) {
+        Map<String, String> location = null;
+        
+        // Sử dụng Nominatim để reverse geocoding
+        if (nominatimService != null && nominatimService.isAvailable()) {
+            location = nominatimService.getLocationFromCoordinates(lat, lng);
+        }
+        
+        // Nếu không có kết quả, trả về map rỗng
+        if (location == null) {
+            location = new HashMap<>();
+        }
+        
+        return ResponseEntity.ok(location);
     }
 }

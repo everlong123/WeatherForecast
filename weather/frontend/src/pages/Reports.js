@@ -1,10 +1,31 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { reportAPI, incidentTypeAPI, locationAPI } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock, FiCheck } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock, FiCheck, FiX } from 'react-icons/fi';
 import { getProvinces, getDistricts, getWards } from '../data/locations';
 import { incidentTypes as defaultIncidentTypes, getCategories, getIncidentTypesByCategory } from '../data/incidentTypes';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import './Reports.css';
+
+// Fix for default markers in react-leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+// Component để lắng nghe click trên map
+const MapClickHandler = ({ onMapClick }) => {
+  useMapEvents({
+    click(e) {
+      onMapClick(e.latlng);
+    },
+  });
+  return null;
+};
 
 // Memoized component for incident type select to prevent re-rendering
 const IncidentTypeSelect = React.memo(({ value, onChange, incidentTypes, required }) => {
@@ -77,8 +98,10 @@ const Reports = () => {
     longitude: null,
     incidentTime: new Date().toISOString().slice(0, 16),
   });
-  const [showMapPicker, setShowMapPicker] = useState(false);
-  const [mapPickerPosition, setMapPickerPosition] = useState([16.0583, 108.2772]);
+  const [mapCenter, setMapCenter] = useState([16.0583, 108.2772]);
+  const [mapZoom, setMapZoom] = useState(7);
+  const [isSyncingFromCoordinates, setIsSyncingFromCoordinates] = useState(false);
+  const [lastNominatimRequest, setLastNominatimRequest] = useState(0);
 
   useEffect(() => {
     fetchData();
@@ -125,50 +148,209 @@ const Reports = () => {
 
   const handleProvinceChange = useCallback(async (e) => {
     const province = e.target.value;
-    setFormData(prev => ({ ...prev, city: province, district: '', ward: '' }));
+    setIsSyncingFromCoordinates(true);
+    
+    // Luôn reset districts và wards
     setDistricts([]);
     setWards([]);
+    
+    // Reset form data và clear tọa độ
+    setFormData(prev => ({ 
+      ...prev, 
+      city: province, 
+      district: '', 
+      ward: '',
+      latitude: null,
+      longitude: null
+    }));
+    
     if (province) {
       const data = await getDistricts(province);
       setDistricts(data);
     }
+    setIsSyncingFromCoordinates(false);
   }, []);
 
   const handleDistrictChange = useCallback(async (e) => {
     const district = e.target.value;
+    setIsSyncingFromCoordinates(true);
     setFormData(prev => {
       if (district && prev.city) {
-        getWards(prev.city, district).then(setWards);
-        // Tự động lấy tọa độ khi chọn district
-        locationAPI.getCoordinates(prev.city, district, null).then(response => {
-          setFormData(current => ({
-            ...current,
-            latitude: response.data.lat,
-            longitude: response.data.lng
-          }));
-        }).catch(() => {});
+        // Capture giá trị trước khi vào setTimeout
+        const city = prev.city;
+        getWards(city, district).then(setWards);
+        // Delay để tránh rate limit của Nominatim (1 request/second)
+        const now = Date.now();
+        const timeSinceLastRequest = now - lastNominatimRequest;
+        const delay = timeSinceLastRequest < 1100 ? 1100 - timeSinceLastRequest : 0;
+        
+        setTimeout(() => {
+          setLastNominatimRequest(Date.now());
+          // Tự động lấy tọa độ khi chọn district - sử dụng giá trị đã capture
+          locationAPI.getCoordinates(city, district, null).then(response => {
+            console.log('District coordinates response:', response);
+            console.log('Response data:', response.data);
+            console.log('Response data keys:', response.data ? Object.keys(response.data) : 'null');
+            console.log('Response data lat:', response.data?.lat);
+            console.log('Response data lng:', response.data?.lng);
+            
+            // Chỉ set tọa độ nếu có kết quả hợp lệ
+            if (response.data && typeof response.data.lat === 'number' && typeof response.data.lng === 'number') {
+              const lat = response.data.lat;
+              const lng = response.data.lng;
+              console.log('Setting coordinates:', lat, lng);
+              // Kiểm tra xem có phải tọa độ mặc định không (16.0583, 108.2772)
+              const isDefaultCoords = Math.abs(lat - 16.0583) < 0.0001 && Math.abs(lng - 108.2772) < 0.0001;
+              if (!isDefaultCoords) {
+                setFormData(current => ({
+                  ...current,
+                  latitude: lat,
+                  longitude: lng
+                }));
+                // Cập nhật map center
+                setMapCenter([lat, lng]);
+                setMapZoom(13);
+              } else {
+                console.log('Skipping default coordinates');
+              }
+            } else {
+              console.log('No valid coordinates in response. Data:', response.data);
+            }
+            setIsSyncingFromCoordinates(false);
+          }).catch((error) => {
+            console.error('Error getting coordinates:', error);
+            setIsSyncingFromCoordinates(false);
+          });
+        }, delay);
+      } else {
+        setIsSyncingFromCoordinates(false);
       }
-      return { ...prev, district, ward: '' };
+      return { ...prev, district, ward: '', latitude: null, longitude: null };
     });
     setWards([]);
-  }, []);
+  }, [lastNominatimRequest]);
 
   const handleWardChange = useCallback(async (e) => {
     const ward = e.target.value;
+    setIsSyncingFromCoordinates(true);
     setFormData(prev => {
       if (ward && prev.city && prev.district) {
-        // Tự động lấy tọa độ khi chọn ward
-        locationAPI.getCoordinates(prev.city, prev.district, ward).then(response => {
-          setFormData(current => ({
-            ...current,
-            latitude: response.data.lat,
-            longitude: response.data.lng
-          }));
-        }).catch(() => {});
+        // Capture giá trị trước khi vào setTimeout
+        const city = prev.city;
+        const district = prev.district;
+        // Delay để tránh rate limit của Nominatim (1 request/second)
+        const now = Date.now();
+        const timeSinceLastRequest = now - lastNominatimRequest;
+        const delay = timeSinceLastRequest < 1100 ? 1100 - timeSinceLastRequest : 0;
+        
+        setTimeout(() => {
+          setLastNominatimRequest(Date.now());
+          // Tự động lấy tọa độ khi chọn ward - sử dụng giá trị đã capture
+          locationAPI.getCoordinates(city, district, ward).then(response => {
+            console.log('Ward coordinates response:', response);
+            console.log('Response data:', response.data);
+            console.log('Response data keys:', response.data ? Object.keys(response.data) : 'null');
+            console.log('Response data lat:', response.data?.lat);
+            console.log('Response data lng:', response.data?.lng);
+            
+            // Chỉ set tọa độ nếu có kết quả hợp lệ
+            if (response.data && typeof response.data.lat === 'number' && typeof response.data.lng === 'number') {
+              const lat = response.data.lat;
+              const lng = response.data.lng;
+              console.log('Setting coordinates:', lat, lng);
+              // Kiểm tra xem có phải tọa độ mặc định không (16.0583, 108.2772)
+              const isDefaultCoords = Math.abs(lat - 16.0583) < 0.0001 && Math.abs(lng - 108.2772) < 0.0001;
+              if (!isDefaultCoords) {
+                setFormData(current => ({
+                  ...current,
+                  latitude: lat,
+                  longitude: lng
+                }));
+                // Cập nhật map center
+                setMapCenter([lat, lng]);
+                setMapZoom(13);
+              } else {
+                console.log('Skipping default coordinates');
+              }
+            } else {
+              console.log('No valid coordinates in response. Data:', response.data);
+            }
+            setIsSyncingFromCoordinates(false);
+          }).catch((error) => {
+            console.error('Error getting coordinates:', error);
+            setIsSyncingFromCoordinates(false);
+          });
+        }, delay);
+      } else {
+        setIsSyncingFromCoordinates(false);
       }
-      return { ...prev, ward };
+      return { ...prev, ward, latitude: null, longitude: null };
     });
-  }, []);
+  }, [lastNominatimRequest]);
+
+  // Cập nhật map center khi tọa độ thay đổi từ selector (chỉ khi không đang sync từ map click)
+  useEffect(() => {
+    if (formData.latitude && formData.longitude && showForm && isSyncingFromCoordinates) {
+      setMapCenter([formData.latitude, formData.longitude]);
+      setMapZoom(13);
+    }
+  }, [formData.latitude, formData.longitude, showForm, isSyncingFromCoordinates]);
+
+  // Tự động lấy địa điểm từ tọa độ khi lat/lng thay đổi (chỉ khi không đang sync từ dropdown)
+  useEffect(() => {
+    const syncLocationFromCoordinates = async () => {
+      // Chỉ sync nếu có lat/lng, form đang mở, và không đang sync từ dropdown
+      if (formData.latitude && formData.longitude && showForm && !isSyncingFromCoordinates) {
+        // Chỉ sync nếu chưa có city hoặc district (tức là đang nhập từ map/GPS)
+        if (!formData.city || !formData.district) {
+          setIsSyncingFromCoordinates(true);
+          try {
+            const response = await locationAPI.getLocationFromCoordinates(
+              formData.latitude,
+              formData.longitude
+            );
+            
+            if (response.data && Object.keys(response.data).length > 0) {
+              const location = response.data;
+              
+              setFormData(prev => {
+                const updates = { ...prev };
+                
+                // Cập nhật city nếu chưa có hoặc khác
+                if (location.city && (!prev.city || location.city !== prev.city)) {
+                  updates.city = location.city;
+                  getDistricts(location.city).then(setDistricts);
+                }
+                
+                // Cập nhật district nếu chưa có hoặc khác
+                if (location.district && (!prev.district || location.district !== prev.district)) {
+                  updates.district = location.district;
+                  if (updates.city || location.city) {
+                    getWards(updates.city || location.city, location.district).then(setWards);
+                  }
+                }
+                
+                // Cập nhật ward nếu chưa có hoặc khác
+                if (location.ward && (!prev.ward || location.ward !== prev.ward)) {
+                  updates.ward = location.ward;
+                }
+                
+                return updates;
+              });
+            }
+          } catch (error) {
+            console.error('Error reverse geocoding:', error);
+          } finally {
+            setIsSyncingFromCoordinates(false);
+          }
+        }
+      }
+    };
+
+    // Debounce để tránh gọi quá nhiều lần
+    const timeoutId = setTimeout(syncLocationFromCoordinates, 800);
+    return () => clearTimeout(timeoutId);
+  }, [formData.latitude, formData.longitude, showForm, isSyncingFromCoordinates]);
 
 
   const handleSubmit = async (e) => {
@@ -422,105 +604,146 @@ const Reports = () => {
                   <option value="CRITICAL">Nghiêm trọng</option>
                 </select>
 
-                <label className="form-label">Tỉnh/Thành phố</label>
-                <select
-                  value={formData.city}
-                  onChange={handleProvinceChange}
-                  className="input"
-                >
-                  <option value="">-- Chọn tỉnh/thành phố --</option>
-                  {provinces.map((province, index) => (
-                    <option key={index} value={province}>
-                      {province}
-                    </option>
-                  ))}
-                </select>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                  <div>
+                    <label className="form-label">Tỉnh/Thành phố</label>
+                    <select
+                      value={formData.city || ''}
+                      onChange={handleProvinceChange}
+                      className="input"
+                    >
+                      <option value="">-- Chọn tỉnh/thành phố --</option>
+                      {provinces.map((province, index) => (
+                        <option key={`${province}-${index}`} value={province}>
+                          {province}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <label className="form-label">Quận/Huyện</label>
-                <select
-                  value={formData.district}
-                  onChange={handleDistrictChange}
-                  className="input"
-                  disabled={!formData.city}
-                >
-                  <option value="">-- Chọn quận/huyện --</option>
-                  {districts.map((district, index) => (
-                    <option key={index} value={district}>
-                      {district}
-                    </option>
-                  ))}
-                </select>
+                  <div>
+                    <label className="form-label">Quận/Huyện</label>
+                    <select
+                      value={formData.district}
+                      onChange={handleDistrictChange}
+                      className="input"
+                      disabled={!formData.city}
+                    >
+                      <option value="">-- Chọn quận/huyện --</option>
+                      {districts.map((district, index) => (
+                        <option key={index} value={district}>
+                          {district}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-                <label className="form-label">Phường/Xã</label>
-                <select
-                  value={formData.ward}
-                  onChange={handleWardChange}
-                  className="input"
-                  disabled={!formData.district}
-                >
-                  <option value="">-- Chọn phường/xã --</option>
-                  {wards.map((ward, index) => (
-                    <option key={index} value={ward}>
-                      {ward}
-                    </option>
-                  ))}
-                </select>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                  <div>
+                    <label className="form-label">Phường/Xã</label>
+                    <select
+                      value={formData.ward}
+                      onChange={handleWardChange}
+                      className="input"
+                      disabled={!formData.district}
+                    >
+                      <option value="">-- Chọn phường/xã --</option>
+                      {wards.map((ward, index) => (
+                        <option key={index} value={ward}>
+                          {ward}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <label className="form-label">Địa chỉ chi tiết</label>
-                <input
-                  type="text"
-                  placeholder="Nhập địa chỉ cụ thể (tên đường, số nhà...)"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="input"
-                />
+                  <div>
+                    <label className="form-label">Địa chỉ chi tiết</label>
+                    <input
+                      type="text"
+                      placeholder="Nhập địa chỉ cụ thể (tên đường, số nhà...)"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      className="input"
+                    />
+                  </div>
+                </div>
 
-                <label className="form-label">Chọn vị trí trên bản đồ (Tùy chọn)</label>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      // Mở map trong tab mới với chế độ chọn vị trí
-                      window.onLocationSelected = (lat, lng) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          latitude: lat,
-                          longitude: lng
-                        }));
-                        window.onLocationSelected = null;
-                      };
-                      const mapWindow = window.open('/map?pickLocation=true', '_blank', 'width=1200,height=800');
-                      if (mapWindow) {
-                        mapWindow.focus();
-                      }
-                    }}
-                    style={{ flex: '1 1 auto', minWidth: '200px' }}
+                <label className="form-label" style={{ marginTop: '10px' }}>
+                  Chọn vị trí trên bản đồ hoặc nhập tọa độ
+                </label>
+                <div style={{ 
+                  marginBottom: '15px', 
+                  border: '2px solid #ddd', 
+                  borderRadius: '8px', 
+                  overflow: 'hidden',
+                  position: 'relative',
+                  height: '350px',
+                  backgroundColor: '#e8f4f8'
+                }}>
+                  <MapContainer
+                    center={mapCenter}
+                    zoom={mapZoom}
+                    style={{ height: '100%', width: '100%' }}
+                    scrollWheelZoom={true}
+                    key={`${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
                   >
-                    <FiMapPin /> Chọn trên bản đồ
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      // Mở trang GPS Coordinates trong popup
-                      const gpsWindow = window.open(
-                        'https://www.gps-coordinates.net/',
-                        '_blank',
-                        'width=1000,height=700'
-                      );
-                      if (gpsWindow) {
-                        // Hướng dẫn người dùng
-                        alert('Vui lòng:\n1. Tìm vị trí trên bản đồ\n2. Copy tọa độ (lat, lng)\n3. Dán vào ô bên dưới');
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    />
+                    <MapClickHandler onMapClick={async (latlng) => {
+                      const lat = latlng.lat;
+                      const lng = latlng.lng;
+                      
+                      // Cập nhật tọa độ
+                      setIsSyncingFromCoordinates(true);
+                      setFormData(prev => ({
+                        ...prev,
+                        latitude: lat,
+                        longitude: lng
+                      }));
+                      
+                      // Cập nhật map center và zoom
+                      setMapCenter([lat, lng]);
+                      setMapZoom(15);
+                      
+                      // Tự động lấy địa điểm từ tọa độ
+                      try {
+                        const response = await locationAPI.getLocationFromCoordinates(lat, lng);
+                        if (response.data && Object.keys(response.data).length > 0) {
+                          const location = response.data;
+                          setFormData(prev => {
+                            const updates = { ...prev };
+                            if (location.city) {
+                              updates.city = location.city;
+                              getDistricts(location.city).then(setDistricts);
+                            }
+                            if (location.district) {
+                              updates.district = location.district;
+                              if (updates.city) {
+                                getWards(updates.city, location.district).then(setWards);
+                              }
+                            }
+                            if (location.ward) {
+                              updates.ward = location.ward;
+                            }
+                            return updates;
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Error reverse geocoding:', error);
+                      } finally {
+                        setIsSyncingFromCoordinates(false);
                       }
-                    }}
-                    style={{ flex: '1 1 auto', minWidth: '200px' }}
-                  >
-                    🌐 Mở GPS Coordinates
-                  </button>
+                    }} />
+                    {formData.latitude && formData.longitude && (
+                      <Marker position={[formData.latitude, formData.longitude]} />
+                    )}
+                  </MapContainer>
                 </div>
                 
-                <label className="form-label" style={{ marginTop: '10px', fontSize: '13px', color: '#666' }}>
+                <label className="form-label" style={{ fontSize: '13px', color: '#666' }}>
                   Hoặc nhập tọa độ trực tiếp (Lat, Lng):
                 </label>
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
@@ -531,7 +754,40 @@ const Reports = () => {
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === '' || (!isNaN(val) && val >= -90 && val <= 90)) {
-                        setFormData(prev => ({ ...prev, latitude: val ? parseFloat(val) : null }));
+                        const lat = val ? parseFloat(val) : null;
+                        setFormData(prev => ({ ...prev, latitude: lat }));
+                        // Cập nhật map center
+                        if (lat && formData.longitude) {
+                          setMapCenter([lat, formData.longitude]);
+                          setMapZoom(13);
+                        }
+                        // Tự động sync location nếu có cả lat và lng
+                        if (lat && formData.longitude) {
+                          locationAPI.getLocationFromCoordinates(lat, formData.longitude)
+                            .then(response => {
+                              if (response.data && Object.keys(response.data).length > 0) {
+                                const location = response.data;
+                                setFormData(prev => {
+                                  const updates = { ...prev };
+                                  if (location.city) {
+                                    updates.city = location.city;
+                                    getDistricts(location.city).then(setDistricts);
+                                  }
+                                  if (location.district) {
+                                    updates.district = location.district;
+                                    if (updates.city) {
+                                      getWards(updates.city, location.district).then(setWards);
+                                    }
+                                  }
+                                  if (location.ward) {
+                                    updates.ward = location.ward;
+                                  }
+                                  return updates;
+                                });
+                              }
+                            })
+                            .catch(err => console.error('Error reverse geocoding:', err));
+                        }
                       }
                     }}
                     className="input"
@@ -544,7 +800,40 @@ const Reports = () => {
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === '' || (!isNaN(val) && val >= -180 && val <= 180)) {
-                        setFormData(prev => ({ ...prev, longitude: val ? parseFloat(val) : null }));
+                        const lng = val ? parseFloat(val) : null;
+                        setFormData(prev => ({ ...prev, longitude: lng }));
+                        // Cập nhật map center
+                        if (lng && formData.latitude) {
+                          setMapCenter([formData.latitude, lng]);
+                          setMapZoom(13);
+                        }
+                        // Tự động sync location nếu có cả lat và lng
+                        if (lng && formData.latitude) {
+                          locationAPI.getLocationFromCoordinates(formData.latitude, lng)
+                            .then(response => {
+                              if (response.data && Object.keys(response.data).length > 0) {
+                                const location = response.data;
+                                setFormData(prev => {
+                                  const updates = { ...prev };
+                                  if (location.city) {
+                                    updates.city = location.city;
+                                    getDistricts(location.city).then(setDistricts);
+                                  }
+                                  if (location.district) {
+                                    updates.district = location.district;
+                                    if (updates.city) {
+                                      getWards(updates.city, location.district).then(setWards);
+                                    }
+                                  }
+                                  if (location.ward) {
+                                    updates.ward = location.ward;
+                                  }
+                                  return updates;
+                                });
+                              }
+                            })
+                            .catch(err => console.error('Error reverse geocoding:', err));
+                        }
                       }
                     }}
                     className="input"
@@ -577,7 +866,7 @@ const Reports = () => {
                   </div>
                 )}
                 <p style={{ fontSize: '12px', color: '#999', marginTop: '-10px', marginBottom: '15px' }}>
-                  💡 Có 3 cách: (1) Click "Chọn trên bản đồ" để chọn trực tiếp, (2) Mở GPS Coordinates để tìm và copy tọa độ, (3) Nhập tọa độ trực tiếp vào ô trên.
+                  💡 Click trên bản đồ để chọn vị trí, hoặc nhập tọa độ trực tiếp. Chọn từ dropdown sẽ tự động cập nhật bản đồ và ngược lại. Hệ thống sẽ tự động đồng bộ giữa bản đồ, tọa độ và selector địa điểm.
                 </p>
 
                 <label className="form-label">Thời gian sự cố <span className="required">*</span></label>

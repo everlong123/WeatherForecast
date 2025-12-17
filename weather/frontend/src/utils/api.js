@@ -83,6 +83,8 @@ export const incidentTypeAPI = {
 export const locationAPI = {
   getCoordinates: (city, district, ward) => 
     api.get('/locations/coordinates', { params: { city, district, ward } }),
+  getLocationFromCoordinates: (lat, lng) =>
+    api.get('/locations/reverse', { params: { lat, lng } }),
 };
 
 export const adminAPI = {
