@@ -19,6 +19,8 @@ public class WeatherReportDTO {
     private String district;
     private String ward;
     private String city;
+    private Double latitude;
+    private Double longitude;
     private WeatherReport.ReportStatus status;
     private WeatherReport.SeverityLevel severity;
     private List<String> images;

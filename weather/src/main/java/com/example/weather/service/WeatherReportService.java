@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +25,9 @@ public class WeatherReportService {
 
     @Autowired
     private IncidentTypeRepository incidentTypeRepository;
+
+    @Autowired(required = false)
+    private com.example.weather.service.OpenWeatherService openWeatherService;
 
     public List<WeatherReportDTO> getAllReports() {
         return reportRepository.findAll().stream()
@@ -60,6 +64,31 @@ public class WeatherReportService {
         report.setDistrict(dto.getDistrict());
         report.setWard(dto.getWard());
         report.setCity(dto.getCity());
+        
+        // Tự động lấy tọa độ từ địa điểm bằng OpenWeatherMap Geocoding API
+        if (dto.getLatitude() == null || dto.getLongitude() == null) {
+            if (openWeatherService != null && openWeatherService.isAvailable()) {
+                Map<String, Double> coords = openWeatherService.getCoordinatesFromLocation(
+                    dto.getCity(), dto.getDistrict(), dto.getWard()
+                );
+                if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
+                    report.setLatitude(coords.get("lat"));
+                    report.setLongitude(coords.get("lng"));
+                } else {
+                    // Fallback: dùng tọa độ mặc định (trung tâm Việt Nam)
+                    report.setLatitude(16.0583);
+                    report.setLongitude(108.2772);
+                }
+            } else {
+                // Nếu API không khả dụng, dùng tọa độ mặc định
+                report.setLatitude(16.0583);
+                report.setLongitude(108.2772);
+            }
+        } else {
+            report.setLatitude(dto.getLatitude());
+            report.setLongitude(dto.getLongitude());
+        }
+        
         report.setStatus(dto.getStatus() != null ? dto.getStatus() : WeatherReport.ReportStatus.PENDING);
         report.setSeverity(dto.getSeverity() != null ? dto.getSeverity() : WeatherReport.SeverityLevel.LOW);
         report.setImages(dto.getImages());
@@ -90,6 +119,23 @@ public class WeatherReportService {
         if (dto.getDistrict() != null) report.setDistrict(dto.getDistrict());
         if (dto.getWard() != null) report.setWard(dto.getWard());
         if (dto.getCity() != null) report.setCity(dto.getCity());
+        
+        // Cập nhật tọa độ nếu địa điểm thay đổi hoặc chưa có
+        if (dto.getLatitude() != null && dto.getLongitude() != null) {
+            report.setLatitude(dto.getLatitude());
+            report.setLongitude(dto.getLongitude());
+        } else if (dto.getCity() != null || dto.getDistrict() != null || dto.getWard() != null) {
+            if (openWeatherService != null && openWeatherService.isAvailable()) {
+                Map<String, Double> coords = openWeatherService.getCoordinatesFromLocation(
+                    report.getCity(), report.getDistrict(), report.getWard()
+                );
+                if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
+                    report.setLatitude(coords.get("lat"));
+                    report.setLongitude(coords.get("lng"));
+                }
+            }
+        }
+        
         if (dto.getSeverity() != null) report.setSeverity(dto.getSeverity());
         if (dto.getImages() != null) report.setImages(dto.getImages());
         if (dto.getIncidentTime() != null) report.setIncidentTime(dto.getIncidentTime());
@@ -123,6 +169,8 @@ public class WeatherReportService {
         dto.setDistrict(report.getDistrict());
         dto.setWard(report.getWard());
         dto.setCity(report.getCity());
+        dto.setLatitude(report.getLatitude());
+        dto.setLongitude(report.getLongitude());
         dto.setStatus(report.getStatus());
         dto.setSeverity(report.getSeverity());
         dto.setImages(report.getImages());

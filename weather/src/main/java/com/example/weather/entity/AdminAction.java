@@ -18,14 +18,18 @@ public class AdminAction {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "report_id", nullable = false)
+    @JoinColumn(name = "report_id", nullable = true, foreignKey = @ForeignKey(name = "fk_admin_action_report"))
     private WeatherReport report;
+    
+    // Lưu report ID để có thể truy vết ngay cả khi report đã bị xóa
+    @Column(name = "report_id_backup")
+    private Long reportIdBackup;
 
     @ManyToOne
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private ActionType actionType;
 
@@ -37,6 +41,10 @@ public class AdminAction {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        // Lưu report ID để có thể truy vết ngay cả khi report đã bị xóa
+        if (report != null && report.getId() != null) {
+            reportIdBackup = report.getId();
+        }
     }
 
     public enum ActionType {

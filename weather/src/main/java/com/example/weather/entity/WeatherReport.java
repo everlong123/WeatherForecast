@@ -37,6 +37,9 @@ public class WeatherReport {
     private String ward;
     private String city;
 
+    private Double latitude;
+    private Double longitude;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReportStatus status = ReportStatus.PENDING;

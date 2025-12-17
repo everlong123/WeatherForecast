@@ -54,7 +54,17 @@ export const reportAPI = {
 };
 
 export const weatherAPI = {
-  getCurrent: (lat, lng) => api.get('/weather/current', { params: { lat, lng } }),
+  getCurrent: (lat, lng, city, district, ward) => {
+    const params = {};
+    if (lat && lng) {
+      params.lat = lat;
+      params.lng = lng;
+    }
+    if (city) params.city = city;
+    if (district) params.district = district;
+    if (ward) params.ward = ward;
+    return api.get('/weather/current', { params });
+  },
   getHistory: (lat, lng) => api.get('/weather/history', { params: { lat, lng } }),
   fetch: (lat, lng, city, district, ward) =>
     api.post('/weather/fetch', null, {
@@ -68,6 +78,11 @@ export const dashboardAPI = {
 
 export const incidentTypeAPI = {
   getAll: () => api.get('/incident-types'),
+};
+
+export const locationAPI = {
+  getCoordinates: (city, district, ward) => 
+    api.get('/locations/coordinates', { params: { city, district, ward } }),
 };
 
 export const adminAPI = {

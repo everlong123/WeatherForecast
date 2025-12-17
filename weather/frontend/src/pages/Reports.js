@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { reportAPI, incidentTypeAPI } from '../utils/api';
+import { reportAPI, incidentTypeAPI, locationAPI } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock, FiCheck } from 'react-icons/fi';
 import { getProvinces, getDistricts, getWards } from '../data/locations';
 import { incidentTypes as defaultIncidentTypes, getCategories, getIncidentTypesByCategory } from '../data/incidentTypes';
 import './Reports.css';
@@ -73,8 +73,12 @@ const Reports = () => {
     city: '',
     district: '',
     ward: '',
+    latitude: null,
+    longitude: null,
     incidentTime: new Date().toISOString().slice(0, 16),
   });
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [mapPickerPosition, setMapPickerPosition] = useState([16.0583, 108.2772]);
 
   useEffect(() => {
     fetchData();
@@ -135,10 +139,35 @@ const Reports = () => {
     setFormData(prev => {
       if (district && prev.city) {
         getWards(prev.city, district).then(setWards);
+        // Tự động lấy tọa độ khi chọn district
+        locationAPI.getCoordinates(prev.city, district, null).then(response => {
+          setFormData(current => ({
+            ...current,
+            latitude: response.data.lat,
+            longitude: response.data.lng
+          }));
+        }).catch(() => {});
       }
       return { ...prev, district, ward: '' };
     });
     setWards([]);
+  }, []);
+
+  const handleWardChange = useCallback(async (e) => {
+    const ward = e.target.value;
+    setFormData(prev => {
+      if (ward && prev.city && prev.district) {
+        // Tự động lấy tọa độ khi chọn ward
+        locationAPI.getCoordinates(prev.city, prev.district, ward).then(response => {
+          setFormData(current => ({
+            ...current,
+            latitude: response.data.lat,
+            longitude: response.data.lng
+          }));
+        }).catch(() => {});
+      }
+      return { ...prev, ward };
+    });
   }, []);
 
 
@@ -216,6 +245,8 @@ const Reports = () => {
       city: '',
       district: '',
       ward: '',
+      latitude: null,
+      longitude: null,
       incidentTime: new Date().toISOString().slice(0, 16),
     });
     setDistricts([]);
@@ -423,7 +454,7 @@ const Reports = () => {
                 <label className="form-label">Phường/Xã</label>
                 <select
                   value={formData.ward}
-                  onChange={(e) => setFormData({ ...formData, ward: e.target.value })}
+                  onChange={handleWardChange}
                   className="input"
                   disabled={!formData.district}
                 >
@@ -443,6 +474,111 @@ const Reports = () => {
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="input"
                 />
+
+                <label className="form-label">Chọn vị trí trên bản đồ (Tùy chọn)</label>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      // Mở map trong tab mới với chế độ chọn vị trí
+                      window.onLocationSelected = (lat, lng) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          latitude: lat,
+                          longitude: lng
+                        }));
+                        window.onLocationSelected = null;
+                      };
+                      const mapWindow = window.open('/map?pickLocation=true', '_blank', 'width=1200,height=800');
+                      if (mapWindow) {
+                        mapWindow.focus();
+                      }
+                    }}
+                    style={{ flex: '1 1 auto', minWidth: '200px' }}
+                  >
+                    <FiMapPin /> Chọn trên bản đồ
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      // Mở trang GPS Coordinates trong popup
+                      const gpsWindow = window.open(
+                        'https://www.gps-coordinates.net/',
+                        '_blank',
+                        'width=1000,height=700'
+                      );
+                      if (gpsWindow) {
+                        // Hướng dẫn người dùng
+                        alert('Vui lòng:\n1. Tìm vị trí trên bản đồ\n2. Copy tọa độ (lat, lng)\n3. Dán vào ô bên dưới');
+                      }
+                    }}
+                    style={{ flex: '1 1 auto', minWidth: '200px' }}
+                  >
+                    🌐 Mở GPS Coordinates
+                  </button>
+                </div>
+                
+                <label className="form-label" style={{ marginTop: '10px', fontSize: '13px', color: '#666' }}>
+                  Hoặc nhập tọa độ trực tiếp (Lat, Lng):
+                </label>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: 10.3460"
+                    value={formData.latitude || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || (!isNaN(val) && val >= -90 && val <= 90)) {
+                        setFormData(prev => ({ ...prev, latitude: val ? parseFloat(val) : null }));
+                      }
+                    }}
+                    className="input"
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: 107.0843"
+                    value={formData.longitude || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || (!isNaN(val) && val >= -180 && val <= 180)) {
+                        setFormData(prev => ({ ...prev, longitude: val ? parseFloat(val) : null }));
+                      }
+                    }}
+                    className="input"
+                    style={{ flex: 1 }}
+                  />
+                </div>
+                
+                {formData.latitude && formData.longitude && (
+                  <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '15px', padding: '8px', background: '#f0f0f0', borderRadius: '6px' }}>
+                    <FiCheck style={{ color: '#4CAF50' }} />
+                    <span>
+                      <strong>Tọa độ:</strong> {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, latitude: null, longitude: null }))}
+                      style={{ 
+                        background: 'transparent', 
+                        border: 'none', 
+                        color: '#f44336', 
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        padding: '2px 5px',
+                        marginLeft: 'auto'
+                      }}
+                      title="Xóa vị trí"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                <p style={{ fontSize: '12px', color: '#999', marginTop: '-10px', marginBottom: '15px' }}>
+                  💡 Có 3 cách: (1) Click "Chọn trên bản đồ" để chọn trực tiếp, (2) Mở GPS Coordinates để tìm và copy tọa độ, (3) Nhập tọa độ trực tiếp vào ô trên.
+                </p>
 
                 <label className="form-label">Thời gian sự cố <span className="required">*</span></label>
                 <input

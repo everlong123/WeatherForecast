@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { reportAPI, weatherAPI } from '../utils/api';
-import { FiMapPin, FiAlertCircle, FiCloud, FiSun, FiDroplet } from 'react-icons/fi';
+import { FiMapPin, FiAlertCircle, FiCloud, FiSun, FiDroplet, FiLayers, FiX, FiCheck } from 'react-icons/fi';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './Map.css';
@@ -118,6 +118,18 @@ const getLocationCoordinates = (city, district) => {
   return [16.0583, 108.2772];
 };
 
+// Component để lắng nghe click trên map
+const MapClickHandler = ({ onMapClick }) => {
+  useMapEvents({
+    click: (e) => {
+      if (onMapClick) {
+        onMapClick(e.latlng);
+      }
+    },
+  });
+  return null;
+};
+
 const Map = () => {
   const [reports, setReports] = useState([]);
   const [currentWeather, setCurrentWeather] = useState(null);
@@ -125,10 +137,20 @@ const Map = () => {
   const [loading, setLoading] = useState(true);
   const [center] = useState([16.0583, 108.2772]); // Trung tâm Việt Nam
   const [zoom] = useState(7); // Zoom level để hiển thị toàn bộ Việt Nam
+  const [mapType, setMapType] = useState('standard'); // standard, satellite, terrain
+  const [showLayerControl, setShowLayerControl] = useState(false);
+  const [clickedPosition, setClickedPosition] = useState(null);
+  const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
   useEffect(() => {
     fetchReports();
     fetchWeather(center[0], center[1]);
+    
+    // Kiểm tra nếu có query parameter pickLocation
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('pickLocation') === 'true') {
+      setIsSelectingLocation(true);
+    }
   }, []);
 
   const fetchReports = async () => {
@@ -167,6 +189,47 @@ const Map = () => {
       iconSize: [32, 32],
       iconAnchor: [16, 32],
     });
+  };
+
+  const handleMapClick = (latlng) => {
+    if (isSelectingLocation) {
+      setClickedPosition(latlng);
+      // Không tắt isSelectingLocation ngay, để user có thể xem và xác nhận
+    }
+  };
+
+  const confirmLocation = () => {
+    if (clickedPosition && window.onLocationSelected) {
+      window.onLocationSelected(clickedPosition.lat, clickedPosition.lng);
+      // Đóng cửa sổ nếu được mở từ form
+      if (window.opener) {
+        window.close();
+      }
+    }
+    setIsSelectingLocation(false);
+    setClickedPosition(null);
+  };
+
+  const getTileLayerUrl = () => {
+    switch (mapType) {
+      case 'satellite':
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      case 'terrain':
+        return 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+      default:
+        return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    }
+  };
+
+  const getTileLayerAttribution = () => {
+    switch (mapType) {
+      case 'satellite':
+        return '&copy; <a href="https://www.esri.com/">Esri</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+      case 'terrain':
+        return '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+      default:
+        return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    }
   };
 
   if (loading) {
@@ -243,6 +306,47 @@ const Map = () => {
         </div>
 
         <div className="map-container">
+          {/* Map Controls */}
+          <div className="map-controls">
+            <button 
+              className="map-control-btn"
+              onClick={() => setShowLayerControl(!showLayerControl)}
+              title="Chọn loại bản đồ"
+            >
+              <FiLayers />
+            </button>
+            {showLayerControl && (
+              <div className="layer-control-panel">
+                <button 
+                  className={mapType === 'standard' ? 'active' : ''}
+                  onClick={() => { setMapType('standard'); setShowLayerControl(false); }}
+                >
+                  Bản đồ chuẩn
+                </button>
+                <button 
+                  className={mapType === 'satellite' ? 'active' : ''}
+                  onClick={() => { setMapType('satellite'); setShowLayerControl(false); }}
+                >
+                  Vệ tinh
+                </button>
+                <button 
+                  className={mapType === 'terrain' ? 'active' : ''}
+                  onClick={() => { setMapType('terrain'); setShowLayerControl(false); }}
+                >
+                  Địa hình
+                </button>
+              </div>
+            )}
+            {isSelectingLocation && (
+              <div className="location-picker-hint">
+                <FiMapPin /> Click trên bản đồ để chọn vị trí
+                <button onClick={() => setIsSelectingLocation(false)} className="cancel-pick-btn">
+                  <FiX />
+                </button>
+              </div>
+            )}
+          </div>
+
           <MapContainer
             center={center}
             zoom={zoom}
@@ -258,15 +362,71 @@ const Map = () => {
             worldCopyJump={false}
           >
             <FitVietnamBounds />
+            <MapClickHandler onMapClick={handleMapClick} />
             <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url={getTileLayerUrl()}
+              attribution={getTileLayerAttribution()}
               noWrap={true}
+              className="map-tiles"
             />
+            {clickedPosition && isSelectingLocation && (
+              <Marker 
+                position={[clickedPosition.lat, clickedPosition.lng]}
+                icon={L.divIcon({
+                  className: 'location-picker-marker',
+                  html: `<div style="background-color: #4a90e2; width: 40px; height: 40px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.4); cursor: pointer;"></div>`,
+                  iconSize: [40, 40],
+                  iconAnchor: [20, 20],
+                })}
+              >
+                <Popup autoClose={false} closeOnClick={false}>
+                  <div style={{ textAlign: 'center', minWidth: '200px' }}>
+                    <p><strong>Vị trí đã chọn</strong></p>
+                    <p style={{ fontSize: '12px', color: '#666', margin: '8px 0' }}>
+                      {clickedPosition.lat.toFixed(6)}, {clickedPosition.lng.toFixed(6)}
+                    </p>
+                    <button 
+                      onClick={confirmLocation}
+                      style={{ 
+                        marginTop: '10px', 
+                        padding: '8px 16px', 
+                        fontSize: '14px',
+                        background: '#4a90e2',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600'
+                      }}
+                    >
+                      <FiCheck style={{ display: 'inline', marginRight: '5px' }} /> Xác nhận
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            )}
             {reports
-              .filter((report) => report.city || report.district)
+              .filter((report) => {
+                // Chỉ hiển thị marker nếu có tọa độ hợp lệ (trong phạm vi Việt Nam)
+                if (report.latitude && report.longitude) {
+                  const lat = report.latitude;
+                  const lng = report.longitude;
+                  // Kiểm tra trong phạm vi Việt Nam: lat 8-23, lng 102-110
+                  return lat >= 8 && lat <= 23 && lng >= 102 && lng <= 110;
+                }
+                // Nếu không có tọa độ, tính từ địa điểm
+                return report.city || report.district;
+              })
               .map((report) => {
-                const coords = getLocationCoordinates(report.city, report.district);
+                // Ưu tiên dùng tọa độ từ database
+                let coords;
+                if (report.latitude && report.longitude) {
+                  coords = [report.latitude, report.longitude];
+                } else {
+                  // Fallback: tính từ địa điểm
+                  coords = getLocationCoordinates(report.city, report.district);
+                }
+                
                 const markerColor = getMarkerColor(report.status, report.severity);
                 const customIcon = createCustomIcon(markerColor);
                 
@@ -284,6 +444,9 @@ const Map = () => {
                       <p><strong>Loại:</strong> {report.incidentTypeName}</p>
                       <p><strong>Địa điểm:</strong> {report.district || report.city || 'N/A'}</p>
                       <p><strong>Trạng thái:</strong> {report.status}</p>
+                      {report.latitude && report.longitude && (
+                        <p><strong>Tọa độ:</strong> {report.latitude.toFixed(4)}, {report.longitude.toFixed(4)}</p>
+                      )}
                     </Popup>
                   </Marker>
                 );

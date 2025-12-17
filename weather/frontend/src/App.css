@@ -1,5 +1,8 @@
 .App {
   min-height: 100vh;
+  position: relative;
+  margin: 0;
+  padding: 0;
 }
 
 /* Container Styles */
@@ -143,8 +146,9 @@
   animation: pulse 3s infinite;
 }
 
-/* Map Container */
-.map-container {
+/* Map Container - chỉ dùng cho các component nhỏ, không dùng cho Map page */
+.home-map-container,
+.dashboard-map-container {
   height: 500px;
   border-radius: 20px;
   overflow: hidden;

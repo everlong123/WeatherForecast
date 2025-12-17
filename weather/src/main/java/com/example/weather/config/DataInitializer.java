@@ -4,6 +4,7 @@ import com.example.weather.entity.IncidentType;
 import com.example.weather.entity.User;
 import com.example.weather.repository.IncidentTypeRepository;
 import com.example.weather.repository.UserRepository;
+import com.example.weather.service.MockWeatherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +24,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private MockWeatherService mockWeatherService;
 
     @Override
     public void run(String... args) {
@@ -80,6 +84,43 @@ public class DataInitializer implements CommandLineRunner {
             admin.setEnabled(true);
             userRepository.save(admin);
             System.out.println("Đã tạo admin user: username=admin, password=admin123");
+        }
+
+        // Seed dữ liệu thời tiết mẫu cho các thành phố lớn
+        seedWeatherData();
+    }
+
+    private void seedWeatherData() {
+        // Các thành phố lớn ở Việt Nam
+        List<CityLocation> cities = Arrays.asList(
+            new CityLocation(21.0285, 105.8542, "Hà Nội", "Hoàn Kiếm", "Tràng Tiền"),
+            new CityLocation(10.8231, 106.6297, "Hồ Chí Minh", "Quận 1", "Bến Nghé"),
+            new CityLocation(16.0544, 108.2022, "Đà Nẵng", "Hải Châu", "Hải Châu"),
+            new CityLocation(20.8449, 106.6881, "Hải Phòng", "Hồng Bàng", "Máy Chai"),
+            new CityLocation(10.3460, 107.0843, "Vũng Tàu", "Thành phố Vũng Tàu", "Thắng Tam")
+        );
+
+        try {
+            for (CityLocation city : cities) {
+                mockWeatherService.generateWeatherData(
+                    city.lat, city.lng, city.city, city.district, city.ward
+                );
+            }
+            System.out.println("Đã tạo dữ liệu thời tiết mẫu cho " + cities.size() + " thành phố");
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tạo dữ liệu thời tiết: " + e.getMessage());
+        }
+    }
+
+    private static class CityLocation {
+        double lat, lng;
+        String city, district, ward;
+        CityLocation(double lat, double lng, String city, String district, String ward) {
+            this.lat = lat;
+            this.lng = lng;
+            this.city = city;
+            this.district = district;
+            this.ward = ward;
         }
     }
 

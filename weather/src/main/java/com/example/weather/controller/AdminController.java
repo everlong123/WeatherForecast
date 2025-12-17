@@ -18,8 +18,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +49,9 @@ public class AdminController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @PutMapping("/reports/{id}/approve")
     public ResponseEntity<WeatherReport> approveReport(
@@ -152,20 +158,38 @@ public class AdminController {
     }
 
     @DeleteMapping("/reports/{id}")
+    @Transactional
     public ResponseEntity<Void> deleteReport(@PathVariable Long id, Authentication authentication) {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
         User admin = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
 
+        // Đảm bảo report được quản lý trong persistence context
+        // Nếu report bị detached, merge nó vào persistence context
+        if (!entityManager.contains(report)) {
+            report = entityManager.merge(report);
+        }
+        
+        // Lưu reportIdBackup trước khi tạo AdminAction
+        Long reportId = report.getId();
+        
+        // Tạo AdminAction với report (đã được merge nên sẽ là managed entity)
         AdminAction action = new AdminAction();
         action.setReport(report);
         action.setAdmin(admin);
         action.setActionType(AdminAction.ActionType.DELETE);
         action.setComment("Report deleted by admin");
-        adminActionRepository.save(action);
+        action.setReportIdBackup(reportId); // Set trực tiếp để đảm bảo
+        
+        // Lưu AdminAction trước khi xóa report
+        adminActionRepository.saveAndFlush(action);
 
+        // Xóa report sau khi đã lưu action
+        // Foreign key constraint sẽ được xử lý bởi database (ON DELETE SET NULL)
         reportRepository.delete(report);
+        reportRepository.flush(); // Force flush để xử lý ngay
+        
         return ResponseEntity.noContent().build();
     }
 

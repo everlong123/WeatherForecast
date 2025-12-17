@@ -1,171 +1,257 @@
 package com.example.weather.service;
 
 import com.example.weather.dto.WeatherDataDTO;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+/**
+ * Service để gọi OpenWeatherMap API (FREE)
+ * Free tier: 1000 calls/day, 60 calls/minute
+ * Đăng ký tại: https://openweathermap.org/api
+ */
 @Service
 public class OpenWeatherService {
-    @Value("${openweather.api.key}")
+    
+    @Value("${openweather.api.key:}")
     private String apiKey;
-
-    @Value("${openweather.api.url}")
-    private String apiUrl;
-
+    
+    @Value("${openweather.api.enabled:false}")
+    private boolean enabled;
+    
+    @Autowired
+    private RestTemplate restTemplate;
+    
     @Autowired
     private WeatherDataService weatherDataService;
-
-    private final WebClient webClient;
-    private final List<CityLocation> vietnamCities = Arrays.asList(
-        new CityLocation(21.0285, 105.8542, "Hà Nội", "Hoàn Kiếm", "Tràng Tiền"),
-        new CityLocation(10.8231, 106.6297, "Hồ Chí Minh", "Quận 1", "Bến Nghé"),
-        new CityLocation(16.0544, 108.2022, "Đà Nẵng", "Hải Châu", "Hải Châu"),
-        new CityLocation(20.8449, 106.6881, "Hải Phòng", "Hồng Bàng", "Máy Chai"),
-        new CityLocation(10.3460, 107.0843, "Vũng Tàu", "Thành phố Vũng Tàu", "Thắng Tam")
-    );
-
-    public OpenWeatherService() {
-        this.webClient = WebClient.builder().build();
-    }
-
-    @Scheduled(fixedRate = 3600000) // Every hour
-    public void fetchWeatherData() {
-        // Skip if API key is not configured
-        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("your-openweather-api-key")) {
-            System.out.println("OpenWeather API key not configured. Skipping scheduled fetch.");
-            return;
-        }
-
-        for (CityLocation city : vietnamCities) {
-            try {
-                fetchAndSaveWeather(city.lat, city.lng, city.city, city.district, city.ward);
-                Thread.sleep(1000); // Rate limiting
-            } catch (Exception e) {
-                // Only log if it's not a 401 error (API key issue)
-                if (!e.getMessage().contains("401")) {
-                    System.err.println("Error fetching weather for " + city.city + ": " + e.getMessage());
-                }
-            }
-        }
-    }
-
-    public WeatherDataDTO fetchAndSaveWeather(Double lat, Double lng, String city, 
-                                              String district, String ward) {
-        // Check if API key is configured
-        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("your-openweather-api-key")) {
-            System.out.println("OpenWeather API key not configured. Please set openweather.api.key in application.properties");
+    
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    
+    private static final String OPENWEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather";
+    private static final String OPENWEATHER_GEOCODING_URL = "http://api.openweathermap.org/geo/1.0/direct";
+    
+    /**
+     * Lấy tọa độ (lat/lng) từ tên địa điểm bằng Geocoding API
+     */
+    public Map<String, Double> getCoordinatesFromLocation(String city, String district, String ward) {
+        if (!enabled || apiKey == null || apiKey.isEmpty()) {
             return null;
         }
-
+        
         try {
-            String url = String.format("%s/weather?lat=%.4f&lon=%.4f&appid=%s&units=metric&lang=vi",
-                    apiUrl, lat, lng, apiKey);
-
-            WeatherResponse response = webClient.get()
-                    .uri(url)
-                    .retrieve()
-                    .onStatus(status -> status.value() == 401, clientResponse -> {
-                        System.err.println("OpenWeather API: Invalid API key. Please check your API key in application.properties");
-                        return clientResponse.createException();
-                    })
-                    .onStatus(status -> status.value() == 429, clientResponse -> {
-                        System.err.println("OpenWeather API: Rate limit exceeded. Please wait.");
-                        return clientResponse.createException();
-                    })
-                    .bodyToMono(WeatherResponse.class)
-                    .block();
-
-            if (response != null && response.main != null && response.weather != null && response.weather.length > 0) {
-                WeatherDataDTO dto = new WeatherDataDTO();
-                dto.setLatitude(lat);
-                dto.setLongitude(lng);
-                dto.setCity(city);
-                dto.setDistrict(district);
-                dto.setWard(ward);
-                dto.setTemperature(response.main.temp);
-                dto.setFeelsLike(response.main.feelsLike);
-                dto.setHumidity(response.main.humidity);
-                dto.setPressure(response.main.pressure);
-                dto.setWindSpeed(response.wind != null ? response.wind.speed : null);
-                dto.setWindDirection(response.wind != null ? response.wind.deg : null);
-                dto.setVisibility(response.visibility != null ? response.visibility / 1000.0 : null);
-                dto.setCloudiness(response.clouds != null ? response.clouds.all : null);
-                dto.setRainVolume(response.rain != null ? response.rain.oneHour : null);
-                dto.setMainWeather(response.weather[0].main);
-                dto.setDescription(response.weather[0].description);
-                dto.setIcon(response.weather[0].icon);
-                dto.setRecordedAt(LocalDateTime.now());
-
+            // Xây dựng query string từ địa điểm
+            // Luôn bao gồm tỉnh để tăng độ chính xác
+            String query = "";
+            if (ward != null && !ward.isEmpty() && district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
+                // Format: "Ward, District, City, Vietnam"
+                query = ward + ", " + district + ", " + city + ", Vietnam";
+            } else if (district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
+                // Format: "District, City, Vietnam"
+                query = district + ", " + city + ", Vietnam";
+            } else if (city != null && !city.isEmpty()) {
+                // Format: "City, Vietnam"
+                query = city + ", Vietnam";
+            } else {
+                return null;
+            }
+            
+            // Xây dựng URL
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(OPENWEATHER_GEOCODING_URL)
+                    .queryParam("q", query)
+                    .queryParam("limit", 1)
+                    .queryParam("appid", apiKey);
+            
+            String url = builder.build().toUriString();
+            
+            // Gọi API
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                JsonNode jsonNode = objectMapper.readTree(response.getBody());
+                
+                // Geocoding API trả về array
+                if (jsonNode.isArray() && jsonNode.size() > 0) {
+                    JsonNode firstResult = jsonNode.get(0);
+                    
+                    Map<String, Double> coords = new HashMap<>();
+                    if (firstResult.has("lat")) {
+                        coords.put("lat", firstResult.get("lat").asDouble());
+                    }
+                    if (firstResult.has("lon")) {
+                        coords.put("lng", firstResult.get("lon").asDouble());
+                    }
+                    
+                    if (coords.containsKey("lat") && coords.containsKey("lng")) {
+                        System.out.println("Geocoding result for '" + query + "': " + coords);
+                        return coords;
+                    }
+                }
+            }
+            
+            return null;
+        } catch (Exception e) {
+            System.err.println("Lỗi khi gọi OpenWeatherMap Geocoding API: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Lấy thời tiết hiện tại từ OpenWeatherMap API
+     */
+    public WeatherDataDTO getCurrentWeather(Double lat, Double lng, String city, String district, String ward) {
+        if (!enabled || apiKey == null || apiKey.isEmpty()) {
+            return null; // Fallback về mock service
+        }
+        
+        try {
+            // Xây dựng URL với query parameters
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(OPENWEATHER_API_URL)
+                    .queryParam("lat", lat)
+                    .queryParam("lon", lng)
+                    .queryParam("appid", apiKey)
+                    .queryParam("units", "metric") // Nhiệt độ theo Celsius
+                    .queryParam("lang", "vi"); // Tiếng Việt
+            
+            String url = builder.build().toUriString();
+            
+            // Gọi API
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                // Parse JSON response
+                JsonNode jsonNode = objectMapper.readTree(response.getBody());
+                
+                // Kiểm tra lỗi từ API
+                if (jsonNode.has("cod") && jsonNode.get("cod").asInt() != 200) {
+                    System.err.println("OpenWeatherMap API Error: " + jsonNode.toString());
+                    return null;
+                }
+                
+                // Chuyển đổi sang WeatherDataDTO
+                WeatherDataDTO dto = convertToWeatherDataDTO(jsonNode, lat, lng, city, district, ward);
+                
+                // Lưu vào database
                 return weatherDataService.saveWeatherData(dto);
             }
-        } catch (WebClientResponseException e) {
-            if (e.getStatusCode().value() == 401) {
-                System.err.println("OpenWeather API: Invalid API key. Please update openweather.api.key in application.properties");
-            } else if (e.getStatusCode().value() == 429) {
-                System.err.println("OpenWeather API: Rate limit exceeded. Please wait.");
-            } else {
-                System.err.println("Error fetching weather data: " + e.getMessage());
-            }
+            
+            return null;
+        } catch (ResourceAccessException e) {
+            System.err.println("Không thể kết nối đến OpenWeatherMap API: " + e.getMessage());
+            return null;
         } catch (Exception e) {
-            String errorMsg = e.getMessage();
-            if (errorMsg != null && errorMsg.contains("401")) {
-                System.err.println("OpenWeather API: Invalid API key. Please update openweather.api.key in application.properties");
-            } else {
-                System.err.println("Error fetching weather data: " + errorMsg);
+            System.err.println("Lỗi khi gọi OpenWeatherMap API: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Chuyển đổi JSON response từ OpenWeatherMap API sang WeatherDataDTO
+     */
+    private WeatherDataDTO convertToWeatherDataDTO(JsonNode jsonNode, Double lat, Double lng, 
+                                                   String city, String district, String ward) {
+        WeatherDataDTO dto = new WeatherDataDTO();
+        
+        dto.setLatitude(lat);
+        dto.setLongitude(lng);
+        dto.setCity(city != null ? city : (jsonNode.has("name") ? jsonNode.get("name").asText() : null));
+        dto.setDistrict(district);
+        dto.setWard(ward);
+        dto.setRecordedAt(LocalDateTime.now());
+        
+        // Parse main data
+        if (jsonNode.has("main")) {
+            JsonNode main = jsonNode.get("main");
+            
+            if (main.has("temp")) {
+                dto.setTemperature(main.get("temp").asDouble());
+            }
+            
+            if (main.has("feels_like")) {
+                dto.setFeelsLike(main.get("feels_like").asDouble());
+            }
+            
+            if (main.has("humidity")) {
+                dto.setHumidity((double) main.get("humidity").asInt());
+            }
+            
+            if (main.has("pressure")) {
+                dto.setPressure((double) main.get("pressure").asInt());
             }
         }
-        return null;
-    }
-
-    private static class CityLocation {
-        double lat, lng;
-        String city, district, ward;
-        CityLocation(double lat, double lng, String city, String district, String ward) {
-            this.lat = lat; this.lng = lng; this.city = city; this.district = district; this.ward = ward;
+        
+        // Parse wind data
+        if (jsonNode.has("wind")) {
+            JsonNode wind = jsonNode.get("wind");
+            
+            if (wind.has("speed")) {
+                dto.setWindSpeed(wind.get("speed").asDouble());
+            }
+            
+            if (wind.has("deg")) {
+                dto.setWindDirection((double) wind.get("deg").asInt());
+            }
         }
+        
+        // Parse visibility
+        if (jsonNode.has("visibility")) {
+            // OpenWeatherMap trả về visibility theo mét, chuyển sang km
+            dto.setVisibility(jsonNode.get("visibility").asDouble() / 1000.0);
+        }
+        
+        // Parse clouds
+        if (jsonNode.has("clouds")) {
+            JsonNode clouds = jsonNode.get("clouds");
+            if (clouds.has("all")) {
+                dto.setCloudiness((double) clouds.get("all").asInt());
+            }
+        }
+        
+        // Parse rain
+        if (jsonNode.has("rain")) {
+            JsonNode rain = jsonNode.get("rain");
+            if (rain.has("1h")) {
+                dto.setRainVolume(rain.get("1h").asDouble());
+            }
+        }
+        
+        // Parse weather condition
+        if (jsonNode.has("weather") && jsonNode.get("weather").isArray() && jsonNode.get("weather").size() > 0) {
+            JsonNode weather = jsonNode.get("weather").get(0);
+            
+            if (weather.has("main")) {
+                dto.setMainWeather(weather.get("main").asText());
+            }
+            
+            if (weather.has("description")) {
+                dto.setDescription(weather.get("description").asText());
+            }
+            
+            if (weather.has("icon")) {
+                // OpenWeatherMap icon URL: http://openweathermap.org/img/w/{icon}.png
+                dto.setIcon("http://openweathermap.org/img/w/" + weather.get("icon").asText() + ".png");
+            }
+        }
+        
+        return dto;
     }
-
-    private static class WeatherResponse {
-        Main main;
-        Wind wind;
-        Clouds clouds;
-        Weather[] weather;
-        Double visibility;
-        Rain rain;
-    }
-
-    private static class Main {
-        Double temp;
-        Double feelsLike;
-        Double humidity;
-        Double pressure;
-    }
-
-    private static class Wind {
-        Double speed;
-        Double deg;
-    }
-
-    private static class Clouds {
-        Double all;
-    }
-
-    private static class Weather {
-        String main;
-        String description;
-        String icon;
-    }
-
-    private static class Rain {
-        Double oneHour;
+    
+    /**
+     * Kiểm tra xem service có sẵn sàng không
+     */
+    public boolean isAvailable() {
+        return enabled && apiKey != null && !apiKey.isEmpty();
     }
 }
 
