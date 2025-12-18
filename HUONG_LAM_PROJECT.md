@@ -1,693 +1,437 @@
 # HƯỚNG LÀM PROJECT - HỆ THỐNG CẢNH BÁO THỜI TIẾT
 
-## 1. TỔNG QUAN DỰ ÁN
+## 1. TỔNG QUAN
 
-### 1.1. Tên dự án
 **Hệ Thống Cảnh Báo Thời Tiết Dựa Trên Dữ Liệu Cộng Đồng**
-(Weather Forecast System - Community-Based Weather Alert Platform)
 
-### 1.2. Mô tả
-Hệ thống web cho phép người dùng báo cáo sự cố thời tiết và xem thông tin thời tiết theo thời gian thực. Hệ thống tích hợp Machine Learning để dự đoán thời tiết, giúp cộng đồng cảnh báo sớm và ứng phó hiệu quả với các hiện tượng thời tiết cực đoan.
+Hệ thống web cho phép người dùng báo cáo sự cố thời tiết và xem thông tin thời tiết theo thời gian thực. Tích hợp Machine Learning để dự đoán thời tiết, hỗ trợ cộng đồng cảnh báo sớm và ứng phó với các hiện tượng thời tiết cực đoan.
 
-### 1.3. Đối tượng sử dụng
-- **Người dùng thường**: Báo cáo sự cố thời tiết, xem thời tiết, xem bản đồ
-- **Quản trị viên**: Duyệt báo cáo, quản lý người dùng, tạo cảnh báo
+**Đối tượng sử dụng:**
+- Người dùng: Báo cáo sự cố, xem thời tiết, xem bản đồ
+- Admin: Duyệt báo cáo, quản lý người dùng, tạo cảnh báo
 
 ---
 
-## 2. MỤC TIÊU DỰ ÁN
+## 2. MỤC TIÊU
 
-### 2.1. Mục tiêu chính
-1. **Tạo nền tảng chia sẻ thông tin thời tiết**
-   - Cho phép người dùng báo cáo sự cố thời tiết từ cộng đồng
-   - Thu thập và quản lý dữ liệu thời tiết theo thời gian thực
-
-2. **Cảnh báo sớm các sự cố thời tiết**
-   - Hiển thị báo cáo trên bản đồ tương tác
-   - Phân loại mức độ nghiêm trọng
-   - Hỗ trợ cộng đồng ứng phó kịp thời
-
-3. **Dự đoán thời tiết bằng Machine Learning**
-   - Sử dụng Python ML model để dự đoán thời tiết
-   - Học từ dữ liệu lịch sử để cải thiện độ chính xác
-
-4. **Quản lý và phân tích dữ liệu**
-   - Dashboard thống kê tổng quan
-   - Phân tích xu hướng thời tiết
-   - Quản lý người dùng và báo cáo
-
-### 2.2. Mục tiêu kỹ thuật
-- Xây dựng hệ thống full-stack hiện đại
-- Tích hợp Machine Learning vào ứng dụng web
-- Đảm bảo bảo mật và hiệu suất
-- Responsive design, hỗ trợ nhiều thiết bị
+1. Nền tảng chia sẻ thông tin thời tiết từ cộng đồng
+2. Cảnh báo sớm sự cố thời tiết qua bản đồ tương tác
+3. Dự đoán thời tiết bằng Machine Learning
+4. Dashboard thống kê và phân tích
 
 ---
 
-## 3. CHỨC NĂNG HỆ THỐNG
+## 3. CHỨC NĂNG
 
 ### 3.1. Quản lý người dùng
-- **Đăng ký/Đăng nhập**: Xác thực bằng JWT token
-- **Phân quyền**: USER và ADMIN
-- **Quản lý profile**: Cập nhật thông tin cá nhân
+- **Đăng ký/Đăng nhập**: Xác thực bằng JWT token, mã hóa mật khẩu BCrypt
+- **Phân quyền**: USER (người dùng thường) và ADMIN (quản trị viên)
+- **Quản lý profile**: Cập nhật thông tin cá nhân (họ tên, email, số điện thoại, địa chỉ)
+- **Bảo mật**: Token tự động hết hạn, yêu cầu đăng nhập lại
 
-### 3.2. Quản lý báo cáo sự cố
-- **Tạo báo cáo**: Người dùng báo cáo sự cố thời tiết
-  - Tiêu đề, mô tả, địa điểm
-  - Phân loại loại sự cố (mưa lớn, gió mạnh, lũ lụt, ...)
-  - Mức độ nghiêm trọng (LOW, MEDIUM, HIGH, CRITICAL)
-  - Upload hình ảnh
+### 3.2. Báo cáo sự cố thời tiết
+- **Tạo báo cáo**: 
+  - Tiêu đề, mô tả chi tiết
+  - Chọn địa điểm (Tỉnh/Quận/Xã) hoặc tự động lấy vị trí (Geolocation)
+  - Chọn loại sự cố (mưa lớn, gió mạnh, lũ lụt, sạt lở, ...)
+  - Phân loại mức độ nghiêm trọng (LOW, MEDIUM, HIGH, CRITICAL)
+  - Upload nhiều hình ảnh minh chứng
+  - Chọn thời gian xảy ra sự cố
 - **Quản lý báo cáo**: 
-  - Xem danh sách báo cáo
-  - Chỉnh sửa/Xóa báo cáo của mình
-  - Admin duyệt/từ chối/giải quyết báo cáo
+  - Xem danh sách báo cáo của mình
+  - Chỉnh sửa/Xóa báo cáo (chỉ báo cáo của mình)
+  - Xem chi tiết báo cáo
+- **Duyệt báo cáo (Admin)**: 
+  - Xem danh sách báo cáo PENDING
+  - Duyệt (APPROVED) hoặc từ chối (REJECTED) báo cáo
+  - Đánh dấu RESOLVED khi đã xử lý xong
+  - Ghi log hành động vào admin_actions
 
 ### 3.3. Hiển thị thời tiết
 - **Thời tiết hiện tại**: 
   - Tự động lấy vị trí người dùng (Geolocation API)
   - Hoặc chọn địa điểm từ dropdown (Tỉnh/Quận/Xã)
-  - Hiển thị nhiệt độ, độ ẩm, gió, mây, mưa
-- **Lịch sử thời tiết**: Xem dữ liệu thời tiết theo thời gian
+  - Hiển thị: nhiệt độ, độ ẩm, gió, mây, mưa, áp suất, tầm nhìn
+  - Icon và mô tả thời tiết
+- **Lịch sử thời tiết**: Xem dữ liệu thời tiết đã lưu trong database
 - **Dự đoán thời tiết**: 
   - Dự đoán từ 1-168 giờ (7 ngày)
-  - Sử dụng Python ML model (Random Forest)
+  - Sử dụng Python ML model (Random Forest Regressor)
+  - Hiển thị biểu đồ nhiệt độ, độ ẩm theo thời gian
+  - Dự đoán các yếu tố: nhiệt độ, độ ẩm, gió, mây, loại thời tiết
 
 ### 3.4. Bản đồ tương tác
 - **Hiển thị báo cáo trên bản đồ**: 
-  - Markers theo địa điểm
-  - Màu sắc theo trạng thái và mức độ
-  - Click để xem chi tiết
-- **Tìm kiếm địa điểm**: Tìm kiếm theo tỉnh/quận/xã
-- **Lọc báo cáo**: Lọc theo loại sự cố, trạng thái
+  - Markers theo địa điểm của báo cáo
+  - Màu sắc markers theo trạng thái (PENDING, APPROVED, RESOLVED) và mức độ nghiêm trọng
+  - Click marker để xem popup chi tiết báo cáo
+  - Hiển thị hình ảnh trong popup
+- **Tìm kiếm địa điểm**: Tìm kiếm theo Tỉnh/Quận/Xã
+- **Lọc báo cáo**: 
+  - Lọc theo loại sự cố
+  - Lọc theo trạng thái (PENDING, APPROVED, REJECTED, RESOLVED)
+  - Lọc theo mức độ nghiêm trọng
+  - Lọc theo khoảng thời gian
+- **Bản đồ satellite**: Chuyển đổi giữa bản đồ thường và satellite imagery
 
 ### 3.5. Dashboard thống kê
-- **Thống kê tổng quan**:
+- **Thống kê tổng quan**: 
   - Tổng số báo cáo, người dùng
-  - Báo cáo theo loại sự cố
-  - Báo cáo theo địa điểm
-  - Biểu đồ phân tích
-- **Phân tích xu hướng**: Thống kê theo thời gian
+  - Số báo cáo theo trạng thái (PENDING, APPROVED, REJECTED, RESOLVED)
+  - Số báo cáo theo mức độ nghiêm trọng
+- **Phân tích theo loại sự cố**: Biểu đồ cột/pie chart
+- **Phân tích theo địa điểm**: Top tỉnh/quận có nhiều báo cáo nhất
+- **Phân tích theo thời gian**: Biểu đồ xu hướng theo ngày/tuần/tháng
+- **Thống kê thời tiết**: Nhiệt độ trung bình, độ ẩm trung bình
 
 ### 3.6. Quản trị hệ thống (Admin)
-- **Quản lý báo cáo**: Duyệt, từ chối, giải quyết báo cáo
-- **Quản lý người dùng**: Xem, khóa/mở khóa, phân quyền
-- **Quản lý loại sự cố**: Thêm, sửa, xóa loại sự cố
-- **Tạo cảnh báo**: Tạo cảnh báo thời tiết cho cộng đồng
-- **Lịch sử hành động**: Theo dõi các thao tác admin
+- **Quản lý báo cáo**: 
+  - Xem tất cả báo cáo (kèm filter và search)
+  - Duyệt/từ chối/giải quyết báo cáo
+  - Xem chi tiết và hình ảnh báo cáo
+- **Quản lý người dùng**: 
+  - Xem danh sách người dùng
+  - Khóa/mở khóa tài khoản
+  - Phân quyền ADMIN/USER
+  - Xem lịch sử báo cáo của từng user
+- **Quản lý loại sự cố**: 
+  - Thêm, sửa, xóa loại sự cố
+  - Thiết lập icon và màu sắc cho từng loại
+- **Tạo cảnh báo thời tiết**: 
+  - Tạo cảnh báo cho cộng đồng
+  - Chọn địa điểm (Tỉnh/Quận/Xã) hoặc tọa độ + bán kính
+  - Phân loại mức độ (INFO, WARNING, DANGER, CRITICAL)
+  - Thiết lập thời gian bắt đầu và kết thúc
+- **Lịch sử hành động**: Xem log các thao tác admin đã thực hiện
+
+### 3.7. Tính năng bổ sung
+- **Upload hình ảnh**: Hỗ trợ upload nhiều file, tự động lưu vào server
+- **Geocoding tự động**: Tự động chuyển đổi địa điểm → tọa độ (Nominatim API hoặc location_coordinates.json)
+- **Reverse geocoding**: Chuyển đổi tọa độ → tên địa điểm
+- **Responsive design**: Giao diện tối ưu cho mobile, tablet, desktop
+- **Real-time updates**: Cập nhật dữ liệu theo thời gian thực
 
 ---
 
-## 4. THIẾT KẾ DATABASE
+## 4. CÔNG NGHỆ
 
-### 4.1. Sơ đồ ER (Entity Relationship)
+**Backend:** Java 17 + Spring Boot 4.0 + Spring Security + JWT + Spring Data JPA + MySQL 8.0
 
-```
-┌─────────────┐         ┌──────────────────┐
-│    User     │────────<│  WeatherReport   │
-└─────────────┘         └──────────────────┘
-     │                           │
-     │                           │
-     │                           ▼
-     │                   ┌──────────────┐
-     │                   │ IncidentType │
-     │                   └──────────────┘
-     │
-     │
-     ▼
-┌─────────────┐
-│ WeatherAlert│
-└─────────────┘
+**Frontend:** React 19.2 + React Router + Leaflet (bản đồ) + Recharts (biểu đồ) + Axios
 
-┌─────────────┐
-│ WeatherData │
-└─────────────┘
+**Machine Learning:** Python 3.8+ + Flask + scikit-learn (Random Forest Regressor)
 
-┌─────────────┐
-│ AdminAction│
-└─────────────┘
-```
-
-### 4.2. Các bảng dữ liệu
-
-#### 4.2.1. Bảng `users`
-Quản lý thông tin người dùng
-
-| Cột | Kiểu | Mô tả |
-|-----|------|-------|
-| id | BIGINT | Primary key |
-| username | VARCHAR(50) | Tên đăng nhập (unique) |
-| email | VARCHAR(100) | Email (unique) |
-| password | VARCHAR(255) | Mật khẩu (đã mã hóa) |
-| role | ENUM | USER hoặc ADMIN |
-| full_name | VARCHAR(100) | Họ tên |
-| phone | VARCHAR(20) | Số điện thoại |
-| address | VARCHAR(255) | Địa chỉ |
-| district | VARCHAR(100) | Quận/Huyện |
-| ward | VARCHAR(100) | Xã/Phường |
-| enabled | BOOLEAN | Trạng thái kích hoạt |
-| created_at | DATETIME | Ngày tạo |
-| updated_at | DATETIME | Ngày cập nhật |
-
-#### 4.2.2. Bảng `weather_reports`
-Lưu trữ báo cáo sự cố thời tiết
-
-| Cột | Kiểu | Mô tả |
-|-----|------|-------|
-| id | BIGINT | Primary key |
-| user_id | BIGINT | Foreign key → users |
-| incident_type_id | BIGINT | Foreign key → incident_types |
-| title | VARCHAR(255) | Tiêu đề báo cáo |
-| description | TEXT | Mô tả chi tiết |
-| address | VARCHAR(255) | Địa chỉ |
-| city | VARCHAR(100) | Tỉnh/Thành phố |
-| district | VARCHAR(100) | Quận/Huyện |
-| ward | VARCHAR(100) | Xã/Phường |
-| status | ENUM | PENDING, APPROVED, REJECTED, RESOLVED |
-| severity | ENUM | LOW, MEDIUM, HIGH, CRITICAL |
-| incident_time | DATETIME | Thời gian xảy ra sự cố |
-| created_at | DATETIME | Ngày tạo |
-| updated_at | DATETIME | Ngày cập nhật |
-
-#### 4.2.3. Bảng `report_images`
-Lưu trữ hình ảnh của báo cáo
-
-| Cột | Kiểu | Mô tả |
-|-----|------|-------|
-| report_id | BIGINT | Foreign key → weather_reports |
-| image_url | VARCHAR(500) | Đường dẫn hình ảnh |
-
-#### 4.2.4. Bảng `incident_types`
-Danh mục loại sự cố thời tiết
-
-| Cột | Kiểu | Mô tả |
-|-----|------|-------|
-| id | BIGINT | Primary key |
-| name | VARCHAR(100) | Tên loại sự cố |
-| description | TEXT | Mô tả |
-| icon | VARCHAR(50) | Icon (emoji) |
-| color | VARCHAR(20) | Màu sắc |
-
-#### 4.2.5. Bảng `weather_data`
-Lưu trữ dữ liệu thời tiết
-
-| Cột | Kiểu | Mô tả |
-|-----|------|-------|
-| id | BIGINT | Primary key |
-| latitude | DOUBLE | Vĩ độ |
-| longitude | DOUBLE | Kinh độ |
-| city | VARCHAR(100) | Tỉnh/Thành phố |
-| district | VARCHAR(100) | Quận/Huyện |
-| ward | VARCHAR(100) | Xã/Phường |
-| temperature | DOUBLE | Nhiệt độ (°C) |
-| feels_like | DOUBLE | Cảm giác như (°C) |
-| humidity | DOUBLE | Độ ẩm (%) |
-| pressure | DOUBLE | Áp suất (hPa) |
-| wind_speed | DOUBLE | Tốc độ gió (m/s) |
-| wind_direction | DOUBLE | Hướng gió (độ) |
-| visibility | DOUBLE | Tầm nhìn (km) |
-| cloudiness | DOUBLE | Mây (%) |
-| rain_volume | DOUBLE | Lượng mưa (mm) |
-| snow_volume | DOUBLE | Lượng tuyết (mm) |
-| main_weather | VARCHAR(50) | Loại thời tiết |
-| description | VARCHAR(255) | Mô tả |
-| icon | VARCHAR(100) | Icon |
-| recorded_at | DATETIME | Thời gian ghi nhận |
-| created_at | DATETIME | Ngày tạo |
-
-#### 4.2.6. Bảng `weather_alerts`
-Cảnh báo thời tiết từ admin
-
-| Cột | Kiểu | Mô tả |
-|-----|------|-------|
-| id | BIGINT | Primary key |
-| admin_id | BIGINT | Foreign key → users |
-| title | VARCHAR(255) | Tiêu đề cảnh báo |
-| message | TEXT | Nội dung cảnh báo |
-| level | ENUM | INFO, WARNING, DANGER, CRITICAL |
-| city | VARCHAR(100) | Tỉnh/Thành phố |
-| district | VARCHAR(100) | Quận/Huyện |
-| ward | VARCHAR(100) | Xã/Phường |
-| latitude | DOUBLE | Vĩ độ |
-| longitude | DOUBLE | Kinh độ |
-| radius | DOUBLE | Bán kính (km) |
-| start_time | DATETIME | Thời gian bắt đầu |
-| end_time | DATETIME | Thời gian kết thúc |
-| active | BOOLEAN | Trạng thái |
-| created_at | DATETIME | Ngày tạo |
-| updated_at | DATETIME | Ngày cập nhật |
-
-#### 4.2.7. Bảng `admin_actions`
-Lịch sử hành động của admin
-
-| Cột | Kiểu | Mô tả |
-|-----|------|-------|
-| id | BIGINT | Primary key |
-| admin_id | BIGINT | Foreign key → users |
-| action_type | ENUM | APPROVE_REPORT, REJECT_REPORT, ... |
-| target_type | VARCHAR(50) | Loại đối tượng |
-| target_id | BIGINT | ID đối tượng |
-| description | TEXT | Mô tả |
-| created_at | DATETIME | Ngày tạo |
-
-### 4.3. Quan hệ giữa các bảng
-- **User** → **WeatherReport** (1-N): Một user có nhiều báo cáo
-- **User** → **WeatherAlert** (1-N): Một admin tạo nhiều cảnh báo
-- **User** → **AdminAction** (1-N): Một admin có nhiều hành động
-- **IncidentType** → **WeatherReport** (1-N): Một loại sự cố có nhiều báo cáo
-- **WeatherReport** → **report_images** (1-N): Một báo cáo có nhiều hình ảnh
+**Dữ liệu:** JSON files (63 tỉnh, 705 quận, 10,599 xã) + location_coordinates.json
 
 ---
 
-## 5. CÔNG NGHỆ SỬ DỤNG
+## 5. KIẾN TRÚC HỆ THỐNG
 
-### 5.1. Backend
-
-#### 5.1.1. Framework & Language
-- **Java 17**: Ngôn ngữ lập trình
-- **Spring Boot 4.0**: Framework chính
-- **Spring Security**: Bảo mật và xác thực
-- **Spring Data JPA**: ORM và quản lý database
-- **Gradle**: Build tool
-
-#### 5.1.2. Database
-- **MySQL 8.0+**: Hệ quản trị cơ sở dữ liệu
-- **Hibernate/JPA**: ORM framework
-
-#### 5.1.3. Authentication & Security
-- **JWT (JSON Web Token)**: Xác thực stateless
-- **BCrypt**: Mã hóa mật khẩu
-- **CORS**: Cross-origin resource sharing
-
-#### 5.1.4. API
-- **RESTful API**: Kiến trúc API
-- **Jackson**: JSON serialization/deserialization
-
-### 5.2. Frontend
-
-#### 5.2.1. Framework & Library
-- **React 19.2**: UI framework
-- **React Router**: Điều hướng
-- **Axios**: HTTP client
-- **React Icons**: Icon library
-
-#### 5.2.2. Visualization
-- **Leaflet**: Bản đồ tương tác
-- **React Leaflet**: React wrapper cho Leaflet
-- **Recharts**: Biểu đồ và thống kê
-
-#### 5.2.3. Build Tool
-- **npm**: Package manager
-- **React Scripts**: Build và development tools
-
-### 5.3. Machine Learning
-
-#### 5.3.1. Python Service
-- **Python 3.8+**: Ngôn ngữ lập trình
-- **Flask**: Web framework
-- **scikit-learn**: Machine Learning library
-- **Random Forest Regressor**: Algorithm dự đoán
-- **Pandas & NumPy**: Data processing
-
-#### 5.3.2. Model
-- **Algorithm**: Random Forest Regressor
-- **Features**: Month, Hour, Humidity, Pressure, Wind Speed, Cloudiness
-- **Target**: Temperature
-- **Training**: Dữ liệu lịch sử từ database
-
-### 5.4. Dữ liệu địa điểm
-- **JSON files**: 
-  - `provinces.json`: 63 tỉnh/thành phố
-  - `districts.json`: 705 quận/huyện
-  - `wards.json`: 10,599 xã/phường
-  - `location_coordinates.json`: Tọa độ cho tất cả địa điểm
-
----
-
-## 6. KIẾN TRÚC HỆ THỐNG
-
-### 6.1. Kiến trúc tổng quan
+### 5.1. Kiến trúc tổng quan
 
 ```
 ┌─────────────────────────────────────┐
-│   FRONTEND (React)                   │
-│   - React Router                     │
-│   - Leaflet Maps                     │
-│   - Recharts                         │
-│   - Axios                            │
+│   FRONTEND (React.js)                │
+│   - User Interface                   │
+│   - State Management                 │
+│   - API Calls                        │
 └──────────────┬──────────────────────┘
-               │ HTTP/REST API
-┌──────────────▼──────────────────────┐
+               │
+               │ REST API
+               ↓
+┌─────────────────────────────────────┐
 │   BACKEND (Spring Boot)              │
-│   - REST API                         │
-│   - Spring Security + JWT             │
-│   - Spring Data JPA                   │
 │   - Business Logic                   │
-└──────────────┬──────────────────────┘
-               │
-               │ HTTP REST API
-┌──────────────▼──────────────────────┐
-│   PYTHON ML SERVICE (Flask)          │
-│   - Weather Prediction Model         │
-│   - Random Forest Regressor          │
-└──────────────────────────────────────┘
-               │
-┌──────────────▼──────────────────────┐
-│   DATABASE (MySQL)                   │
-│   - Users                            │
-│   - Weather Reports                  │
-│   - Weather Data                     │
-│   - Incident Types                   │
-└──────────────────────────────────────┘
+│   - Authentication (JWT)             │
+│   - Data Processing                  │
+└──────┬──────────────────┬───────────┘
+       │                  │
+       │                  │
+       ↓                  ↓
+┌──────────────┐  ┌──────────────────┐
+│ MySQL        │  │ Python ML        │
+│ Database     │  │ (Flask)          │
+│              │  │ - Analysis       │
+│              │  │ - ML (optional)   │
+└──────────────┘  └──────────────────┘
 ```
 
-### 6.2. Luồng xử lý báo cáo
+**Giải thích:**
+- **Frontend giao tiếp với Backend qua REST API** - React gửi HTTP request (GET, POST, PUT, DELETE) đến Spring Boot
+- **Backend xử lý logic, lưu trữ vào MySQL** - Spring Boot xử lý business logic, xác thực, và lưu dữ liệu vào database
+- **Python service xử lý phân tích và ML (optional)** - Backend gọi Python ML service khi cần dự đoán thời tiết
 
+### 5.2. Các thành phần chính
+
+**Frontend (React.js):**
+- Giao diện người dùng, hiển thị dữ liệu
+- Quản lý state (đăng nhập, token, dữ liệu)
+- Gọi API đến Backend qua Axios
+
+**Backend (Spring Boot):**
+- Xử lý business logic và authentication
+- Giao tiếp với Database để lưu/đọc dữ liệu
+- Gọi Python ML Service khi cần dự đoán
+
+**MySQL Database:**
+- Lưu trữ dữ liệu: users, reports, weather_data, alerts, ...
+
+**Python ML Service (Flask):**
+- Xử lý Machine Learning (dự đoán thời tiết)
+- Tùy chọn - hệ thống vẫn hoạt động nếu không có
+
+### 5.3. Luồng xử lý chính
+
+#### Luồng đăng nhập:
 ```
-1. Người dùng tạo báo cáo
-   ↓
-2. Frontend gửi POST /api/reports
-   ↓
-3. Backend validate và lưu vào database
-   ↓
-4. Báo cáo ở trạng thái PENDING
-   ↓
-5. Admin xem xét báo cáo
-   ↓
-6. Admin duyệt (APPROVED) hoặc từ chối (REJECTED)
-   ↓
-7. Báo cáo được hiển thị trên bản đồ (nếu APPROVED)
-   ↓
-8. Admin đánh dấu RESOLVED khi xử lý xong
+1. User nhập username/password → Frontend
+2. Frontend POST /api/auth/login → Backend
+3. Backend kiểm tra credentials → Database
+4. Backend tạo JWT token → Trả về Frontend
+5. Frontend lưu token → Gửi kèm các request sau
 ```
 
-### 6.3. Luồng dự đoán thời tiết
+#### Luồng tạo báo cáo:
+```
+1. User điền form báo cáo → Frontend
+2. Frontend POST /api/reports (kèm JWT token) → Backend
+3. Backend validate token → Kiểm tra quyền USER
+4. Backend lấy tọa độ từ địa điểm (Nominatim API hoặc location_coordinates.json)
+5. Backend lưu báo cáo vào DB (status: PENDING) → Database
+6. Backend trả về báo cáo đã tạo → Frontend
+7. Frontend hiển thị thông báo thành công
+```
 
+#### Luồng duyệt báo cáo (Admin):
 ```
-1. User yêu cầu dự đoán thời tiết
-   ↓
-2. Frontend gọi GET /api/weather/forecast
-   ↓
-3. Backend lấy thời tiết hiện tại từ database
-   ↓
-4. Backend gọi Python ML service POST /predict
-   ↓
-5. Python service:
-   - Load model (Random Forest)
-   - Predict dựa trên features
-   - Trả về predictions
-   ↓
-6. Backend trả về kết quả cho Frontend
-   ↓
-7. Frontend hiển thị dự đoán
+1. Admin xem danh sách báo cáo PENDING → Frontend
+2. Frontend GET /api/admin/reports → Backend
+3. Backend kiểm tra quyền ADMIN → Trả về danh sách
+4. Admin chọn duyệt → Frontend PUT /api/admin/reports/{id}/approve
+5. Backend cập nhật status = APPROVED → Database
+6. Backend ghi log vào admin_actions → Database
+7. Báo cáo hiển thị trên bản đồ (status = APPROVED)
 ```
+
+#### Luồng dự đoán thời tiết:
+```
+1. User chọn địa điểm → Frontend
+2. Frontend GET /api/weather/current?city=... → Backend
+3. Backend lấy thời tiết hiện tại từ Database hoặc OpenWeatherMap API
+4. User yêu cầu dự đoán → Frontend POST /api/weather/forecast
+5. Backend gọi Python ML Service POST /predict (dữ liệu thời tiết hiện tại)
+6. Python ML Service predict → Trả về kết quả (1-168 giờ)
+7. Backend nhận kết quả → Trả về Frontend
+8. Frontend hiển thị biểu đồ dự đoán
+```
+
+#### Luồng hiển thị bản đồ:
+```
+1. User mở trang bản đồ → Frontend
+2. Frontend GET /api/reports?status=APPROVED → Backend
+3. Backend trả về danh sách báo cáo đã duyệt
+4. Frontend hiển thị markers trên Leaflet map
+5. User click marker → Frontend hiển thị popup chi tiết
+```
+
+### 5.4. API Endpoints chính
+
+**Authentication:**
+- `POST /api/auth/register` - Đăng ký
+- `POST /api/auth/login` - Đăng nhập
+
+**Báo cáo:**
+- `GET /api/reports` - Lấy danh sách báo cáo
+- `POST /api/reports` - Tạo báo cáo mới
+- `PUT /api/reports/{id}` - Cập nhật báo cáo
+- `DELETE /api/reports/{id}` - Xóa báo cáo
+
+**Thời tiết:**
+- `GET /api/weather/current` - Thời tiết hiện tại
+- `POST /api/weather/forecast` - Dự đoán thời tiết
+
+**Admin:**
+- `GET /api/admin/reports` - Quản lý báo cáo
+- `PUT /api/admin/reports/{id}/approve` - Duyệt báo cáo
+- `PUT /api/admin/reports/{id}/reject` - Từ chối báo cáo
+- `GET /api/admin/users` - Quản lý người dùng
+
+### 5.5. Xử lý lỗi và Fallback
+
+- **OpenWeatherMap API không khả dụng** → Fallback về MockWeatherService
+- **Nominatim API rate limit** → Sử dụng location_coordinates.json
+- **Python ML Service không chạy** → Thông báo lỗi, không hiển thị dự đoán
+- **JWT token hết hạn** → Redirect về trang đăng nhập
 
 ---
 
-## 7. DỮ LIỆU THỜI TIẾT
+## 6. DATABASE
 
-### 7.1. Tạo dữ liệu thời tiết (Mock Data)
+### 6.1. Các bảng chính và mục đích
 
-Thay vì gọi API bên ngoài, hệ thống tự tạo dữ liệu thời tiết:
+**`users`** - Thông tin người dùng
+- Lưu thông tin đăng nhập (username, email, password), phân quyền (USER/ADMIN)
+- Thông tin cá nhân (họ tên, số điện thoại, địa chỉ)
+- Trạng thái tài khoản (enabled/disabled)
+- **Lý do:** Quản lý người dùng, xác thực, phân quyền
 
-- **MockWeatherService**: Service tạo dữ liệu giả
-- **Template-based generation**: 
-  - Mùa mưa (tháng 5-10): Nhiệt độ 25-32°C, độ ẩm cao, có mưa
-  - Mùa khô (tháng 11-4): Nhiệt độ 20-35°C, độ ẩm thấp, trời quang
-- **Random với range hợp lý**: Đảm bảo dữ liệu realistic
-- **Seed data**: Tự động tạo dữ liệu mẫu khi khởi động
+**`weather_reports`** - Báo cáo sự cố thời tiết
+- Lưu báo cáo từ người dùng (tiêu đề, mô tả, địa điểm, tọa độ)
+- Trạng thái (PENDING, APPROVED, REJECTED, RESOLVED)
+- Mức độ nghiêm trọng (LOW, MEDIUM, HIGH, CRITICAL)
+- **Lý do:** Lưu trữ báo cáo sự cố từ cộng đồng, quản lý workflow duyệt báo cáo
 
-### 7.2. Lấy tọa độ từ địa điểm
+**`report_images`** - Hình ảnh báo cáo
+- Lưu danh sách URL hình ảnh của mỗi báo cáo
+- **Lý do:** Một báo cáo có thể có nhiều hình ảnh minh chứng, tách riêng để tối ưu storage
 
-- **LocationCoordinateService**: Service lấy tọa độ từ địa điểm
-- **location_coordinates.json**: Chứa tọa độ cho:
-  - 63 tỉnh/thành phố
-  - 705 quận/huyện
-  - 10,599 xã/phường
-- **Auto-mapping**: Tự động map địa điểm → tọa độ → dữ liệu thời tiết
+**`incident_types`** - Loại sự cố
+- Danh mục loại sự cố (mưa lớn, gió mạnh, lũ lụt, sạt lở, ...)
+- Icon và màu sắc để hiển thị trên bản đồ
+- **Lý do:** Phân loại báo cáo, dễ quản lý và thống kê, có thể thêm/sửa/xóa loại mới
 
----
+**`weather_data`** - Dữ liệu thời tiết
+- Lưu dữ liệu thời tiết theo thời gian (nhiệt độ, độ ẩm, gió, mưa, ...)
+- Gắn với tọa độ và địa điểm
+- **Lý do:** Lưu lịch sử thời tiết để phân tích, train ML model, hiển thị xu hướng
 
-## 8. MACHINE LEARNING - DỰ ĐOÁN THỜI TIẾT
+**`weather_alerts`** - Cảnh báo thời tiết
+- Cảnh báo từ admin cho cộng đồng
+- Phạm vi cảnh báo (tọa độ + bán kính hoặc địa điểm)
+- Mức độ (INFO, WARNING, DANGER, CRITICAL)
+- **Lý do:** Admin có thể tạo cảnh báo chủ động, không phụ thuộc vào báo cáo từ người dùng
 
-### 8.1. Model Architecture
+**`admin_actions`** - Lịch sử hành động admin
+- Ghi log các thao tác admin (duyệt, từ chối, giải quyết, xóa báo cáo)
+- **Lý do:** Audit trail, theo dõi hoạt động admin, bảo mật và minh bạch
 
-- **Algorithm**: Random Forest Regressor
-- **Features**:
-  - Month (1-12)
-  - Hour (0-23)
-  - Humidity (%)
-  - Pressure (hPa)
-  - Wind Speed (m/s)
-  - Cloudiness (%)
-- **Target**: Temperature (°C)
+### 6.2. Mối quan hệ giữa các bảng
 
-### 8.2. Training Process
+```
+users (1) ──→ (N) weather_reports
+  │                │
+  │                │
+  │                └──→ (N) report_images (ElementCollection)
+  │                │
+  │                └──→ (1) incident_types
+  │
+  ├──→ (N) weather_alerts
+  │
+  └──→ (N) admin_actions ──→ (1) weather_reports (nullable)
+```
 
-1. **Initial Training**: 
-   - Tạo model với dữ liệu mẫu
-   - Lưu model vào `models/weather_model.pkl`
+**Chi tiết quan hệ:**
 
-2. **Retrain với dữ liệu thực**:
-   - Thu thập dữ liệu lịch sử từ database
-   - Retrain model định kỳ
-   - Cải thiện độ chính xác theo thời gian
+1. **User → WeatherReport (1-N)**
+   - Một user có thể tạo nhiều báo cáo
+   - Foreign key: `weather_reports.user_id` → `users.id`
+   - **Đúng** ✓
 
-### 8.3. Prediction Process
+2. **IncidentType → WeatherReport (1-N)**
+   - Một loại sự cố có thể có nhiều báo cáo
+   - Foreign key: `weather_reports.incident_type_id` → `incident_types.id`
+   - **Đúng** ✓
 
-1. Nhận thời tiết hiện tại
-2. Generate features cho các giờ tiếp theo
-3. Predict nhiệt độ
-4. Điều chỉnh theo mùa và thời gian trong ngày
-5. Dự đoán các yếu tố khác (độ ẩm, gió, loại thời tiết)
+3. **WeatherReport → report_images (1-N)**
+   - Một báo cáo có nhiều hình ảnh
+   - Sử dụng `@ElementCollection` (không phải entity riêng)
+   - Bảng: `report_images` với `report_id` và `image_url`
+   - **Đúng** ✓
 
-### 8.4. API Endpoints
+4. **User → WeatherAlert (1-N)**
+   - Một admin có thể tạo nhiều cảnh báo
+   - Foreign key: `weather_alerts.admin_id` → `users.id`
+   - **Thiếu trong tài liệu** - Cần bổ sung
 
-- `POST /predict`: Dự đoán thời tiết (1-168 giờ)
-- `POST /retrain`: Retrain model với dữ liệu mới
-- `GET /health`: Health check
+5. **User → AdminAction (1-N)**
+   - Một admin có nhiều hành động
+   - Foreign key: `admin_actions.admin_id` → `users.id`
+   - **Thiếu trong tài liệu** - Cần bổ sung
 
----
+6. **WeatherReport → AdminAction (1-N, nullable)**
+   - Một báo cáo có thể có nhiều hành động admin (duyệt, từ chối, ...)
+   - Foreign key: `admin_actions.report_id` → `weather_reports.id` (nullable)
+   - Có `report_id_backup` để lưu ID ngay cả khi report bị xóa
+   - **Thiếu trong tài liệu** - Cần bổ sung
 
-## 9. BẢO MẬT
+7. **WeatherData** - Độc lập
+   - Không có quan hệ với bảng khác
+   - Lưu dữ liệu thời tiết theo thời gian và vị trí
+   - **Đúng** ✓
 
-### 9.1. Authentication
-- JWT Token-based authentication
-- Password encryption (BCrypt)
-- Token expiration
+### 6.3. Đánh giá thiết kế
 
-### 9.2. Authorization
-- Role-based access control (RBAC)
-- Phân quyền USER/ADMIN
-- Secure endpoints
+**Điểm mạnh:**
+- ✅ Phân tách rõ ràng các chức năng (users, reports, alerts, actions)
+- ✅ Quan hệ hợp lý, đảm bảo tính toàn vẹn dữ liệu
+- ✅ Có audit trail (admin_actions) để theo dõi
+- ✅ Hỗ trợ soft delete (report_id_backup trong admin_actions)
 
-### 9.3. Data Validation
-- Input validation
-- SQL injection prevention (JPA)
-- XSS protection
-
-### 9.4. CORS Configuration
-- Cross-origin resource sharing
-- Whitelist domains
-
----
-
-## 10. QUY TRÌNH PHÁT TRIỂN
-
-### 10.1. Planning & Design
-- Phân tích yêu cầu
-- Thiết kế database
-- API design
-- UI/UX mockup
-
-### 10.2. Backend Development
-- Setup Spring Boot project
-- Implement entities & repositories
-- Develop services & controllers
-- Security configuration
-- API testing
-
-### 10.3. Frontend Development
-- Setup React project
-- Component development
-- API integration
-- Map integration
-- State management
-
-### 10.4. Machine Learning Development
-- Tạo Python service
-- Develop prediction model
-- Train và test model
-- Integrate với Spring Boot
-
-### 10.5. Integration & Testing
-- API integration testing
-- End-to-end testing
-- Bug fixing
-- Performance optimization
-
-### 10.6. Deployment
-- Database setup
-- Backend deployment
-- Frontend build & deploy
-- Python service deployment
+**Có cần thêm không?**
+- **Không cần thêm bảng** - Thiết kế hiện tại đã đủ cho các chức năng chính
+- Có thể mở rộng sau: `notifications` (thông báo cho user), `comments` (bình luận trên báo cáo), `favorites` (báo cáo yêu thích)
 
 ---
 
-## 11. KẾT QUẢ ĐẠT ĐƯỢC
+## 7. MACHINE LEARNING
 
-### 11.1. Tính năng hoàn thành
-✅ Hệ thống authentication hoàn chỉnh  
-✅ RESTful API đầy đủ tính năng  
-✅ Giao diện người dùng thân thiện  
-✅ Tích hợp bản đồ tương tác  
+**Model:** Random Forest Regressor
+- **Features:** Month, Hour, Humidity, Pressure, Wind Speed, Cloudiness
+- **Target:** Temperature (°C)
+- **Quy trình:** Thu thập dữ liệu → Train model → Predict (1-168 giờ)
+
+**API:** `POST /predict`, `POST /retrain`, `GET /health`
+
+---
+
+## 8. API BÊN NGOÀI (Tùy chọn)
+
+- **OpenWeatherMap API** (tùy chọn): Lấy dữ liệu thời tiết thực tế, cần API key, có fallback về MockWeatherService
+- **Nominatim (OpenStreetMap) API** (miễn phí): Geocoding (địa điểm → tọa độ), rate limit 1 request/second
+- **ArcGIS Map Server**: Hiển thị bản đồ satellite imagery
+
+## 9. DỮ LIỆU THỜI TIẾT
+
+- **MockWeatherService**: Tự tạo dữ liệu thời tiết (fallback khi không có OpenWeatherMap API)
+- Template theo mùa: Mùa mưa (5-10), Mùa khô (11-4)
+- Tự động map địa điểm → tọa độ từ location_coordinates.json hoặc Nominatim API
+
+---
+
+## 10. BẢO MẬT
+
+- JWT Token authentication
+- BCrypt mã hóa mật khẩu
+- Role-based access control (USER/ADMIN)
+- CORS, Input validation
+
+---
+
+## 11. CÀI ĐẶT
+
+**Yêu cầu:** Java 17+, Node.js 14+, MySQL 8.0+, Python 3.8+ (tùy chọn)
+
+**Thứ tự khởi động:**
+1. MySQL: `CREATE DATABASE weather_db;`
+2. Backend: `cd weather && ./gradlew bootRun` → `http://localhost:8080/api`
+3. Frontend: `cd weather/frontend && npm install && npm start` → `http://localhost:3000`
+4. Python ML: `cd python_ml && pip install -r requirements.txt && python app.py` → `http://localhost:5000`
+
+---
+
+## 12. KẾT QUẢ
+
+✅ Authentication với JWT  
+✅ RESTful API đầy đủ  
+✅ Giao diện React thân thiện  
+✅ Bản đồ tương tác (Leaflet)  
 ✅ Dashboard thống kê  
 ✅ Admin panel  
 ✅ Machine Learning prediction  
 ✅ Tự tạo dữ liệu thời tiết  
-✅ Mapping địa điểm → tọa độ  
 
-### 11.2. Metrics
-- **API endpoints**: 20+
-- **React components**: 15+
-- **Database tables**: 7+
-- **Tính năng chính**: 6 modules
-- **Loại sự cố**: 20+ loại
-- **Địa điểm**: 63 tỉnh, 705 quận, 10,599 xã
+**Metrics:** 20+ API endpoints, 15+ React components, 7 database tables
 
 ---
 
-## 12. HƯỚNG PHÁT TRIỂN TƯƠNG LAI
-
-### 12.1. Mobile App
-- React Native
-- Push notifications
-- Offline mode
-
-### 12.2. Advanced Features
-- Machine Learning cải tiến (LSTM, Transformer)
-- Chat/Forum cộng đồng
-- Email/SMS alerts
-- Weather forecasting AI nâng cao
-
-### 12.3. Performance
-- Redis caching
-- CDN cho static files
-- Database optimization
-- Load balancing
-
-### 12.4. Analytics
-- Advanced reporting
-- Data export
-- Custom dashboards
-- Real-time analytics
-
-### 12.5. Integration
-- Social media sharing
-- Government API integration
-- IoT sensors integration
-
----
-
-## 13. KẾT LUẬN
-
-Hệ thống Cảnh báo Thời tiết là một nền tảng web hiện đại, tích hợp Machine Learning để dự đoán thời tiết và hỗ trợ cộng đồng trong việc báo cáo và ứng phó với các sự cố thời tiết. Hệ thống sử dụng các công nghệ tiên tiến, đảm bảo hiệu suất, bảo mật và khả năng mở rộng.
-
-**Điểm mạnh:**
-- Kiến trúc rõ ràng, dễ bảo trì
-- Tích hợp ML để dự đoán
-- Giao diện thân thiện, dễ sử dụng
-- Bảo mật tốt với JWT
-- Không phụ thuộc API bên ngoài
-
-**Ứng dụng thực tế:**
-- Cảnh báo sớm thiên tai
-- Hỗ trợ cộng đồng ứng phó
-- Thu thập dữ liệu thời tiết
-- Phân tích xu hướng
-
----
-
----
-
-## 14. HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY
-
-### 14.1. Yêu cầu hệ thống
-- Java 17 hoặc cao hơn
-- Node.js 14+ và npm
-- MySQL 8.0+ (đang chạy)
-- Python 3.8+ (cho ML service, tùy chọn)
-
-### 14.2. Cài đặt Database
-
-1. **Khởi động MySQL Server**
-   ```bash
-   # Windows: Kiểm tra service MySQL
-   # Services → MySQL → Start
-   
-   # Hoặc dùng command line
-   net start MySQL80
-   ```
-
-2. **Tạo database**
-   ```sql
-   CREATE DATABASE weather_db;
-   ```
-
-3. **Cấu hình trong `application.properties`**
-   ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/weather_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-   spring.datasource.username=root
-   spring.datasource.password=YOUR_MYSQL_PASSWORD  # ⚠️ QUAN TRỌNG: Điền password MySQL của bạn
-   ```
-
-### 14.3. Chạy Backend
-
-```bash
-cd weather
-./gradlew bootRun
-# Hoặc trên Windows:
-gradlew.bat bootRun
-```
-
-Backend sẽ chạy tại: `http://localhost:8080/api`
-
-**Lưu ý**: Nếu gặp lỗi "Connection refused":
-- Kiểm tra MySQL đang chạy: `net start MySQL80` (Windows)
-- Kiểm tra password trong `application.properties`
-- Kiểm tra port 3306 có bị chiếm không
-
-### 14.4. Chạy Frontend
-
-```bash
-cd weather/frontend
-npm install
-npm start
-```
-
-Frontend sẽ chạy tại: `http://localhost:3000`
-
-### 14.5. Chạy Python ML Service (Tùy chọn)
-
-```bash
-cd python_ml
-pip install -r requirements.txt
-python app.py
-```
-
-Python service sẽ chạy tại: `http://localhost:5000`
-
-**Lưu ý**: Nếu không chạy Python service, tính năng dự đoán thời tiết sẽ không hoạt động, nhưng các tính năng khác vẫn bình thường.
-
-### 14.6. Thứ tự khởi động
-
-1. **MySQL** (bắt buộc)
-2. **Backend Spring Boot** (bắt buộc)
-3. **Frontend React** (bắt buộc)
-4. **Python ML Service** (tùy chọn)
-
----
-
-**Ngày tạo**: 2024  
-**Phiên bản**: 1.0  
-**Tác giả**: [Tên nhóm]
-
+**Ngày tạo**: 2024 | **Phiên bản**: 1.0
