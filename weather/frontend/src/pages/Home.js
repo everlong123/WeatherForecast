@@ -151,27 +151,28 @@ const Home = () => {
               </div>
               
               <div className="weather-main-content">
-                <div className="weather-icon-large">
-                  {getWeatherIcon(currentWeather.mainWeather)}
-                </div>
-                <div className="weather-info-main">
-                  <div className="temperature">
-                    <span className="temp-value">{Math.round(currentWeather.temperature)}°C</span>
-                    <span className="temp-feels">
-                      Cảm giác như {Math.round(currentWeather.feelsLike || currentWeather.temperature)}°C
-                    </span>
+                <div className="weather-left-group">
+                  <div className="weather-icon-large">
+                    {getWeatherIcon(currentWeather.mainWeather)}
                   </div>
-                  <p className="weather-desc">{currentWeather.description || currentWeather.mainWeather || 'N/A'}</p>
-                  {currentWeather.recordedAt && (
-                    <p className="weather-updated">
-                      Cập nhật: {new Date(currentWeather.recordedAt).toLocaleString('vi-VN')}
-                    </p>
-                  )}
+                  <div className="weather-info-main">
+                    <div className="temperature">
+                      <span className="temp-value">{Math.round(currentWeather.temperature)}°C</span>
+                      <span className="temp-feels">
+                        Cảm giác như {Math.round(currentWeather.feelsLike || currentWeather.temperature)}°C
+                      </span>
+                    </div>
+                    <p className="weather-desc">{currentWeather.description || currentWeather.mainWeather || 'N/A'}</p>
+                    {currentWeather.recordedAt && (
+                      <p className="weather-updated">
+                        Cập nhật: {new Date(currentWeather.recordedAt).toLocaleString('vi-VN')}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-              
-              <div className="weather-details-section">
-                <div className="weather-details grid grid-4">
+                
+                <div className="weather-details-section">
+                  <div className="weather-details grid grid-3">
                   <div className="detail-item">
                     <FiDroplet className="detail-icon" /> 
                     <div>
@@ -234,6 +235,7 @@ const Home = () => {
                       )}
                     </>
                   )}
+                  </div>
                 </div>
               </div>
             </div>
