@@ -1,14 +1,11 @@
 package com.example.weather.controller;
 
-import com.example.weather.dto.AdminActionDTO;
 import com.example.weather.dto.UserDTO;
 import com.example.weather.dto.WeatherAlertDTO;
-import com.example.weather.entity.AdminAction;
 import com.example.weather.entity.IncidentType;
 import com.example.weather.entity.User;
 import com.example.weather.entity.WeatherAlert;
 import com.example.weather.entity.WeatherReport;
-import com.example.weather.repository.AdminActionRepository;
 import com.example.weather.repository.IncidentTypeRepository;
 import com.example.weather.repository.UserRepository;
 import com.example.weather.repository.WeatherAlertRepository;
@@ -21,8 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -42,16 +37,10 @@ public class AdminController {
     private WeatherAlertRepository alertRepository;
 
     @Autowired
-    private AdminActionRepository adminActionRepository;
-
-    @Autowired
     private IncidentTypeRepository incidentTypeRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-    
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @PutMapping("/reports/{id}/approve")
     public ResponseEntity<WeatherReport> approveReport(
@@ -60,18 +49,9 @@ public class AdminController {
             Authentication authentication) {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
-        User admin = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
 
         report.setStatus(WeatherReport.ReportStatus.APPROVED);
         report = reportRepository.save(report);
-
-        AdminAction action = new AdminAction();
-        action.setReport(report);
-        action.setAdmin(admin);
-        action.setActionType(AdminAction.ActionType.APPROVE);
-        action.setComment(comment);
-        adminActionRepository.save(action);
 
         return ResponseEntity.ok(report);
     }
@@ -83,18 +63,9 @@ public class AdminController {
             Authentication authentication) {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
-        User admin = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
 
         report.setStatus(WeatherReport.ReportStatus.REJECTED);
         report = reportRepository.save(report);
-
-        AdminAction action = new AdminAction();
-        action.setReport(report);
-        action.setAdmin(admin);
-        action.setActionType(AdminAction.ActionType.REJECT);
-        action.setComment(comment);
-        adminActionRepository.save(action);
 
         return ResponseEntity.ok(report);
     }
@@ -106,18 +77,9 @@ public class AdminController {
             Authentication authentication) {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
-        User admin = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
 
         report.setStatus(WeatherReport.ReportStatus.RESOLVED);
         report = reportRepository.save(report);
-
-        AdminAction action = new AdminAction();
-        action.setReport(report);
-        action.setAdmin(admin);
-        action.setActionType(AdminAction.ActionType.RESOLVE);
-        action.setComment(comment);
-        adminActionRepository.save(action);
 
         return ResponseEntity.ok(report);
     }
@@ -162,34 +124,8 @@ public class AdminController {
     public ResponseEntity<Void> deleteReport(@PathVariable Long id, Authentication authentication) {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
-        User admin = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-        // Lưu reportId trước khi xóa
-        Long reportId = report.getId();
-        
-        // Tạo AdminAction với report = null để tránh constraint violation khi xóa
-        // Chỉ lưu reportIdBackup để có thể truy vết sau này
-        AdminAction action = new AdminAction();
-        action.setReport(null); // Set null để tránh reference đến entity sẽ bị xóa
-        action.setAdmin(admin);
-        action.setActionType(AdminAction.ActionType.DELETE);
-        action.setComment("Report deleted by admin");
-        action.setReportIdBackup(reportId); // Lưu ID để truy vết
-        
-        // Lưu AdminAction trước khi xóa report
-        adminActionRepository.saveAndFlush(action);
-
-        // Update tất cả AdminAction có report_id = reportId để set report_id = NULL
-        // Điều này tránh foreign key constraint violation
-        entityManager.createQuery(
-            "UPDATE AdminAction a SET a.report = NULL WHERE a.report.id = :reportId"
-        ).setParameter("reportId", reportId).executeUpdate();
-        entityManager.flush();
-
-        // Xóa report sau khi đã update tất cả AdminAction
         reportRepository.delete(report);
-        reportRepository.flush(); // Force flush để xử lý ngay
         
         return ResponseEntity.noContent().build();
     }
@@ -353,15 +289,6 @@ public class AdminController {
             "totalAlerts", totalAlerts
         );
         return ResponseEntity.ok(stats);
-    }
-
-    @GetMapping("/actions")
-    public ResponseEntity<List<AdminActionDTO>> getAdminActions() {
-        List<AdminAction> actions = adminActionRepository.findAll();
-        List<AdminActionDTO> actionDTOs = actions.stream()
-                .map(AdminActionDTO::fromEntity)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(actionDTOs);
     }
 
     // Incident Types

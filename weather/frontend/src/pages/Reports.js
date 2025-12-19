@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { reportAPI, incidentTypeAPI, locationAPI } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock, FiCheck, FiX } from 'react-icons/fi';
@@ -101,7 +101,7 @@ const Reports = () => {
   const [mapCenter, setMapCenter] = useState([16.0583, 108.2772]);
   const [mapZoom, setMapZoom] = useState(7);
   const [isSyncingFromCoordinates, setIsSyncingFromCoordinates] = useState(false);
-  const [lastNominatimRequest, setLastNominatimRequest] = useState(0);
+  const lastNominatimRequestRef = useRef(0);
 
   useEffect(() => {
     fetchData();
@@ -174,31 +174,30 @@ const Reports = () => {
   const handleDistrictChange = useCallback(async (e) => {
     const district = e.target.value;
     setIsSyncingFromCoordinates(true);
+    
+    // Lấy city từ formData hiện tại trước khi update
     setFormData(prev => {
-      if (district && prev.city) {
-        // Capture giá trị trước khi vào setTimeout
-        const city = prev.city;
+      const city = prev.city;
+      
+      // Cập nhật district và reset ward ngay lập tức
+      const newData = { ...prev, district, ward: '' };
+      
+      if (district && city) {
         getWards(city, district).then(setWards);
+        
         // Delay để tránh rate limit của Nominatim (1 request/second)
         const now = Date.now();
-        const timeSinceLastRequest = now - lastNominatimRequest;
+        const timeSinceLastRequest = now - lastNominatimRequestRef.current;
         const delay = timeSinceLastRequest < 1100 ? 1100 - timeSinceLastRequest : 0;
         
         setTimeout(() => {
-          setLastNominatimRequest(Date.now());
-          // Tự động lấy tọa độ khi chọn district - sử dụng giá trị đã capture
+          lastNominatimRequestRef.current = Date.now();
+          // Tự động lấy tọa độ khi chọn district
           locationAPI.getCoordinates(city, district, null).then(response => {
-            console.log('District coordinates response:', response);
-            console.log('Response data:', response.data);
-            console.log('Response data keys:', response.data ? Object.keys(response.data) : 'null');
-            console.log('Response data lat:', response.data?.lat);
-            console.log('Response data lng:', response.data?.lng);
-            
             // Chỉ set tọa độ nếu có kết quả hợp lệ
             if (response.data && typeof response.data.lat === 'number' && typeof response.data.lng === 'number') {
               const lat = response.data.lat;
               const lng = response.data.lng;
-              console.log('Setting coordinates:', lat, lng);
               // Kiểm tra xem có phải tọa độ mặc định không (16.0583, 108.2772)
               const isDefaultCoords = Math.abs(lat - 16.0583) < 0.0001 && Math.abs(lng - 108.2772) < 0.0001;
               if (!isDefaultCoords) {
@@ -210,11 +209,7 @@ const Reports = () => {
                 // Cập nhật map center
                 setMapCenter([lat, lng]);
                 setMapZoom(13);
-              } else {
-                console.log('Skipping default coordinates');
               }
-            } else {
-              console.log('No valid coordinates in response. Data:', response.data);
             }
             setIsSyncingFromCoordinates(false);
           }).catch((error) => {
@@ -225,39 +220,44 @@ const Reports = () => {
       } else {
         setIsSyncingFromCoordinates(false);
       }
-      return { ...prev, district, ward: '', latitude: null, longitude: null };
+      
+      if (!district) {
+        // Nếu không chọn district, reset tọa độ
+        newData.latitude = null;
+        newData.longitude = null;
+      }
+      
+      return newData;
     });
     setWards([]);
-  }, [lastNominatimRequest]);
+  }, []);
 
   const handleWardChange = useCallback(async (e) => {
     const ward = e.target.value;
     setIsSyncingFromCoordinates(true);
+    
+    // Lấy city và district từ formData hiện tại trước khi update
     setFormData(prev => {
-      if (ward && prev.city && prev.district) {
-        // Capture giá trị trước khi vào setTimeout
-        const city = prev.city;
-        const district = prev.district;
+      const city = prev.city;
+      const district = prev.district;
+      
+      // Cập nhật ward ngay lập tức
+      const newData = { ...prev, ward };
+      
+      if (ward && city && district) {
         // Delay để tránh rate limit của Nominatim (1 request/second)
         const now = Date.now();
-        const timeSinceLastRequest = now - lastNominatimRequest;
+        const timeSinceLastRequest = now - lastNominatimRequestRef.current;
         const delay = timeSinceLastRequest < 1100 ? 1100 - timeSinceLastRequest : 0;
         
         setTimeout(() => {
-          setLastNominatimRequest(Date.now());
-          // Tự động lấy tọa độ khi chọn ward - sử dụng giá trị đã capture
+          lastNominatimRequestRef.current = Date.now();
+          // Tự động lấy tọa độ khi chọn ward
           locationAPI.getCoordinates(city, district, ward).then(response => {
-            console.log('Ward coordinates response:', response);
-            console.log('Response data:', response.data);
-            console.log('Response data keys:', response.data ? Object.keys(response.data) : 'null');
-            console.log('Response data lat:', response.data?.lat);
-            console.log('Response data lng:', response.data?.lng);
-            
             // Chỉ set tọa độ nếu có kết quả hợp lệ
             if (response.data && typeof response.data.lat === 'number' && typeof response.data.lng === 'number') {
               const lat = response.data.lat;
               const lng = response.data.lng;
-              console.log('Setting coordinates:', lat, lng);
               // Kiểm tra xem có phải tọa độ mặc định không (16.0583, 108.2772)
               const isDefaultCoords = Math.abs(lat - 16.0583) < 0.0001 && Math.abs(lng - 108.2772) < 0.0001;
               if (!isDefaultCoords) {
@@ -268,12 +268,8 @@ const Reports = () => {
                 }));
                 // Cập nhật map center
                 setMapCenter([lat, lng]);
-                setMapZoom(13);
-              } else {
-                console.log('Skipping default coordinates');
+                setMapZoom(15);
               }
-            } else {
-              console.log('No valid coordinates in response. Data:', response.data);
             }
             setIsSyncingFromCoordinates(false);
           }).catch((error) => {
@@ -284,17 +280,25 @@ const Reports = () => {
       } else {
         setIsSyncingFromCoordinates(false);
       }
-      return { ...prev, ward, latitude: null, longitude: null };
+      
+      return newData;
     });
-  }, [lastNominatimRequest]);
+  }, []);
 
-  // Cập nhật map center khi tọa độ thay đổi từ selector (chỉ khi không đang sync từ map click)
+  // Cập nhật map center khi tọa độ thay đổi từ input (không phải từ map click)
   useEffect(() => {
-    if (formData.latitude && formData.longitude && showForm && isSyncingFromCoordinates) {
-      setMapCenter([formData.latitude, formData.longitude]);
-      setMapZoom(13);
+    if (formData.latitude && formData.longitude && showForm && !isSyncingFromCoordinates) {
+      // Kiểm tra xem map center có khác với tọa độ hiện tại không
+      const newCenter = [formData.latitude, formData.longitude];
+      const isCenterDifferent = Math.abs(mapCenter[0] - newCenter[0]) > 0.0001 || 
+                                Math.abs(mapCenter[1] - newCenter[1]) > 0.0001;
+      
+      if (isCenterDifferent) {
+        setMapCenter(newCenter);
+        setMapZoom(13);
+      }
     }
-  }, [formData.latitude, formData.longitude, showForm, isSyncingFromCoordinates]);
+  }, [formData.latitude, formData.longitude, showForm, isSyncingFromCoordinates, mapCenter]);
 
   // Tự động lấy địa điểm từ tọa độ khi lat/lng thay đổi (chỉ khi không đang sync từ dropdown)
   useEffect(() => {
@@ -755,14 +759,16 @@ const Reports = () => {
                       const val = e.target.value;
                       if (val === '' || (!isNaN(val) && val >= -90 && val <= 90)) {
                         const lat = val ? parseFloat(val) : null;
+                        setIsSyncingFromCoordinates(false); // Đang nhập từ input, không phải từ dropdown
                         setFormData(prev => ({ ...prev, latitude: lat }));
-                        // Cập nhật map center
+                        
+                        // Cập nhật map center nếu có cả lat và lng
                         if (lat && formData.longitude) {
                           setMapCenter([lat, formData.longitude]);
                           setMapZoom(13);
-                        }
-                        // Tự động sync location nếu có cả lat và lng
-                        if (lat && formData.longitude) {
+                          
+                          // Tự động sync location nếu có cả lat và lng
+                          setIsSyncingFromCoordinates(true);
                           locationAPI.getLocationFromCoordinates(lat, formData.longitude)
                             .then(response => {
                               if (response.data && Object.keys(response.data).length > 0) {
@@ -775,8 +781,8 @@ const Reports = () => {
                                   }
                                   if (location.district) {
                                     updates.district = location.district;
-                                    if (updates.city) {
-                                      getWards(updates.city, location.district).then(setWards);
+                                    if (updates.city || location.city) {
+                                      getWards(updates.city || location.city, location.district).then(setWards);
                                     }
                                   }
                                   if (location.ward) {
@@ -785,8 +791,16 @@ const Reports = () => {
                                   return updates;
                                 });
                               }
+                              setIsSyncingFromCoordinates(false);
                             })
-                            .catch(err => console.error('Error reverse geocoding:', err));
+                            .catch(err => {
+                              console.error('Error reverse geocoding:', err);
+                              setIsSyncingFromCoordinates(false);
+                            });
+                        } else if (!lat) {
+                          // Nếu xóa lat, cũng cập nhật map về center mặc định
+                          setMapCenter([16.0583, 108.2772]);
+                          setMapZoom(7);
                         }
                       }
                     }}
@@ -801,14 +815,16 @@ const Reports = () => {
                       const val = e.target.value;
                       if (val === '' || (!isNaN(val) && val >= -180 && val <= 180)) {
                         const lng = val ? parseFloat(val) : null;
+                        setIsSyncingFromCoordinates(false); // Đang nhập từ input, không phải từ dropdown
                         setFormData(prev => ({ ...prev, longitude: lng }));
-                        // Cập nhật map center
+                        
+                        // Cập nhật map center nếu có cả lat và lng
                         if (lng && formData.latitude) {
                           setMapCenter([formData.latitude, lng]);
                           setMapZoom(13);
-                        }
-                        // Tự động sync location nếu có cả lat và lng
-                        if (lng && formData.latitude) {
+                          
+                          // Tự động sync location nếu có cả lat và lng
+                          setIsSyncingFromCoordinates(true);
                           locationAPI.getLocationFromCoordinates(formData.latitude, lng)
                             .then(response => {
                               if (response.data && Object.keys(response.data).length > 0) {
@@ -821,8 +837,8 @@ const Reports = () => {
                                   }
                                   if (location.district) {
                                     updates.district = location.district;
-                                    if (updates.city) {
-                                      getWards(updates.city, location.district).then(setWards);
+                                    if (updates.city || location.city) {
+                                      getWards(updates.city || location.city, location.district).then(setWards);
                                     }
                                   }
                                   if (location.ward) {
@@ -831,8 +847,16 @@ const Reports = () => {
                                   return updates;
                                 });
                               }
+                              setIsSyncingFromCoordinates(false);
                             })
-                            .catch(err => console.error('Error reverse geocoding:', err));
+                            .catch(err => {
+                              console.error('Error reverse geocoding:', err);
+                              setIsSyncingFromCoordinates(false);
+                            });
+                        } else if (!lng) {
+                          // Nếu xóa lng, cũng cập nhật map về center mặc định
+                          setMapCenter([16.0583, 108.2772]);
+                          setMapZoom(7);
                         }
                       }
                     }}

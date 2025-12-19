@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { weatherAPI, reportAPI } from '../utils/api';
-import { FiMapPin, FiAlertCircle, FiTrendingUp, FiCloud, FiSun, FiDroplet } from 'react-icons/fi';
+import { FiMapPin, FiAlertCircle, FiTrendingUp, FiCloud, FiSun, FiDroplet, FiClock } from 'react-icons/fi';
 import './Home.css';
 
 const Home = () => {
@@ -9,6 +9,7 @@ const Home = () => {
   const [recentReports, setRecentReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     // Get user location
@@ -29,6 +30,15 @@ const Home = () => {
     }
 
     fetchRecentReports();
+  }, []);
+
+  // Update clock every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
   const fetchWeather = async (lat, lng) => {
@@ -103,7 +113,16 @@ const Home = () => {
                   {getWeatherIcon(currentWeather.mainWeather)}
                 </div>
                 <div className="weather-info">
-                  <h2>{currentWeather.city || 'Vị trí hiện tại'}</h2>
+                  <div className="weather-title-row">
+                    <h2>{currentWeather.city || 'Vị trí hiện tại'}</h2>
+                    <div className="real-time-clock">
+                      <FiClock className="clock-icon" />
+                      <div className="clock-time">
+                        <span className="clock-hours">{currentTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                        <span className="clock-date">{currentTime.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                      </div>
+                    </div>
+                  </div>
                   <div className="temperature">
                     <span className="temp-value">{Math.round(currentWeather.temperature)}°C</span>
                     <span className="temp-feels">

@@ -30,8 +30,12 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // Đợi Hibernate tạo xong các bảng với retry logic
+        waitForTables();
+        
         // Chỉ seed dữ liệu nếu database trống
-        if (incidentTypeRepository.count() == 0) {
+        try {
+            if (incidentTypeRepository.count() == 0) {
             List<IncidentType> defaultTypes = Arrays.asList(
                 // Mưa và Lũ lụt
                 createIncidentType("Mưa lớn", "Mưa với cường độ cao, lượng mưa trên 50mm/giờ", "🌧️", "#4A90E2"),
@@ -69,21 +73,31 @@ public class DataInitializer implements CommandLineRunner {
                 createIncidentType("Nước sinh hoạt thiếu", "Thiếu nước do hạn hán hoặc lũ lụt", "🚰", "#3498DB")
             );
             
-            incidentTypeRepository.saveAll(defaultTypes);
-            System.out.println("Đã khởi tạo " + defaultTypes.size() + " loại sự cố mặc định vào database");
+                incidentTypeRepository.saveAll(defaultTypes);
+                System.out.println("Đã khởi tạo " + defaultTypes.size() + " loại sự cố mặc định vào database");
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi khi kiểm tra/khởi tạo incident types: " + e.getMessage());
+            // Nếu bảng chưa tồn tại, bỏ qua và chờ lần chạy sau
+            return;
         }
 
         // Tạo admin user nếu chưa có
-        if (!userRepository.findByUsername("admin").isPresent()) {
+        try {
+            if (!userRepository.findByUsername("admin").isPresent()) {
             User admin = new User();
             admin.setUsername("admin");
             admin.setEmail("admin@weather.com");
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setFullName("Administrator");
             admin.setRole(User.Role.ADMIN);
-            admin.setEnabled(true);
-            userRepository.save(admin);
-            System.out.println("Đã tạo admin user: username=admin, password=admin123");
+                admin.setEnabled(true);
+                userRepository.save(admin);
+                System.out.println("Đã tạo admin user: username=admin, password=admin123");
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tạo admin user: " + e.getMessage());
+            return;
         }
 
         // Seed dữ liệu thời tiết mẫu cho các thành phố lớn
@@ -131,5 +145,40 @@ public class DataInitializer implements CommandLineRunner {
         type.setIcon(icon);
         type.setColor(color);
         return type;
+    }
+    
+    /**
+     * Đợi Hibernate tạo xong các bảng với retry logic
+     */
+    private void waitForTables() {
+        int maxRetries = 30; // Tăng lên 30 lần
+        int retryDelay = 2000; // Tăng lên 2 giây
+        
+        System.out.println("Waiting for Hibernate to create database tables...");
+        
+        for (int i = 0; i < maxRetries; i++) {
+            try {
+                // Thử query bảng users để kiểm tra xem đã tồn tại chưa
+                userRepository.count();
+                // Kiểm tra thêm bảng incident_types
+                incidentTypeRepository.count();
+                // Nếu không có exception, bảng đã tồn tại
+                System.out.println("✓ Database tables are ready");
+                return;
+            } catch (Exception e) {
+                if (i < maxRetries - 1) {
+                    System.out.println("Waiting for database tables... (" + (i + 1) + "/" + maxRetries + ") - " + e.getMessage());
+                    try {
+                        Thread.sleep(retryDelay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                } else {
+                    System.err.println("✗ Failed to wait for database tables after " + maxRetries + " retries: " + e.getMessage());
+                    System.err.println("Please ensure Hibernate has created all tables before DataInitializer runs.");
+                }
+            }
+        }
     }
 }

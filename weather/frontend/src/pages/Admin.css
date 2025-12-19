@@ -1,6 +1,6 @@
 .admin-page {
   min-height: 100vh;
-  padding: 40px 0;
+  padding: 100px 0 40px 0;
   background: var(--gradient-navy);
 }
 

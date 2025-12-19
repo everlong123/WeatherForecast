@@ -114,80 +114,101 @@ public class NominatimService {
     /**
      * Lấy tọa độ (lat/lng) từ tên địa điểm bằng Nominatim Geocoding API
      * Thử nhiều format khác nhau để tăng khả năng tìm thấy
+     * Ưu tiên format đầy đủ (có tiền tố) vì đó là format trong dữ liệu
      */
     public Map<String, Double> getCoordinatesFromLocation(String city, String district, String ward) {
         if (!enabled) {
             return null;
         }
         
-        // Chuẩn hóa tên địa điểm
+        // Chuẩn hóa tên địa điểm (bỏ tiền tố)
         String normalizedCity = city != null ? normalizeLocation(city) : null;
         String normalizedDistrict = district != null ? normalizeLocation(district) : null;
         String normalizedWard = ward != null ? normalizeLocation(ward) : null;
         
-        // Danh sách các query format để thử (theo thứ tự ưu tiên)
+        // Danh sách các query format để thử (theo thứ tự ưu tiên - format đầy đủ trước)
         java.util.List<String> queries = new java.util.ArrayList<>();
         
-        // Nếu có đầy đủ ward, district, city - thử nhiều format cho ward
+        // Nếu có đầy đủ ward, district, city - ưu tiên format đầy đủ (có tiền tố)
         if (normalizedWard != null && !normalizedWard.isEmpty() && 
             normalizedDistrict != null && !normalizedDistrict.isEmpty() && 
             normalizedCity != null && !normalizedCity.isEmpty()) {
-            // Format 1: Ward, District, City, Vietnam (chuẩn hóa)
-            queries.add(normalizedWard + ", " + normalizedDistrict + ", " + normalizedCity + ", Vietnam");
-            // Format 2: Ward, District, City (không có Vietnam)
-            queries.add(normalizedWard + ", " + normalizedDistrict + ", " + normalizedCity);
-            // Format 3: Xã/Phường Ward, District, City, Vietnam (với tiền tố ward)
-            if (ward != null && !ward.isEmpty()) {
-                queries.add(ward + ", " + normalizedDistrict + ", " + normalizedCity + ", Vietnam");
+            
+            // Format 1: Ward đầy đủ (có tiền tố), District đầy đủ, City đầy đủ, Vietnam (ưu tiên nhất)
+            if (ward != null && !ward.isEmpty() && district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
                 queries.add(ward + ", " + district + ", " + city + ", Vietnam");
             }
-            // Format 4: Ward, Huyện District, Tỉnh City, Vietnam (đầy đủ tiền tố)
+            
+            // Format 2: Ward đầy đủ, District đầy đủ, City chuẩn hóa, Vietnam
+            if (ward != null && !ward.isEmpty() && district != null && !district.isEmpty()) {
+                queries.add(ward + ", " + district + ", " + normalizedCity + ", Vietnam");
+            }
+            
+            // Format 3: Ward chuẩn hóa, District đầy đủ, City đầy đủ, Vietnam
             if (district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
                 queries.add(normalizedWard + ", " + district + ", " + city + ", Vietnam");
             }
-            // Format 5: Thử chỉ với Ward và District (không có City)
+            
+            // Format 4: Ward đầy đủ, District chuẩn hóa, City chuẩn hóa, Vietnam
+            if (ward != null && !ward.isEmpty()) {
+                queries.add(ward + ", " + normalizedDistrict + ", " + normalizedCity + ", Vietnam");
+            }
+            
+            // Format 5: Ward chuẩn hóa, District chuẩn hóa, City chuẩn hóa, Vietnam
+            queries.add(normalizedWard + ", " + normalizedDistrict + ", " + normalizedCity + ", Vietnam");
+            
+            // Format 6: Ward chuẩn hóa, District chuẩn hóa, City chuẩn hóa (không có Vietnam)
+            queries.add(normalizedWard + ", " + normalizedDistrict + ", " + normalizedCity);
+            
+            // Format 7: Ward và District (không có City)
             queries.add(normalizedWard + ", " + normalizedDistrict + ", Vietnam");
-            queries.add(normalizedWard + ", " + normalizedDistrict);
-            // Format 6: Thử với ward có tiền tố và district
             if (ward != null && !ward.isEmpty()) {
                 queries.add(ward + ", " + normalizedDistrict + ", Vietnam");
             }
-            // Format 7: Fallback về District, City nếu không tìm thấy với ward
+            
+            // Format 8: Fallback về District, City nếu không tìm thấy với ward
             queries.add(normalizedDistrict + ", " + normalizedCity + ", Vietnam");
+            if (district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
+                queries.add(district + ", " + city + ", Vietnam");
+            }
         }
         
         // Nếu có district và city (không có ward hoặc ward không tìm thấy)
         if (normalizedDistrict != null && !normalizedDistrict.isEmpty() && 
             normalizedCity != null && !normalizedCity.isEmpty()) {
-            // Chỉ thêm nếu chưa có trong list (tránh duplicate)
-            String districtCityQuery = normalizedDistrict + ", " + normalizedCity + ", Vietnam";
-            if (!queries.contains(districtCityQuery)) {
-                queries.add(districtCityQuery);
-            }
-            queries.add(normalizedDistrict + ", " + normalizedCity);
-            // Thử với tên đầy đủ (có tiền tố)
+            
+            // Ưu tiên format đầy đủ
             if (district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
                 String fullDistrictCityQuery = district + ", " + city + ", Vietnam";
                 if (!queries.contains(fullDistrictCityQuery)) {
                     queries.add(fullDistrictCityQuery);
                 }
             }
+            
+            // Format chuẩn hóa
+            String districtCityQuery = normalizedDistrict + ", " + normalizedCity + ", Vietnam";
+            if (!queries.contains(districtCityQuery)) {
+                queries.add(districtCityQuery);
+            }
+            queries.add(normalizedDistrict + ", " + normalizedCity);
         }
         
         // Nếu chỉ có city (fallback cuối cùng)
         if (normalizedCity != null && !normalizedCity.isEmpty()) {
-            String cityQuery = normalizedCity + ", Vietnam";
-            if (!queries.contains(cityQuery)) {
-                queries.add(cityQuery);
-            }
-            queries.add(normalizedCity);
-            // Thử với tên đầy đủ
+            // Ưu tiên format đầy đủ
             if (city != null && !city.isEmpty()) {
                 String fullCityQuery = city + ", Vietnam";
                 if (!queries.contains(fullCityQuery)) {
                     queries.add(fullCityQuery);
                 }
             }
+            
+            // Format chuẩn hóa
+            String cityQuery = normalizedCity + ", Vietnam";
+            if (!queries.contains(cityQuery)) {
+                queries.add(cityQuery);
+            }
+            queries.add(normalizedCity);
         }
         
         // Thử từng query cho đến khi tìm thấy
