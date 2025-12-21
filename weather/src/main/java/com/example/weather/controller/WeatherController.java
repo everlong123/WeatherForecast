@@ -97,25 +97,40 @@ public class WeatherController {
         return ResponseEntity.ok(weather);
     }
 
+    /**
+     * Dự đoán thời tiết sử dụng ML
+     * 
+     * LƯU Ý: User chỉ cần nhập địa điểm (lat/lng), KHÔNG cần nhập thông số thời tiết.
+     * Backend sẽ TỰ ĐỘNG lấy weather data từ API/Database và gửi vào ML service.
+     * 
+     * Flow:
+     * 1. User nhập lat/lng (hoặc địa điểm)
+     * 2. Backend tự động lấy weather data từ OpenWeatherMap API hoặc Database
+     * 3. Backend gửi weather data (temperature, humidity, pressure, windSpeed, cloudiness...) vào ML service
+     * 4. ML service dự đoán và trả về kết quả
+     */
     @GetMapping("/forecast")
     public ResponseEntity<List<Map<String, Object>>> getWeatherForecast(
-            @RequestParam Double lat,
-            @RequestParam Double lng,
+            @RequestParam Double lat,  // User chỉ nhập địa điểm
+            @RequestParam Double lng,  // User chỉ nhập địa điểm
             @RequestParam(defaultValue = "24") int hoursAhead) {
-        // Lấy thời tiết hiện tại
+        
+        // BƯỚC 1: Tự động lấy weather data từ database (nếu có)
         WeatherDataDTO currentWeather = weatherDataService.getCurrentWeather(lat, lng);
         
-        // Nếu không có, thử lấy từ OpenWeatherMap API
+        // BƯỚC 2: Nếu không có trong DB, TỰ ĐỘNG lấy từ OpenWeatherMap API
+        // API sẽ trả về đầy đủ: temperature, humidity, pressure, windSpeed, cloudiness...
         if (currentWeather == null && openWeatherService != null && openWeatherService.isAvailable()) {
             currentWeather = openWeatherService.getCurrentWeather(lat, lng, null, null, null);
         }
         
-        // Nếu vẫn không có, tạo dữ liệu giả (fallback)
+        // BƯỚC 3: Nếu API không có, dùng mock data (fallback)
         if (currentWeather == null) {
             currentWeather = mockWeatherService.generateWeatherData(lat, lng, null, null, null);
         }
         
-        // Dự đoán thời tiết
+        // BƯỚC 4: Gửi weather data (đã có đầy đủ từ API/DB) vào ML service để dự đoán
+        // currentWeather đã có: temperature, humidity, pressure, windSpeed, cloudiness...
         List<Map<String, Object>> predictions = predictionService.predictWeather(currentWeather, hoursAhead);
         
         if (predictions == null) {

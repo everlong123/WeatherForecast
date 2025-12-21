@@ -52,3 +52,15 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// Cấu hình encoding UTF-8 cho console output
+tasks.named('bootRun') {
+	// Đảm bảo console output sử dụng UTF-8
+	// Lưu ý: Windows console có thể vẫn hiển thị sai, nhưng điều này chỉ ảnh hưởng đến hiển thị, không ảnh hưởng đến functionality
+	jvmArgs = [
+		'-Dfile.encoding=UTF-8',
+		'-Dconsole.encoding=UTF-8',
+		'-Duser.language=en',
+		'-Duser.country=US'
+	]
+}

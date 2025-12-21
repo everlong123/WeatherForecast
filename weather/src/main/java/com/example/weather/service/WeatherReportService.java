@@ -8,6 +8,7 @@ import com.example.weather.repository.IncidentTypeRepository;
 import com.example.weather.repository.UserRepository;
 import com.example.weather.repository.WeatherReportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -31,6 +32,9 @@ public class WeatherReportService {
     
     @Autowired
     private NominatimService nominatimService;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<WeatherReportDTO> getAllReports() {
         return reportRepository.findAll().stream()
@@ -53,8 +57,17 @@ public class WeatherReportService {
     }
 
     public WeatherReportDTO createReport(WeatherReportDTO dto, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // Nếu user chưa tồn tại (ví dụ "guest"), tạo mới user đó
+        User user = userRepository.findByUsername(username).orElseGet(() -> {
+            User newUser = new User();
+            newUser.setUsername(username);
+            newUser.setEmail(username + "@guest.local");
+            newUser.setPassword(passwordEncoder.encode("guest123")); // Password mặc định, không quan trọng vì không dùng để login
+            newUser.setRole(com.example.weather.entity.User.Role.USER);
+            newUser.setFullName(username.equals("guest") ? "Khách" : username);
+            newUser.setEnabled(true);
+            return userRepository.save(newUser);
+        });
         IncidentType incidentType = incidentTypeRepository.findById(dto.getIncidentTypeId())
                 .orElseThrow(() -> new RuntimeException("Incident type not found"));
 

@@ -28,18 +28,27 @@ public class WeatherPredictionService {
     
     /**
      * Dự đoán thời tiết trong tương lai
+     * 
+     * LƯU Ý: currentWeather đã có đầy đủ thông số thời tiết (từ API/DB, KHÔNG từ user input).
+     * User chỉ nhập địa điểm (lat/lng), backend tự động lấy weather data từ API.
+     * 
+     * @param currentWeather WeatherDataDTO có đầy đủ: temperature, humidity, pressure, windSpeed, cloudiness...
+     *                      (Từ OpenWeatherMap API hoặc Database, KHÔNG từ user input)
+     * @param hoursAhead Số giờ dự đoán trước
+     * @return Danh sách predictions
      */
     public List<Map<String, Object>> predictWeather(WeatherDataDTO currentWeather, int hoursAhead) {
         try {
-            // Chuẩn bị request body
+            // Chuẩn bị request body cho Python ML service
+            // Tất cả thông số thời tiết này đã có trong currentWeather (từ API/DB)
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("temperature", currentWeather.getTemperature());
-            requestBody.put("humidity", currentWeather.getHumidity());
-            requestBody.put("pressure", currentWeather.getPressure());
-            requestBody.put("windSpeed", currentWeather.getWindSpeed());
-            requestBody.put("cloudiness", currentWeather.getCloudiness());
-            requestBody.put("latitude", currentWeather.getLatitude());
-            requestBody.put("longitude", currentWeather.getLongitude());
+            requestBody.put("temperature", currentWeather.getTemperature());  // ← Từ API/DB
+            requestBody.put("humidity", currentWeather.getHumidity());        // ← Từ API/DB
+            requestBody.put("pressure", currentWeather.getPressure());        // ← Từ API/DB
+            requestBody.put("windSpeed", currentWeather.getWindSpeed());      // ← Từ API/DB
+            requestBody.put("cloudiness", currentWeather.getCloudiness());    // ← Từ API/DB
+            requestBody.put("latitude", currentWeather.getLatitude());        // ← Từ user
+            requestBody.put("longitude", currentWeather.getLongitude());      // ← Từ user
             requestBody.put("hoursAhead", hoursAhead);
             
             // Gọi Python service

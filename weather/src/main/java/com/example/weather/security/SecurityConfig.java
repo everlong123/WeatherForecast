@@ -64,6 +64,8 @@ public class SecurityConfig {
                 .requestMatchers("/incident-types").permitAll()
                 .requestMatchers("/incident-types/**").permitAll()
                 .requestMatchers("/locations/**").permitAll()
+                .requestMatchers("/reports").permitAll()  // Cho phép GET và POST /reports public
+                .requestMatchers("/reports/**").permitAll()  // Cho phép tất cả endpoints liên quan reports
                 .anyRequest().authenticated()
             );
 

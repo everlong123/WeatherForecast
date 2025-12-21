@@ -1,7 +1,6 @@
 package com.example.weather.scheduler;
 
 import com.example.weather.service.OpenWeatherService;
-import com.example.weather.service.WeatherDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -19,9 +18,6 @@ public class WeatherDataScheduler {
     @Autowired(required = false)
     private OpenWeatherService openWeatherService;
     
-    @Autowired
-    private WeatherDataService weatherDataService;
-    
     // Danh sách các thành phố lớn cần theo dõi
     private static final List<CityLocation> CITIES = Arrays.asList(
         new CityLocation(21.0285, 105.8542, "Hà Nội", "Hoàn Kiếm", "Tràng Tiền"),
@@ -33,7 +29,6 @@ public class WeatherDataScheduler {
     
     /**
      * Tự động lấy dữ liệu thời tiết mỗi 30 phút
-     * Cron: 0 */30 * * * * = mỗi 30 phút
      */
     @Scheduled(cron = "0 */30 * * * *")
     public void fetchWeatherDataScheduled() {

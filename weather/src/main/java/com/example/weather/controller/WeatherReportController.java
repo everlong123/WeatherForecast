@@ -33,7 +33,9 @@ public class WeatherReportController {
 
     @PostMapping
     public ResponseEntity<WeatherReportDTO> createReport(@Valid @RequestBody WeatherReportDTO reportDTO, Authentication authentication) {
-        return ResponseEntity.status(201).body(reportService.createReport(reportDTO, authentication.getName()));
+        // Nếu không có authentication, sử dụng "guest" user (hoặc tạo mới nếu chưa có)
+        String username = authentication != null ? authentication.getName() : "guest";
+        return ResponseEntity.status(201).body(reportService.createReport(reportDTO, username));
     }
 
     @PutMapping("/{id}")
