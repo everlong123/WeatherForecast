@@ -31,4 +31,13 @@ public class WeatherReportDTO {
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    // Vote counts
+    private Long confirmCount = 0L;
+    private Long rejectCount = 0L;
+    private String userVote; // "CONFIRM", "REJECT", or null
+    
+    // Admin suggestion
+    private Double priorityScore;
+    private String suggestedStatus; // "APPROVE", "REVIEW", "REJECT"
 }

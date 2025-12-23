@@ -1,5 +1,6 @@
 package com.example.weather.controller;
 
+import com.example.weather.dto.IncidentTypeDTO;
 import com.example.weather.dto.UserDTO;
 import com.example.weather.dto.WeatherAlertDTO;
 import com.example.weather.dto.WeatherReportDTO;
@@ -12,6 +13,7 @@ import com.example.weather.repository.UserRepository;
 import com.example.weather.repository.WeatherAlertRepository;
 import com.example.weather.repository.WeatherReportRepository;
 import com.example.weather.service.WeatherReportService;
+import com.example.weather.service.AdminSuggestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -46,6 +48,9 @@ public class AdminController {
 
     @Autowired
     private WeatherReportService weatherReportService;
+    
+    @Autowired(required = false)
+    private AdminSuggestionService adminSuggestionService;
 
     @PutMapping("/reports/{id}/approve")
     public ResponseEntity<WeatherReport> approveReport(
@@ -117,11 +122,22 @@ public class AdminController {
     }
 
     @GetMapping("/reports")
-    public ResponseEntity<List<WeatherReportDTO>> getAllReports() {
+    public ResponseEntity<List<WeatherReportDTO>> getAllReports(Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : null;
         // Admin có thể xem tất cả reports kể cả đã ẩn
-        return ResponseEntity.ok(reportRepository.findAll().stream()
-                .map(r -> weatherReportService.convertToDTO(r))
-                .collect(Collectors.toList()));
+        List<WeatherReportDTO> reports = reportRepository.findAll().stream()
+                .map(r -> {
+                    WeatherReportDTO dto = weatherReportService.convertToDTO(r, username);
+                    // Thêm admin suggestions
+                    if (adminSuggestionService != null) {
+                        AdminSuggestionService.AdminSuggestion suggestion = adminSuggestionService.getSuggestion(r);
+                        dto.setPriorityScore(suggestion.getPriorityScore());
+                        dto.setSuggestedStatus(suggestion.getSuggestedAction());
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(reports);
     }
 
     @GetMapping("/users")
@@ -287,8 +303,21 @@ public class AdminController {
 
     // Incident Types
     @GetMapping("/incident-types")
-    public ResponseEntity<List<IncidentType>> getIncidentTypes() {
-        return ResponseEntity.ok(incidentTypeRepository.findAll());
+    public ResponseEntity<List<IncidentTypeDTO>> getIncidentTypes() {
+        List<IncidentTypeDTO> dtos = incidentTypeRepository.findAll().stream()
+                .map(type -> {
+                    IncidentTypeDTO dto = new IncidentTypeDTO();
+                    dto.setId(type.getId());
+                    dto.setName(type.getName());
+                    dto.setDescription(type.getDescription());
+                    dto.setIcon(type.getIcon());
+                    dto.setColor(type.getColor());
+                    dto.setCreatedAt(type.getCreatedAt());
+                    dto.setUpdatedAt(type.getUpdatedAt());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @PostMapping("/incident-types")
@@ -326,6 +355,20 @@ public class AdminController {
         if (typeData.get("icon") != null) type.setIcon((String) typeData.get("icon"));
         if (typeData.get("color") != null) type.setColor((String) typeData.get("color"));
         return ResponseEntity.ok(incidentTypeRepository.save(type));
+    }
+
+    @DeleteMapping("/incident-types/{id}")
+    public ResponseEntity<Void> deleteIncidentType(@PathVariable Long id) {
+        IncidentType type = incidentTypeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Loại sự cố không tồn tại"));
+        
+        // Kiểm tra xem có báo cáo nào đang sử dụng loại sự cố này không
+        if (type.getReports() != null && !type.getReports().isEmpty()) {
+            throw new RuntimeException("Không thể xóa loại sự cố này vì đang có " + type.getReports().size() + " báo cáo đang sử dụng");
+        }
+        
+        incidentTypeRepository.delete(type);
+        return ResponseEntity.noContent().build();
     }
 
 }

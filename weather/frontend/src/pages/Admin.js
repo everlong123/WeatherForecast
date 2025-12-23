@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { adminAPI, reportAPI, incidentTypeAPI, locationAPI } from '../utils/api';
 import { isAdmin } from '../utils/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { 
   FiCheck, FiX, FiCheckCircle, FiShield, FiUsers, FiAlertCircle, 
   FiSettings, FiBarChart2, FiEdit, FiTrash2, FiPlus, FiDownload,
-  FiToggleLeft, FiToggleRight, FiActivity, FiMapPin, FiEye, FiEyeOff
+  FiToggleLeft, FiToggleRight, FiActivity, FiMapPin, FiEye, FiEyeOff,
+  FiTrendingUp, FiTrendingDown, FiArrowUp, FiArrowDown, FiFilter, FiSliders
 } from 'react-icons/fi';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './Admin.css';
 
 // Fix for default markers in react-leaflet
@@ -36,14 +38,17 @@ const Admin = () => {
   const [reports, setReports] = useState([]);
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState(null);
-  const [incidentTypes, setIncidentTypes] = useState([]); // Chỉ dùng cho dropdown trong form báo cáo
+  const [incidentTypes, setIncidentTypes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('reports'); // Đổi default từ 'dashboard' sang 'reports'
+  const [showIncidentTypeForm, setShowIncidentTypeForm] = useState(false);
+  const [editingIncidentType, setEditingIncidentType] = useState(null);
   const [showUserForm, setShowUserForm] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editingReport, setEditingReport] = useState(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [userForm, setUserForm] = useState({
     username: '',
@@ -75,27 +80,59 @@ const Admin = () => {
   const [mapCenter, setMapCenter] = useState([16.0583, 108.2772]);
   const [mapZoom, setMapZoom] = useState(6);
   const [loadingAddress, setLoadingAddress] = useState(false);
-  const [showCommentModal, setShowCommentModal] = useState(false);
-  const [commentAction, setCommentAction] = useState(null); // 'approve', 'reject', 'resolve'
-  const [commentReportId, setCommentReportId] = useState(null);
-  const [commentText, setCommentText] = useState('');
   const [severityFilter, setSeverityFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [incidentTypeFilter, setIncidentTypeFilter] = useState('ALL');
+  const [reportSortBy, setReportSortBy] = useState('createdAt');
+  const [reportSortOrder, setReportSortOrder] = useState('desc');
+  const [userRoleFilter, setUserRoleFilter] = useState('ALL');
+  const [userEnabledFilter, setUserEnabledFilter] = useState('ALL');
+  const [userSortBy, setUserSortBy] = useState('createdAt');
+  const [userSortOrder, setUserSortOrder] = useState('desc');
+
+  const [incidentTypeForm, setIncidentTypeForm] = useState({
+    name: '',
+    description: '',
+    icon: '',
+  });
 
   useEffect(() => {
     if (!isAdmin()) {
       navigate('/');
       return;
     }
+    
+    // Check URL params for tab
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['reports', 'users', 'incident-types'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+    
     fetchData();
     fetchIncidentTypes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchIncidentTypes = async () => {
     try {
-      const response = await incidentTypeAPI.getAll();
-      setIncidentTypes(Array.isArray(response.data) ? response.data : []);
+      console.log('Fetching incident types...');
+      const response = await adminAPI.getIncidentTypes();
+      console.log('Incident types response:', response);
+      console.log('Incident types data:', response.data);
+      console.log('Is array?', Array.isArray(response.data));
+      
+      if (Array.isArray(response.data)) {
+        console.log('Setting incident types:', response.data.length, 'types');
+        setIncidentTypes(response.data);
+      } else {
+        console.error('Response is not an array:', response.data);
+        setIncidentTypes([]);
+      }
     } catch (error) {
       console.error('Error fetching incident types:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      alert('Lỗi khi tải loại sự cố: ' + (error.response?.data?.message || error.message || 'Đã xảy ra lỗi'));
       setIncidentTypes([]);
     }
   };
@@ -138,42 +175,35 @@ const Admin = () => {
   };
 
   const handleApprove = async (id) => {
-    setCommentAction('approve');
-    setCommentReportId(id);
-    setCommentText('');
-    setShowCommentModal(true);
+    if (window.confirm('Bạn có chắc chắn muốn duyệt báo cáo này?')) {
+      try {
+        await adminAPI.approveReport(id);
+        fetchData();
+      } catch (error) {
+        alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+      }
+    }
   };
 
   const handleReject = async (id) => {
-    setCommentAction('reject');
-    setCommentReportId(id);
-    setCommentText('');
-    setShowCommentModal(true);
+    if (window.confirm('Bạn có chắc chắn muốn từ chối báo cáo này?')) {
+      try {
+        await adminAPI.rejectReport(id);
+        fetchData();
+      } catch (error) {
+        alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+      }
+    }
   };
 
   const handleResolve = async (id) => {
-    setCommentAction('resolve');
-    setCommentReportId(id);
-    setCommentText('');
-    setShowCommentModal(true);
-  };
-
-  const handleConfirmAction = async () => {
-    try {
-      if (commentAction === 'approve') {
-        await adminAPI.approveReport(commentReportId, commentText);
-      } else if (commentAction === 'reject') {
-        await adminAPI.rejectReport(commentReportId, commentText);
-      } else if (commentAction === 'resolve') {
-        await adminAPI.resolveReport(commentReportId, commentText);
+    if (window.confirm('Bạn có chắc chắn muốn đánh dấu báo cáo này đã được xử lý?')) {
+      try {
+        await adminAPI.resolveReport(id);
+        fetchData();
+      } catch (error) {
+        alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
       }
-      setShowCommentModal(false);
-      setCommentText('');
-      setCommentAction(null);
-      setCommentReportId(null);
-      fetchData();
-    } catch (error) {
-      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
     }
   };
 
@@ -260,6 +290,156 @@ const Admin = () => {
       enabled: user.enabled !== undefined ? user.enabled : true,
     });
     setShowUserForm(true);
+  };
+
+  // Incident Type Handlers
+  const handleSaveIncidentType = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingIncidentType) {
+        await adminAPI.updateIncidentType(editingIncidentType.id, incidentTypeForm);
+      } else {
+        await adminAPI.createIncidentType(incidentTypeForm);
+      }
+      setShowIncidentTypeForm(false);
+      setEditingIncidentType(null);
+      setIncidentTypeForm({ name: '', description: '', icon: '' });
+      fetchIncidentTypes();
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || error.message || 'Đã xảy ra lỗi'));
+    }
+  };
+
+  const handleDeleteIncidentType = async (id) => {
+    if (window.confirm('Bạn có chắc muốn xóa loại sự cố này?')) {
+      try {
+        await adminAPI.deleteIncidentType(id);
+        fetchIncidentTypes();
+      } catch (error) {
+        alert('Lỗi: ' + (error.response?.data?.message || error.message || 'Đã xảy ra lỗi'));
+      }
+    }
+  };
+
+  const handleEditIncidentType = (type) => {
+    setEditingIncidentType(type);
+    setIncidentTypeForm({
+      name: type.name || '',
+      description: type.description || '',
+      icon: type.icon || '',
+    });
+    setShowIncidentTypeForm(true);
+  };
+
+  // Filter and Sort Functions
+  const getFilteredAndSortedReports = () => {
+    let filtered = [...reports];
+    
+    // Filter by severity
+    if (severityFilter !== 'ALL') {
+      filtered = filtered.filter(r => r.severity === severityFilter);
+    }
+    
+    // Filter by status
+    if (statusFilter !== 'ALL') {
+      filtered = filtered.filter(r => r.status === statusFilter);
+    }
+    
+    // Filter by incident type
+    if (incidentTypeFilter !== 'ALL') {
+      filtered = filtered.filter(r => r.incidentTypeId === parseInt(incidentTypeFilter));
+    }
+    
+    // Sort
+    filtered.sort((a, b) => {
+      let aVal, bVal;
+      switch (reportSortBy) {
+        case 'createdAt':
+          aVal = new Date(a.createdAt).getTime();
+          bVal = new Date(b.createdAt).getTime();
+          break;
+        case 'priorityScore':
+          aVal = a.priorityScore || 0;
+          bVal = b.priorityScore || 0;
+          break;
+        case 'severity':
+          const severityOrder = { 'LOW': 1, 'MEDIUM': 2, 'HIGH': 3, 'CRITICAL': 4 };
+          aVal = severityOrder[a.severity] || 0;
+          bVal = severityOrder[b.severity] || 0;
+          break;
+        case 'title':
+          aVal = (a.title || '').toLowerCase();
+          bVal = (b.title || '').toLowerCase();
+          break;
+        case 'confirmCount':
+          aVal = a.confirmCount || 0;
+          bVal = b.confirmCount || 0;
+          break;
+        default:
+          aVal = 0;
+          bVal = 0;
+      }
+      
+      if (reportSortOrder === 'asc') {
+        return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+      } else {
+        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+      }
+    });
+    
+    return filtered;
+  };
+
+  const getFilteredAndSortedUsers = () => {
+    let filtered = [...users];
+    
+    // Filter by role
+    if (userRoleFilter !== 'ALL') {
+      filtered = filtered.filter(u => u.role === userRoleFilter);
+    }
+    
+    // Filter by enabled
+    if (userEnabledFilter !== 'ALL') {
+      filtered = filtered.filter(u => {
+        if (userEnabledFilter === 'ENABLED') return u.enabled === true;
+        if (userEnabledFilter === 'DISABLED') return u.enabled === false;
+        return true;
+      });
+    }
+    
+    // Sort
+    filtered.sort((a, b) => {
+      let aVal, bVal;
+      switch (userSortBy) {
+        case 'createdAt':
+          aVal = new Date(a.createdAt || 0).getTime();
+          bVal = new Date(b.createdAt || 0).getTime();
+          break;
+        case 'username':
+          aVal = (a.username || '').toLowerCase();
+          bVal = (b.username || '').toLowerCase();
+          break;
+        case 'email':
+          aVal = (a.email || '').toLowerCase();
+          bVal = (b.email || '').toLowerCase();
+          break;
+        case 'role':
+          aVal = a.role === 'ADMIN' ? 1 : 0;
+          bVal = b.role === 'ADMIN' ? 1 : 0;
+          break;
+        default:
+          aVal = 0;
+          bVal = 0;
+      }
+      
+      if (userSortOrder === 'asc') {
+        return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+      } else {
+        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+      }
+    });
+    
+    return filtered;
   };
 
   const handleSaveReport = async (e) => {
@@ -453,12 +633,6 @@ const Admin = () => {
 
         <div className="admin-tabs">
           <button
-            className={`tab-button ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <FiBarChart2 /> Dashboard
-          </button>
-          <button
             className={`tab-button ${activeTab === 'reports' ? 'active' : ''}`}
             onClick={() => setActiveTab('reports')}
           >
@@ -470,39 +644,60 @@ const Admin = () => {
           >
             <FiUsers /> Người dùng
           </button>
+          <button
+            className={`tab-button ${activeTab === 'incident-types' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('incident-types');
+              fetchIncidentTypes();
+            }}
+          >
+            <FiSettings /> Loại sự cố ({incidentTypes.length})
+          </button>
         </div>
 
-        {activeTab === 'dashboard' && stats && (
+        {activeTab === 'incident-types' && (
           <div className="admin-content">
-            <div className="stats-grid grid grid-4">
-              <div className="stat-card card card-navy fade-in">
-                <div className="stat-icon"><FiUsers /></div>
-                <div className="stat-content">
-                  <div className="stat-label">Tổng người dùng</div>
-                  <div className="stat-value">{stats.totalUsers}</div>
-                </div>
+            <div className="section-header">
+              <h2>Quản lý Loại sự cố</h2>
+              <div>
+                <button className="btn btn-primary" onClick={() => {
+                  setEditingIncidentType(null);
+                  setIncidentTypeForm({ name: '', description: '', icon: '' });
+                  setShowIncidentTypeForm(true);
+                }}>
+                  <FiPlus /> Tạo loại sự cố
+                </button>
               </div>
-              <div className="stat-card card card-navy fade-in">
-                <div className="stat-icon"><FiAlertCircle /></div>
-                <div className="stat-content">
-                  <div className="stat-label">Tổng báo cáo</div>
-                  <div className="stat-value">{stats.totalReports}</div>
+            </div>
+            <div className="incidents-grid grid grid-3">
+              {incidentTypes.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888', gridColumn: '1 / -1' }}>
+                  <p>Chưa có loại sự cố nào. Hãy tạo loại sự cố mới.</p>
                 </div>
-              </div>
-              <div className="stat-card card card-navy fade-in">
-                <div className="stat-icon"><FiAlertCircle /></div>
-                <div className="stat-content">
-                  <div className="stat-label">Chờ duyệt</div>
-                  <div className="stat-value">{stats.pendingReports}</div>
-                </div>
-              </div>
-              <div className="stat-card card card-navy fade-in">
-                <div className="stat-icon"><FiShield /></div>
-                <div className="stat-content">
-                  <div className="stat-label">Cảnh báo hoạt động</div>
-                  <div className="stat-value">{stats.activeAlerts}</div>
-                </div>
-              </div>
+              ) : (
+                incidentTypes.map((type) => (
+                  <div key={type.id} className="incident-card card card-navy fade-in">
+                    <div className="incident-header">
+                      <div className="incident-icon" style={{ fontSize: '48px' }}>
+                        {type.icon || '⚠️'}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="btn-icon" onClick={() => handleEditIncidentType(type)} title="Chỉnh sửa">
+                          <FiEdit />
+                        </button>
+                        <button className="btn-icon btn-danger" onClick={() => handleDeleteIncidentType(type.id)} title="Xóa">
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </div>
+                    <h3>{type.name}</h3>
+                    <p>{type.description || 'Không có mô tả'}</p>
+                    <div style={{ marginTop: '10px', fontSize: '12px', color: '#999' }}>
+                      ID: {type.id}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -511,31 +706,79 @@ const Admin = () => {
           <div className="admin-content">
             <div className="section-header">
               <h2>Quản lý Báo cáo</h2>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <select
-                  value={severityFilter}
-                  onChange={(e) => setSeverityFilter(e.target.value)}
-                  className="input"
-                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd' }}
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="filter-group">
+                  <FiFilter style={{ marginRight: '5px', color: '#666' }} />
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="input filter-select"
+                  >
+                    <option value="ALL">Tất cả trạng thái</option>
+                    <option value="PENDING">Chờ duyệt</option>
+                    <option value="APPROVED">Đã duyệt</option>
+                    <option value="REJECTED">Đã từ chối</option>
+                    <option value="RESOLVED">Đã xử lý</option>
+                  </select>
+                </div>
+                <div className="filter-group">
+                  <select
+                    value={severityFilter}
+                    onChange={(e) => setSeverityFilter(e.target.value)}
+                    className="input filter-select"
+                  >
+                    <option value="ALL">Tất cả mức độ</option>
+                    <option value="LOW">Thấp</option>
+                    <option value="MEDIUM">Trung bình</option>
+                    <option value="HIGH">Cao</option>
+                    <option value="CRITICAL">Nghiêm trọng</option>
+                  </select>
+                </div>
+                <div className="filter-group">
+                  <select
+                    value={incidentTypeFilter}
+                    onChange={(e) => setIncidentTypeFilter(e.target.value)}
+                    className="input filter-select"
+                  >
+                    <option value="ALL">Tất cả loại sự cố</option>
+                    {incidentTypes.map(type => (
+                      <option key={type.id} value={type.id}>{type.icon || '⚠️'} {type.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="filter-group">
+                  <FiSliders style={{ marginRight: '5px', color: '#666' }} />
+                  <select
+                    value={reportSortBy}
+                    onChange={(e) => setReportSortBy(e.target.value)}
+                    className="input filter-select"
+                  >
+                    <option value="createdAt">Thời gian tạo</option>
+                    <option value="priorityScore">Điểm ưu tiên</option>
+                    <option value="severity">Mức độ</option>
+                    <option value="title">Tiêu đề</option>
+                    <option value="confirmCount">Số xác nhận</option>
+                  </select>
+                </div>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setReportSortOrder(reportSortOrder === 'asc' ? 'desc' : 'asc')}
+                  title={reportSortOrder === 'asc' ? 'Sắp xếp tăng dần' : 'Sắp xếp giảm dần'}
                 >
-                  <option value="ALL">Tất cả mức độ</option>
-                  <option value="LOW">Thấp</option>
-                  <option value="MEDIUM">Trung bình</option>
-                  <option value="HIGH">Cao</option>
-                  <option value="CRITICAL">Nghiêm trọng</option>
-                </select>
+                  {reportSortOrder === 'asc' ? <FiArrowUp /> : <FiArrowDown />}
+                </button>
                 <button className="btn btn-secondary" onClick={() => exportData('reports')}>
                   <FiDownload /> Xuất dữ liệu
                 </button>
               </div>
             </div>
             <div className="reports-table">
-              {reports.filter(r => severityFilter === 'ALL' || r.severity === severityFilter).length === 0 ? (
+              {getFilteredAndSortedReports().length === 0 ? (
                 <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
                   <p>Chưa có báo cáo nào.</p>
                 </div>
               ) : (
-                reports.filter(r => severityFilter === 'ALL' || r.severity === severityFilter).map((report) => (
+                getFilteredAndSortedReports().map((report) => (
                 <div key={report.id} className="admin-report-card card card-navy fade-in">
                   <div className="report-info">
                     <h3>{report.title}</h3>
@@ -550,6 +793,40 @@ const Admin = () => {
                     <div className={`report-status status-${report.status.toLowerCase()}`}>
                       {report.status}
                     </div>
+                    {/* Admin Suggestion */}
+                    {report.priorityScore !== undefined && report.suggestedStatus && (
+                      <div className="admin-suggestion" style={{
+                        marginTop: '12px',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        background: report.suggestedStatus === 'APPROVE' 
+                          ? 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)'
+                          : report.suggestedStatus === 'REVIEW'
+                          ? 'linear-gradient(135deg, #ffa726 0%, #fb8c00 100%)'
+                          : 'linear-gradient(135deg, #ef5350 0%, #e53935 100%)',
+                        color: 'white',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        fontSize: '13px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                          <FiActivity />
+                          <strong>Hệ thống đề xuất: {report.suggestedStatus === 'APPROVE' ? 'DUYỆT' : report.suggestedStatus === 'REVIEW' ? 'XEM XÉT KỸ' : 'TỪ CHỐI'}</strong>
+                        </div>
+                        <div style={{ fontSize: '12px', opacity: 0.9 }}>
+                          Điểm ưu tiên: {report.priorityScore.toFixed(1)}/100
+                          {report.confirmCount > 0 && (
+                            <span style={{ marginLeft: '12px' }}>
+                              ✓ {report.confirmCount} xác nhận
+                            </span>
+                          )}
+                          {report.rejectCount > 0 && (
+                            <span style={{ marginLeft: '12px' }}>
+                              ✗ {report.rejectCount} phản đối
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="report-actions">
                     {report.hidden ? (
@@ -590,7 +867,50 @@ const Admin = () => {
           <div className="admin-content">
             <div className="section-header">
               <h2>Quản lý Người dùng</h2>
-              <div>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="filter-group">
+                  <FiFilter style={{ marginRight: '5px', color: '#666' }} />
+                  <select
+                    value={userRoleFilter}
+                    onChange={(e) => setUserRoleFilter(e.target.value)}
+                    className="input filter-select"
+                  >
+                    <option value="ALL">Tất cả vai trò</option>
+                    <option value="USER">Người dùng</option>
+                    <option value="ADMIN">Quản trị viên</option>
+                  </select>
+                </div>
+                <div className="filter-group">
+                  <select
+                    value={userEnabledFilter}
+                    onChange={(e) => setUserEnabledFilter(e.target.value)}
+                    className="input filter-select"
+                  >
+                    <option value="ALL">Tất cả trạng thái</option>
+                    <option value="ENABLED">Đã kích hoạt</option>
+                    <option value="DISABLED">Đã khóa</option>
+                  </select>
+                </div>
+                <div className="filter-group">
+                  <FiSliders style={{ marginRight: '5px', color: '#666' }} />
+                  <select
+                    value={userSortBy}
+                    onChange={(e) => setUserSortBy(e.target.value)}
+                    className="input filter-select"
+                  >
+                    <option value="createdAt">Thời gian tạo</option>
+                    <option value="username">Tên đăng nhập</option>
+                    <option value="email">Email</option>
+                    <option value="role">Vai trò</option>
+                  </select>
+                </div>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setUserSortOrder(userSortOrder === 'asc' ? 'desc' : 'asc')}
+                  title={userSortOrder === 'asc' ? 'Sắp xếp tăng dần' : 'Sắp xếp giảm dần'}
+                >
+                  {userSortOrder === 'asc' ? <FiArrowUp /> : <FiArrowDown />}
+                </button>
                 <button className="btn btn-primary" onClick={() => {
                   setEditingUser(null);
                   setUserForm({ username: '', email: '', password: '', fullName: '', phone: '', address: '', district: '', ward: '', role: 'USER', enabled: true });
@@ -604,12 +924,12 @@ const Admin = () => {
               </div>
             </div>
             <div className="users-table">
-              {users.length === 0 ? (
+              {getFilteredAndSortedUsers().length === 0 ? (
                 <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
                   <p>Chưa có người dùng nào. Hãy tạo người dùng mới.</p>
                 </div>
               ) : (
-                users.map((user) => (
+                getFilteredAndSortedUsers().map((user) => (
                 <div key={user.id} className="user-card card card-navy fade-in">
                   <div className="user-info">
                     <h3>{user.username}</h3>
@@ -760,43 +1080,6 @@ const Admin = () => {
           </div>
         )}
 
-        {showCommentModal && (
-          <div className="modal-overlay" onClick={() => {
-            setShowCommentModal(false);
-            setCommentText('');
-            setCommentAction(null);
-            setCommentReportId(null);
-          }}>
-            <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
-              <h2>
-                {commentAction === 'approve' && 'Duyệt báo cáo'}
-                {commentAction === 'reject' && 'Từ chối báo cáo'}
-                {commentAction === 'resolve' && 'Đánh dấu đã xử lý'}
-              </h2>
-              <label className="form-label">Ghi chú (tùy chọn)</label>
-              <textarea
-                placeholder="Nhập ghi chú..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                className="input"
-                rows="4"
-              />
-              <div className="form-actions" style={{ marginTop: '20px' }}>
-                <button type="button" className="btn btn-primary" onClick={handleConfirmAction}>
-                  Xác nhận
-                </button>
-                <button type="button" className="btn btn-secondary" onClick={() => {
-                  setShowCommentModal(false);
-                  setCommentText('');
-                  setCommentAction(null);
-                  setCommentReportId(null);
-                }}>
-                  Hủy
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {showReportForm && editingReport && (
           <div className="modal-overlay" onClick={() => {
@@ -957,6 +1240,55 @@ const Admin = () => {
                     setShowReportForm(false);
                     setEditingReport(null);
                   }}>Hủy</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal form cho Incident Type */}
+        {showIncidentTypeForm && (
+          <div className="modal-overlay" onClick={() => {
+            setShowIncidentTypeForm(false);
+            setEditingIncidentType(null);
+          }}>
+            <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
+              <h2>{editingIncidentType ? 'Chỉnh sửa Loại sự cố' : 'Tạo Loại sự cố mới'}</h2>
+              <form onSubmit={handleSaveIncidentType}>
+                <label className="form-label">Tên loại sự cố <span className="required">*</span></label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Mưa lớn, Lũ lụt, Bão..."
+                  value={incidentTypeForm.name}
+                  onChange={(e) => setIncidentTypeForm({ ...incidentTypeForm, name: e.target.value })}
+                  required
+                  className="input"
+                />
+                <label className="form-label">Mô tả</label>
+                <textarea
+                  placeholder="Mô tả chi tiết về loại sự cố này"
+                  value={incidentTypeForm.description}
+                  onChange={(e) => setIncidentTypeForm({ ...incidentTypeForm, description: e.target.value })}
+                  className="input"
+                  rows="3"
+                />
+                <label className="form-label">Icon (Emoji hoặc ký tự)</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: 🌧️, ⛈️, 🌊..."
+                  value={incidentTypeForm.icon}
+                  onChange={(e) => setIncidentTypeForm({ ...incidentTypeForm, icon: e.target.value })}
+                  className="input"
+                />
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary">Lưu</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => {
+                    setShowIncidentTypeForm(false);
+                    setEditingIncidentType(null);
+                    setIncidentTypeForm({ name: '', description: '', icon: '' });
+                  }}>
+                    Hủy
+                  </button>
                 </div>
               </form>
             </div>

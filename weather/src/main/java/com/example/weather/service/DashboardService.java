@@ -70,9 +70,29 @@ public class DashboardService {
             weatherTrends.add(trend);
         }
 
+        // Thống kê theo severity
+        Map<String, Long> reportsBySeverity = reportRepository.findAll().stream()
+                .collect(Collectors.groupingBy(
+                    r -> r.getSeverity().name(),
+                    Collectors.counting()
+                ));
+
+        // So sánh với tuần trước (7 ngày trước)
+        LocalDateTime weekAgoStart = now.minusDays(14).withHour(0).withMinute(0);
+        LocalDateTime weekAgoEnd = now.minusDays(7).withHour(0).withMinute(0);
+        long reportsLastWeek = reportRepository.findByDateRange(weekAgoStart, weekAgoEnd).size();
+        
+        LocalDateTime thisWeekStart = now.minusDays(7).withHour(0).withMinute(0);
+        long reportsThisWeek = reportRepository.findByDateRange(thisWeekStart, now).size();
+        
+        double weekOverWeekChange = reportsLastWeek > 0 
+            ? ((double)(reportsThisWeek - reportsLastWeek) / reportsLastWeek) * 100 
+            : 0.0;
+
         return new DashboardStatsDTO(
             totalReports, pendingReports, approvedReports, totalUsers, activeAlerts,
-            reportsByType, reportsByDistrict, recentReports, weatherTrends
+            reportsByType, reportsByDistrict, recentReports, weatherTrends,
+            reportsBySeverity, weekOverWeekChange
         );
     }
 }

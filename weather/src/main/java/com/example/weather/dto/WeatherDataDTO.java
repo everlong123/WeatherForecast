@@ -26,6 +26,11 @@ public class WeatherDataDTO {
     private String description;
     private String icon;
     private LocalDateTime recordedAt;
+    
+    // Weather-based action suggestion
+    private String suggestedAction;
+    private String suggestedIncidentType;
+    private String suggestionPriority; // "LOW", "MEDIUM", "HIGH"
 }
 
 

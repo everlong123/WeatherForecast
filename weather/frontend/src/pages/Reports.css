@@ -1,6 +1,6 @@
 .reports-page {
   min-height: 100vh;
-  padding: 140px 0 40px 0;
+  padding: 100px 0 40px 0; /* Padding-top để tránh bị navbar che */
   background: var(--gradient-navy);
 }
 
@@ -17,6 +17,8 @@
   margin-bottom: 30px;
   flex-wrap: wrap;
   gap: 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .reports-header h1,
@@ -367,34 +369,102 @@
 .modal-content {
   background: var(--white);
   border-radius: 20px;
-  padding: 30px;
-  max-width: 650px;
+  padding: 0;
+  max-width: 700px;
   width: 100%;
   max-height: 95vh;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   position: relative;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   border: none;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Custom scrollbar cho modal */
-.modal-content::-webkit-scrollbar {
+.modal-content .modal-header {
+  padding: 25px 30px;
+  flex-shrink: 0;
+}
+
+.modal-content form {
+  padding: 0 30px 30px 30px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  max-height: calc(95vh - 100px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom scrollbar cho form trong modal */
+.modal-content form::-webkit-scrollbar {
   width: 8px;
 }
 
-.modal-content::-webkit-scrollbar-track {
+.modal-content form::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 10px;
 }
 
-.modal-content::-webkit-scrollbar-thumb {
+.modal-content form::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 10px;
 }
 
-.modal-content::-webkit-scrollbar-thumb:hover {
+.modal-content form::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+/* Custom scrollbar cho modal - đã di chuyển vào form */
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(0, 31, 63, 0.1);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--text-navy);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.close-btn {
+  background: rgba(244, 67, 54, 0.1);
+  border: 2px solid rgba(244, 67, 54, 0.3);
+  color: #F44336;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  line-height: 1;
+  padding: 0;
+  margin-left: 15px;
+}
+
+.close-btn:hover {
+  background: #F44336;
+  color: white;
+  border-color: #F44336;
+  transform: rotate(90deg) scale(1.1);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+.close-btn:active {
+  transform: rotate(90deg) scale(0.95);
 }
 
 .modal-content h2 {
@@ -512,6 +582,27 @@
   border-radius: 8px;
   margin-bottom: 20px;
   border: 1px solid #f5c6cb;
+}
+
+/* Map container trong modal */
+.map-container-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.map-container-wrapper .leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+  z-index: 1;
+  border-radius: 12px;
+}
+
+.map-container-wrapper .leaflet-tile-container {
+  z-index: 1;
+}
+
+.map-container-wrapper .leaflet-pane {
+  z-index: 1;
 }
 
 .btn {
@@ -682,4 +773,48 @@
   .form-actions .btn {
     width: 100%;
   }
+}
+
+/* View Mode Toggle */
+.view-mode-toggle {
+  display: inline-flex;
+  gap: 0;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toggle-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.toggle-btn:hover {
+  color: rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.4);
+  transform: translateY(-1px);
+}
+
+.toggle-btn.active:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.5);
 }

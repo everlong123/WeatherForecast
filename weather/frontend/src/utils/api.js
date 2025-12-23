@@ -48,6 +48,11 @@ export const reportAPI = {
   create: (data) => api.post('/reports', data),
   update: (id, data) => api.put(`/reports/${id}`, data),
   delete: (id) => api.delete(`/reports/${id}`),
+  vote: (id, voteType, latitude, longitude) => api.post(`/reports/${id}/vote`, { 
+    voteType, 
+    latitude, 
+    longitude 
+  }),
   // Admin endpoints
   updateReport: (id, data) => api.put(`/admin/reports/${id}`, data),
   deleteReport: (id) => api.delete(`/admin/reports/${id}`),
@@ -103,12 +108,12 @@ export const uploadAPI = {
 };
 
 export const adminAPI = {
-  approveReport: (id, comment) =>
-    api.put(`/admin/reports/${id}/approve`, null, { params: { comment } }),
-  rejectReport: (id, comment) =>
-    api.put(`/admin/reports/${id}/reject`, null, { params: { comment } }),
-  resolveReport: (id, comment) =>
-    api.put(`/admin/reports/${id}/resolve`, null, { params: { comment } }),
+  approveReport: (id) =>
+    api.put(`/admin/reports/${id}/approve`),
+  rejectReport: (id) =>
+    api.put(`/admin/reports/${id}/reject`),
+  resolveReport: (id) =>
+    api.put(`/admin/reports/${id}/resolve`),
   hideReport: (id) => api.put(`/admin/reports/${id}/hide`),
   unhideReport: (id) => api.put(`/admin/reports/${id}/unhide`),
   getAllReports: () => api.get('/admin/reports'),

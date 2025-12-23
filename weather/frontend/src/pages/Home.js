@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { weatherAPI, reportAPI, locationAPI } from '../utils/api';
 import { FiMapPin, FiAlertCircle, FiTrendingUp, FiCloud, FiSun, FiDroplet, FiClock, FiCompass, FiEye, FiActivity, FiCalendar, FiArrowRight } from 'react-icons/fi';
+import { isAdmin } from '../utils/auth';
 import './Home.css';
 
 const Home = () => {
@@ -525,6 +526,55 @@ const Home = () => {
                             <FiMapPin /> Chọn vị trí khác
                           </Link>
                         </div>
+                        {/* Weather Action Suggestion Banner */}
+                        {currentWeather.suggestedAction && (
+                          <div className="weather-suggestion-banner" style={{
+                            marginTop: '20px',
+                            padding: '16px',
+                            borderRadius: '12px',
+                            background: currentWeather.suggestionPriority === 'HIGH' 
+                              ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)'
+                              : currentWeather.suggestionPriority === 'MEDIUM'
+                              ? 'linear-gradient(135deg, #ffa726 0%, #fb8c00 100%)'
+                              : 'linear-gradient(135deg, #66bb6a 0%, #4caf50 100%)',
+                            color: 'white',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                              <FiAlertCircle size={24} />
+                              <strong style={{ fontSize: '16px' }}>Gợi ý từ hệ thống</strong>
+                            </div>
+                            <p style={{ margin: '0 0 12px 0', fontSize: '14px', lineHeight: '1.5' }}>
+                              {currentWeather.suggestedAction}
+                            </p>
+                            {currentWeather.suggestedIncidentType && (
+                              <Link 
+                                to="/reports" 
+                                className="btn btn-primary"
+                                style={{
+                                  background: 'rgba(255,255,255,0.2)',
+                                  border: '1px solid rgba(255,255,255,0.3)',
+                                  color: 'white',
+                                  padding: '8px 16px',
+                                  fontSize: '14px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  // Lưu suggested incident type vào localStorage để form tự điền
+                                  localStorage.setItem('suggestedIncidentType', currentWeather.suggestedIncidentType);
+                                  window.location.href = '/reports';
+                                }}
+                              >
+                                <FiAlertCircle />
+                                Báo cáo ngay
+                              </Link>
+                            )}
+                          </div>
+                        )}
                         <div className="real-time-clock">
                           <FiClock className="clock-icon" />
                           <div className="clock-time">
@@ -635,7 +685,20 @@ const Home = () => {
             </h2>
             <div className="reports-grid grid grid-3">
               {recentReports.map((report) => (
-                <div key={report.id} className="report-card card fade-in">
+                <div 
+                  key={report.id} 
+                  className="report-card card fade-in"
+                  onClick={() => {
+                    if (admin) {
+                      // Admin: navigate đến trang Admin với tab reports
+                      navigate('/admin?tab=reports');
+                    } else {
+                      // User: chỉ xem trên bản đồ
+                      navigate(`/map?reportId=${report.id}`);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="report-header">
                     <span className={`report-status status-${report.status.toLowerCase()}`}>
                       {report.status}
@@ -652,6 +715,18 @@ const Home = () => {
                       {new Date(report.createdAt).toLocaleDateString('vi-VN')}
                     </span>
                   </div>
+                  {admin && (
+                    <div style={{ 
+                      marginTop: '10px', 
+                      paddingTop: '10px', 
+                      borderTop: '1px solid #eee',
+                      fontSize: '12px',
+                      color: '#4a90e2',
+                      fontWeight: '600'
+                    }}>
+                      👆 Click để quản lý
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

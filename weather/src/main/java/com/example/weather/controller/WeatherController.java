@@ -6,6 +6,7 @@ import com.example.weather.service.MockWeatherService;
 import com.example.weather.service.WeatherPredictionService;
 import com.example.weather.service.NominatimService;
 import com.example.weather.service.OpenMeteoService;
+import com.example.weather.service.WeatherDecisionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,9 @@ public class WeatherController {
     
     @Autowired
     private NominatimService nominatimService;
+    
+    @Autowired(required = false)
+    private WeatherDecisionService weatherDecisionService;
 
     @GetMapping("/current")
     public ResponseEntity<WeatherDataDTO> getCurrentWeather(
@@ -88,6 +92,16 @@ public class WeatherController {
         // Nếu vẫn không có, tạo dữ liệu giả (fallback)
         if (weather == null) {
             weather = mockWeatherService.generateWeatherData(lat, lng, city, district, ward);
+        }
+        
+        // Thêm suggested action nếu có
+        if (weatherDecisionService != null && weather != null) {
+            Map<String, Object> suggestion = weatherDecisionService.analyzeWeatherAndSuggestAction(weather);
+            if (!suggestion.isEmpty()) {
+                weather.setSuggestedAction((String) suggestion.get("suggestedAction"));
+                weather.setSuggestedIncidentType((String) suggestion.get("suggestedIncidentType"));
+                weather.setSuggestionPriority((String) suggestion.get("priority"));
+            }
         }
         
         return ResponseEntity.ok(weather);

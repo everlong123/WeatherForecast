@@ -630,9 +630,212 @@
 ### 12.3. API Endpoints Summary
 - **Auth**: `/api/auth/register`, `/api/auth/login`
 - **Weather**: `/api/weather/current`, `/api/weather/forecast`, `/api/weather/history`
-- **Reports**: `/api/reports/*`, `/api/reports/my`
+- **Reports**: `/api/reports/*`, `/api/reports/my`, `/api/reports/{id}/vote`
 - **Admin**: `/api/admin/*`
 - **Locations**: `/api/locations/coordinates`, `/api/locations/reverse`
 - **Upload**: `/uploads` (no `/api` prefix)
 - **Incident Types**: `/api/incident-types/*`
 - **Dashboard**: `/api/admin/dashboard/stats`
+
+---
+
+## 14. TÍNH NĂNG MỚI - HỆ THỐNG THÔNG MINH
+
+### 14.1. Community Confirm (Vote) - Xác nhận từ Cộng đồng
+
+#### Mục tiêu
+Đánh giá độ tin cậy báo cáo dựa trên sự xác nhận của cộng đồng người dùng.
+
+#### Logic cốt lõi
+- User A tạo report
+- User B, C, D có thể:
+  - **Xác nhận đúng** (CONFIRM) - "Tôi cũng gặp"
+  - **Phản đối** (REJECT) - "Không đúng"
+- Mỗi user chỉ vote 1 lần / report (có thể thay đổi vote)
+- Report có:
+  - `confirmCount`: Số lượng xác nhận
+  - `rejectCount`: Số lượng phản đối
+  - `userVote`: Vote của user hiện tại (nếu có)
+
+#### Cách triển khai
+
+**Backend:**
+- **Entity**: `ReportVote` với các trường:
+  - `report_id` (FK → weather_reports)
+  - `user_id` (FK → users)
+  - `vote_type` (ENUM: CONFIRM, REJECT)
+  - Unique constraint: (report_id, user_id)
+- **Repository**: `ReportVoteRepository` với methods:
+  - `findByReportAndUser()`: Tìm vote của user cho report
+  - `countConfirmsByReport()`: Đếm số CONFIRM
+  - `countRejectsByReport()`: Đếm số REJECT
+- **Service**: `ReportVoteService`
+  - `voteReport()`: Upsert vote (nếu vote cùng loại → xóa, khác loại → cập nhật)
+  - `getConfirmCount()` / `getRejectCount()`: Lấy số lượng votes
+  - `getUserVote()`: Lấy vote của user hiện tại
+- **API Endpoint**: `POST /api/reports/{id}/vote?voteType=CONFIRM|REJECT`
+  - Validation: User không thể vote báo cáo của chính mình
+  - Response: `{ confirmCount, rejectCount, userVote, message }`
+
+**Frontend:**
+- **Reports Page**: 
+  - 2 nút vote: "Tôi cũng gặp" (CONFIRM) và "Không đúng" (REJECT)
+  - Hiển thị số lượng votes với badge
+  - Highlight nút nếu user đã vote
+  - Chỉ hiển thị cho user khác (không phải owner)
+- **UI**: 
+  - Green button cho CONFIRM với icon thumbs up
+  - Red button cho REJECT với icon X
+  - Badge hiển thị số lượng votes
+
+#### Giá trị
+- ✅ Không chỉ CRUD, có dữ liệu cộng đồng
+- ✅ Admin không duyệt mù, có thông tin xác nhận
+- ✅ Tăng độ tin cậy của báo cáo
+
+---
+
+### 14.2. Weather-Based Action Suggestion - Gợi ý Hành động dựa trên Thời tiết
+
+#### Mục tiêu
+Hệ thống chủ động gợi ý hành động cho user dựa trên điều kiện thời tiết hiện tại.
+
+#### Logic cốt lõi
+1. Lấy thời tiết hiện tại
+2. Phân tích điều kiện:
+   - Mưa (rainVolume)
+   - Gió (windSpeed)
+   - Nhiệt độ (temperature)
+   - Độ ẩm (humidity)
+   - Trạng thái thời tiết (mainWeather)
+3. Ánh xạ → hành động gợi ý
+
+#### Rules (Ví dụ)
+- **Mưa lớn (> 10mm)** → Gợi ý báo cáo "Lũ lụt" (Priority: HIGH)
+- **Gió mạnh (> 15 m/s)** → Gợi ý báo cáo "Bão" (Priority: HIGH)
+- **Nhiệt độ cực cao (> 38°C)** → Gợi ý báo cáo "Nhiệt độ cực đoan" (Priority: MEDIUM)
+- **Nhiệt độ cực thấp (< 5°C)** → Gợi ý báo cáo "Nhiệt độ cực đoan" (Priority: MEDIUM)
+- **Mưa vừa (5-10mm)** → Gợi ý báo cáo "Mưa" (Priority: LOW)
+- **Độ ẩm cao (> 90%) + Mưa nhẹ** → Gợi ý báo cáo "Sương mù" (Priority: LOW)
+- **Gió mạnh vừa (10-15 m/s)** → Gợi ý báo cáo "Gió mạnh" (Priority: MEDIUM)
+- **Có sét (thunderstorm)** → Gợi ý báo cáo "Sét" (Priority: HIGH)
+
+#### Cách triển khai
+
+**Backend:**
+- **Service**: `WeatherDecisionService`
+  - `analyzeWeatherAndSuggestAction(WeatherDataDTO)`: Phân tích và trả về suggestion
+  - Return: `{ suggestedAction, suggestedIncidentType, priority }`
+- **WeatherController**: 
+  - Sau khi fetch weather, gọi `WeatherDecisionService`
+  - Thêm fields vào `WeatherDataDTO`:
+    - `suggestedAction`: String mô tả gợi ý
+    - `suggestedIncidentType`: Tên loại sự cố gợi ý
+    - `suggestionPriority`: "LOW", "MEDIUM", "HIGH"
+
+**Frontend:**
+- **Home Page**:
+  - Nếu `currentWeather.suggestedAction` có giá trị:
+    - Hiển thị banner với màu theo priority:
+      - HIGH: Red gradient
+      - MEDIUM: Orange gradient
+      - LOW: Green gradient
+    - Hiển thị message gợi ý
+    - Nút "Báo cáo ngay" → Link đến `/reports` và tự động điền `suggestedIncidentType`
+
+#### Giá trị
+- ✅ Hệ thống không thụ động, chủ động gợi ý
+- ✅ Thể hiện tư duy logic và phân tích dữ liệu
+- ✅ Tăng engagement của user
+
+---
+
+### 14.3. Admin Suggestion Logic - Gợi ý Quyết định cho Admin
+
+#### Mục tiêu
+Hỗ trợ admin ra quyết định duyệt/từ chối báo cáo dựa trên priority score.
+
+#### Logic cốt lõi
+Với mỗi report, tính **priorityScore** (0-100) dựa trên:
+1. **Severity** (40%):
+   - CRITICAL: +40
+   - HIGH: +30
+   - MEDIUM: +20
+   - LOW: +10
+2. **Community Confirmation** (30%):
+   - Tỷ lệ CONFIRM / tổng votes × 30
+   - Bonus: +10 nếu có ≥ 5 CONFIRM
+3. **Time Factor** (20%):
+   - < 24h: +20 (rất mới)
+   - < 72h: +15 (mới)
+   - < 168h (1 tuần): +10 (vừa)
+   - ≥ 168h: +5 (cũ)
+4. **Has Images** (10%):
+   - Có ảnh: +10
+5. **Penalty**:
+   - ≥ 3 REJECT: -20
+   - ≥ 2 REJECT: -10
+
+Từ score → gợi ý hành động:
+- **Score ≥ 70**: `APPROVE` (Nên duyệt)
+- **Score 40-69**: `REVIEW` (Cần xem xét kỹ)
+- **Score < 40**: `REJECT` (Nên từ chối)
+
+#### Cách triển khai
+
+**Backend:**
+- **Service**: `AdminSuggestionService`
+  - `calculatePriorityScore(WeatherReport)`: Tính điểm ưu tiên
+  - `suggestAction(double score)`: Đề xuất hành động
+  - `getSuggestion(WeatherReport)`: Trả về `AdminSuggestion` object
+- **AdminSuggestion** class:
+  - `priorityScore`: double (0-100)
+  - `suggestedAction`: String ("APPROVE", "REVIEW", "REJECT")
+  - `confirmCount`: Long
+  - `rejectCount`: Long
+- **AdminController**:
+  - `GET /api/admin/reports`: Thêm suggestions vào mỗi report DTO
+- **WeatherReportDTO**:
+  - `priorityScore`: Double
+  - `suggestedStatus`: String
+
+**Frontend:**
+- **Admin Page**:
+  - Hiển thị suggestion badge trên mỗi report card:
+    - Màu theo suggestedStatus:
+      - APPROVE: Green gradient
+      - REVIEW: Orange gradient
+      - REJECT: Red gradient
+    - Hiển thị: "Hệ thống đề xuất: DUYỆT/XEM XÉT KỸ/TỪ CHỐI"
+    - Hiển thị priority score và vote counts
+  - Sort reports theo priority score (tùy chọn)
+
+#### Giá trị
+- ✅ Admin không chỉ click, có dữ liệu hỗ trợ quyết định
+- ✅ Hệ thống có "não", thể hiện AI/ML thinking
+- ✅ Tăng hiệu quả và độ chính xác trong quản lý
+
+---
+
+## 15. DATABASE SCHEMA UPDATES
+
+### 15.1. Bảng `report_votes`
+- `id` (BIGINT, PK, AUTO_INCREMENT)
+- `report_id` (BIGINT, FK → weather_reports.id, NOT NULL)
+- `user_id` (BIGINT, FK → users.id, NOT NULL)
+- `vote_type` (ENUM: CONFIRM, REJECT, NOT NULL)
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+- **Unique Constraint**: (report_id, user_id) - Mỗi user chỉ vote 1 lần / report
+
+### 15.2. Cập nhật DTOs
+- **WeatherReportDTO**: 
+  - `confirmCount` (Long)
+  - `rejectCount` (Long)
+  - `userVote` (String: "CONFIRM", "REJECT", null)
+  - `priorityScore` (Double) - Admin only
+  - `suggestedStatus` (String) - Admin only
+- **WeatherDataDTO**:
+  - `suggestedAction` (String)
+  - `suggestedIncidentType` (String)
+  - `suggestionPriority` (String: "LOW", "MEDIUM", "HIGH")

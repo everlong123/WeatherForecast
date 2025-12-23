@@ -2,6 +2,7 @@ package com.example.weather.service;
 
 import com.example.weather.dto.WeatherReportDTO;
 import com.example.weather.entity.IncidentType;
+import com.example.weather.entity.ReportVote;
 import com.example.weather.entity.User;
 import com.example.weather.entity.WeatherReport;
 import com.example.weather.repository.IncidentTypeRepository;
@@ -41,27 +42,42 @@ public class WeatherReportService {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired(required = false)
+    private com.example.weather.service.ReportVoteService voteService;
 
     public List<WeatherReportDTO> getAllReports() {
+        return getAllReports(null);
+    }
+    
+    public List<WeatherReportDTO> getAllReports(String currentUsername) {
         return reportRepository.findAll().stream()
                 // Ẩn các báo cáo đã được admin đánh dấu hidden; null được coi như chưa ẩn
                 .filter(r -> !Boolean.TRUE.equals(r.getHidden()))
-                .map(this::convertToDTO)
+                .map(r -> convertToDTO(r, currentUsername))
                 .collect(Collectors.toList());
     }
 
     public List<WeatherReportDTO> getUserReports(String username) {
+        return getUserReports(username, username);
+    }
+    
+    public List<WeatherReportDTO> getUserReports(String username, String currentUsername) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return reportRepository.findByUser(user).stream()
-                .map(this::convertToDTO)
+                .map(r -> convertToDTO(r, currentUsername))
                 .collect(Collectors.toList());
     }
 
     public WeatherReportDTO getReportById(Long id) {
+        return getReportById(id, null);
+    }
+    
+    public WeatherReportDTO getReportById(Long id, String currentUsername) {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
-        return convertToDTO(report);
+        return convertToDTO(report, currentUsername);
     }
 
     public WeatherReportDTO createReport(WeatherReportDTO dto, String username) {
@@ -286,6 +302,10 @@ public class WeatherReportService {
     }
 
     public WeatherReportDTO convertToDTO(WeatherReport report) {
+        return convertToDTO(report, null);
+    }
+    
+    public WeatherReportDTO convertToDTO(WeatherReport report, String currentUsername) {
         WeatherReportDTO dto = new WeatherReportDTO();
         dto.setId(report.getId());
         dto.setUserId(report.getUser().getId());
@@ -306,6 +326,17 @@ public class WeatherReportService {
         dto.setIncidentTime(report.getIncidentTime());
         dto.setCreatedAt(report.getCreatedAt());
         dto.setUpdatedAt(report.getUpdatedAt());
+        
+        // Thêm vote counts và user vote
+        if (voteService != null) {
+            dto.setConfirmCount(voteService.getConfirmCount(report));
+            dto.setRejectCount(voteService.getRejectCount(report));
+            if (currentUsername != null && !currentUsername.equals(report.getUser().getUsername())) {
+                ReportVote.VoteType userVote = voteService.getUserVote(report, currentUsername);
+                dto.setUserVote(userVote != null ? userVote.name() : null);
+            }
+        }
+        
         return dto;
     }
 }

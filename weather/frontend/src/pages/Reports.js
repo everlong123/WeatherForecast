@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { reportAPI, incidentTypeAPI, locationAPI, uploadAPI } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock, FiCheck } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock, FiCheck, FiThumbsUp, FiX } from 'react-icons/fi';
 import { incidentTypes as defaultIncidentTypes } from '../data/incidentTypes';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import { isAdmin } from '../utils/auth';
+import { isAdmin, getUser } from '../utils/auth';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './Reports.css';
@@ -93,6 +93,7 @@ const Reports = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [reportAddresses, setReportAddresses] = useState({}); // Cache địa chỉ theo report ID
+  const [viewMode, setViewMode] = useState('all'); // 'all' hoặc 'my'
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -115,9 +116,14 @@ const Reports = () => {
   const admin = isAdmin();
 
   useEffect(() => {
+    // Admin không được vào trang Reports, redirect về Admin
+    if (admin) {
+      navigate('/admin');
+      return;
+    }
     fetchData();
     fetchIncidentTypes();
-  }, []);
+  }, [admin, navigate]);
 
   // Tự động reverse geocode cho các report thiếu địa điểm
   useEffect(() => {
@@ -190,7 +196,12 @@ const Reports = () => {
 
   const fetchData = async () => {
     try {
-      const response = await reportAPI.getMyReports();
+      let response;
+      if (viewMode === 'all') {
+        response = await reportAPI.getAll();
+      } else {
+        response = await reportAPI.getMyReports();
+      }
       setReports(response.data);
     } catch (error) {
       console.error('Error fetching reports:', error);
@@ -201,6 +212,11 @@ const Reports = () => {
       setLoading(false);
     }
   };
+
+  // Re-fetch khi viewMode thay đổi
+  useEffect(() => {
+    fetchData();
+  }, [viewMode]);
 
   const fetchIncidentTypes = async () => {
     try {
@@ -395,6 +411,71 @@ const Reports = () => {
     setShowForm(true);
   };
 
+  const handleVote = async (reportId, voteType) => {
+    try {
+      // Lấy vị trí GPS của user
+      let userLat = null;
+      let userLng = null;
+      
+      // Thử lấy từ localStorage (nếu đã lưu trước đó)
+      const savedLocation = localStorage.getItem('userLocation');
+      if (savedLocation) {
+        try {
+          const location = JSON.parse(savedLocation);
+          userLat = location.lat;
+          userLng = location.lng;
+        } catch (e) {
+          console.error('Error parsing saved location:', e);
+        }
+      }
+      
+      // Nếu không có trong localStorage, lấy từ GPS
+      if (userLat === null || userLng === null) {
+        if (navigator.geolocation) {
+          await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                userLat = position.coords.latitude;
+                userLng = position.coords.longitude;
+                // Lưu vào localStorage
+                localStorage.setItem('userLocation', JSON.stringify({ lat: userLat, lng: userLng }));
+                resolve();
+              },
+              (error) => {
+                console.error('Error getting location:', error);
+                reject(new Error('Không thể lấy vị trí GPS. Vui lòng cho phép truy cập vị trí để vote.'));
+              },
+              { timeout: 10000, enableHighAccuracy: true }
+            );
+          });
+        } else {
+          throw new Error('Trình duyệt không hỗ trợ GPS. Vui lòng sử dụng trình duyệt khác.');
+        }
+      }
+      
+      // Gửi vote với vị trí
+      const response = await reportAPI.vote(reportId, voteType, userLat, userLng);
+      
+      // Cập nhật vote counts trong state
+      setReports(prevReports => 
+        prevReports.map(report => 
+          report.id === reportId 
+            ? { 
+                ...report, 
+                confirmCount: response.data.confirmCount || 0,
+                rejectCount: response.data.rejectCount || 0,
+                userVote: response.data.userVote
+              }
+            : report
+        )
+      );
+    } catch (error) {
+      console.error('Error voting:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Không thể vote. Vui lòng thử lại.';
+      alert(errorMessage);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa báo cáo này?')) {
       try {
@@ -476,14 +557,32 @@ const Reports = () => {
   }
 
   return (
-    <div className="reports-container">
-      <div className="reports-header">
+    <div className="reports-page">
+      <div className="reports-container">
+        <div className="reports-header">
         <h2>Báo cáo sự cố thời tiết</h2>
-        {!admin && (
-          <button className="btn-primary" onClick={() => setShowForm(true)}>
-            <FiPlus /> Tạo báo cáo mới
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Toggle view mode */}
+          <div className="view-mode-toggle">
+            <button
+              onClick={() => setViewMode('all')}
+              className={`toggle-btn ${viewMode === 'all' ? 'active' : ''}`}
+            >
+              Tất cả
+            </button>
+            <button
+              onClick={() => setViewMode('my')}
+              className={`toggle-btn ${viewMode === 'my' ? 'active' : ''}`}
+            >
+              Của tôi
+            </button>
+          </div>
+          {!admin && (
+            <button className="btn-primary" onClick={() => setShowForm(true)}>
+              <FiPlus /> Tạo báo cáo mới
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -544,18 +643,20 @@ const Reports = () => {
                 Click trên bản đồ để chọn vị trí sự cố
               </p>
               
-              <div style={{ 
+              <div className="map-container-wrapper" style={{ 
                 marginBottom: '15px', 
                 border: '2px solid #ddd', 
                 borderRadius: '12px', 
                 overflow: 'hidden',
-                height: '320px',
-                backgroundColor: '#e8f4f8'
+                height: '400px',
+                backgroundColor: '#e8f4f8',
+                position: 'relative',
+                zIndex: 1
               }}>
                 <MapContainer
                   center={mapCenter}
                   zoom={mapZoom}
-                  style={{ height: '100%', width: '100%' }}
+                  style={{ height: '100%', width: '100%', zIndex: 1 }}
                   scrollWheelZoom={true}
                   key={`${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
                 >
@@ -753,9 +854,92 @@ const Reports = () => {
                 <FiClock />
                 <span>{new Date(report.incidentTime).toLocaleString('vi-VN')}</span>
               </div>
+
+              {/* Vote Section - Chỉ hiển thị nếu không phải owner và có tọa độ báo cáo */}
+              {(() => {
+                const currentUser = getUser();
+                const isOwner = currentUser && report.userId === currentUser.id;
+                const hasLocation = report.latitude != null && report.longitude != null;
+                return !isOwner && hasLocation && (
+                  <div className="report-votes" style={{ 
+                    marginTop: '12px', 
+                    paddingTop: '12px', 
+                    borderTop: '1px solid rgba(0, 31, 63, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}>
+                    <button
+                      onClick={() => handleVote(report.id, 'CONFIRM')}
+                      className={`vote-btn confirm ${report.userVote === 'CONFIRM' ? 'active' : ''}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        border: `1px solid ${report.userVote === 'CONFIRM' ? '#4CAF50' : 'rgba(0, 31, 63, 0.2)'}`,
+                        background: report.userVote === 'CONFIRM' ? '#4CAF50' : 'rgba(76, 175, 80, 0.1)',
+                        color: report.userVote === 'CONFIRM' ? 'white' : '#4CAF50',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                      }}
+                      title="Tôi cũng gặp"
+                    >
+                      <FiThumbsUp />
+                      <span>Tôi cũng gặp</span>
+                      {report.confirmCount > 0 && (
+                        <span style={{ 
+                          background: report.userVote === 'CONFIRM' ? 'rgba(255,255,255,0.3)' : '#4CAF50',
+                          color: report.userVote === 'CONFIRM' ? 'white' : 'white',
+                          padding: '2px 6px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>
+                          {report.confirmCount}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleVote(report.id, 'REJECT')}
+                      className={`vote-btn reject ${report.userVote === 'REJECT' ? 'active' : ''}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        border: `1px solid ${report.userVote === 'REJECT' ? '#F44336' : 'rgba(0, 31, 63, 0.2)'}`,
+                        background: report.userVote === 'REJECT' ? '#F44336' : 'rgba(244, 67, 54, 0.1)',
+                        color: report.userVote === 'REJECT' ? 'white' : '#F44336',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                      }}
+                      title="Không đúng"
+                    >
+                      <FiX />
+                      <span>Không đúng</span>
+                      {report.rejectCount > 0 && (
+                        <span style={{ 
+                          background: report.userVote === 'REJECT' ? 'rgba(255,255,255,0.3)' : '#F44336',
+                          color: report.userVote === 'REJECT' ? 'white' : 'white',
+                          padding: '2px 6px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>
+                          {report.rejectCount}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           ))
         )}
+      </div>
       </div>
     </div>
   );

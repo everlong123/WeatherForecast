@@ -158,9 +158,20 @@ const Map = () => {
   const fetchReports = async () => {
     try {
       const response = await reportAPI.getAll();
-      setReports(response.data);
+      console.log('Fetched reports:', response.data?.length || 0);
+      const reportsData = response.data || [];
+      // Log để debug
+      const reportsWithCoords = reportsData.filter(r => r.latitude && r.longitude);
+      const reportsWithoutCoords = reportsData.filter(r => !r.latitude || !r.longitude);
+      console.log('Reports with coordinates:', reportsWithCoords.length);
+      console.log('Reports without coordinates:', reportsWithoutCoords.length);
+      if (reportsWithCoords.length > 0) {
+        console.log('Sample report with coords:', reportsWithCoords[0]);
+      }
+      setReports(reportsData);
     } catch (error) {
       console.error('Error fetching reports:', error);
+      console.error('Error response:', error.response);
     } finally {
       setLoading(false);
     }
@@ -270,6 +281,27 @@ const Map = () => {
             <div className="stat-item">
               <span className="stat-label">Tổng báo cáo:</span>
               <span className="stat-value">{reports.length}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Có tọa độ:</span>
+              <span className="stat-value">
+                {reports.filter((r) => r.latitude != null && r.longitude != null).length}
+              </span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Hiển thị trên map:</span>
+              <span className="stat-value">
+                {reports.filter((report) => {
+                  if (report.latitude != null && report.longitude != null) {
+                    const lat = parseFloat(report.latitude);
+                    const lng = parseFloat(report.longitude);
+                    return !isNaN(lat) && !isNaN(lng) && 
+                           lat >= 5 && lat <= 25 && 
+                           lng >= 100 && lng <= 112;
+                  }
+                  return report.city || report.district;
+                }).length}
+              </span>
             </div>
             <div className="stat-item">
               <span className="stat-label">Đang chờ:</span>
@@ -435,23 +467,33 @@ const Map = () => {
             )}
             {reports
               .filter((report) => {
-                // Chỉ hiển thị marker nếu có tọa độ hợp lệ (trong phạm vi Việt Nam)
-                if (report.latitude && report.longitude) {
-                  const lat = report.latitude;
-                  const lng = report.longitude;
-                  // Kiểm tra trong phạm vi Việt Nam: lat 8-23, lng 102-110
-                  return lat >= 8 && lat <= 23 && lng >= 102 && lng <= 110;
+                // Ưu tiên: có tọa độ hợp lệ
+                if (report.latitude != null && report.longitude != null) {
+                  const lat = parseFloat(report.latitude);
+                  const lng = parseFloat(report.longitude);
+                  // Kiểm tra tọa độ hợp lệ (trong phạm vi Việt Nam mở rộng)
+                  // Mở rộng phạm vi để bao gồm cả các vùng biên giới
+                  return !isNaN(lat) && !isNaN(lng) && 
+                         lat >= 5 && lat <= 25 && 
+                         lng >= 100 && lng <= 112;
                 }
-                // Nếu không có tọa độ, tính từ địa điểm
+                // Fallback: nếu không có tọa độ nhưng có địa điểm, vẫn hiển thị
                 return report.city || report.district;
               })
               .map((report) => {
                 // Ưu tiên dùng tọa độ từ database
                 let coords;
-                if (report.latitude && report.longitude) {
-                  coords = [report.latitude, report.longitude];
+                if (report.latitude != null && report.longitude != null) {
+                  const lat = parseFloat(report.latitude);
+                  const lng = parseFloat(report.longitude);
+                  if (!isNaN(lat) && !isNaN(lng)) {
+                    coords = [lat, lng];
+                  } else {
+                    // Tọa độ không hợp lệ, dùng fallback
+                    coords = getLocationCoordinates(report.city, report.district);
+                  }
                 } else {
-                  // Fallback: tính từ địa điểm
+                  // Không có tọa độ, tính từ địa điểm
                   coords = getLocationCoordinates(report.city, report.district);
                 }
                 

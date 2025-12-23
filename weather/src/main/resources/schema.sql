@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS weather_reports (
     longitude DOUBLE,
     status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
     severity VARCHAR(50) NOT NULL DEFAULT 'LOW',
+    hidden BOOLEAN NOT NULL DEFAULT FALSE,
     incident_time DATETIME(6),
     created_at DATETIME(6),
     updated_at DATETIME(6),
