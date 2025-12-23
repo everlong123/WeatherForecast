@@ -6,6 +6,8 @@ import { isAdmin } from '../utils/auth';
 import './Home.css';
 
 const Home = () => {
+  const navigate = useNavigate();
+  const admin = isAdmin();
   const [currentWeather, setCurrentWeather] = useState(null);
   const [forecast, setForecast] = useState([]);
   const [history, setHistory] = useState([]);

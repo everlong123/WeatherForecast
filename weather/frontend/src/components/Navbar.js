@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiHome, FiMap, FiBarChart2, FiUser, FiLogOut, FiShield } from 'react-icons/fi';
+import { FiHome, FiMap, FiBarChart2, FiUser, FiLogOut, FiShield, FiInfo } from 'react-icons/fi';
 import { getUser, logout, isAdmin } from '../utils/auth';
 import './Navbar.css';
 
@@ -25,6 +25,9 @@ const Navbar = () => {
         <div className="navbar-menu">
           <Link to="/" className="navbar-item">
             <FiHome /> Trang chủ
+          </Link>
+          <Link to="/about" className="navbar-item">
+            <FiInfo /> Giới thiệu
           </Link>
           <Link to="/map" className="navbar-item">
             <FiMap /> Bản đồ
