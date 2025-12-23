@@ -44,19 +44,22 @@ const Navbar = () => {
               <FiShield /> Quản trị
             </Link>
           )}
-          {user ? (
-            <div className="navbar-user">
-              <span className="user-name">{user.username}</span>
-              <button onClick={handleLogout} className="btn-logout">
-                <FiLogOut /> Đăng xuất
-              </button>
-            </div>
-          ) : (
+        </div>
+        
+        {user ? (
+          <div className="navbar-user">
+            <span className="user-name">{user.username}</span>
+            <button onClick={handleLogout} className="btn-logout">
+              <FiLogOut /> Đăng xuất
+            </button>
+          </div>
+        ) : (
+          <div className="navbar-user">
             <Link to="/login" className="navbar-item">
               <FiUser /> Đăng nhập
             </Link>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </nav>
   );

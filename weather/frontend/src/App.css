@@ -38,48 +38,76 @@
   border: 2px solid var(--navy-accent);
 }
 
-/* Button Styles */
-.btn {
-  padding: 12px 24px;
+/* Button Styles - Đồng bộ cho toàn bộ ứng dụng */
+.btn,
+button.btn,
+a.btn {
+  padding: 14px 28px;
   border: none;
   border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 31, 63, 0.3);
+  font-family: inherit;
 }
 
-.btn-primary {
+.btn-primary,
+button.btn-primary,
+a.btn-primary {
   background: var(--gradient-navy);
   color: var(--white);
   box-shadow: 0 4px 15px rgba(0, 31, 63, 0.4);
+  border: 2px solid transparent;
 }
 
-.btn-primary:hover {
+.btn-primary:hover,
+button.btn-primary:hover,
+a.btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 31, 63, 0.6);
   background: var(--gradient-navy-light);
+  color: var(--white);
 }
 
-.btn-secondary {
+.btn-secondary,
+button.btn-secondary,
+a.btn-secondary {
   background: var(--white);
   color: var(--navy-primary);
   border: 2px solid var(--navy-primary);
+  box-shadow: 0 4px 15px rgba(0, 31, 63, 0.2);
 }
 
-
-.btn-secondary {
-  background: var(--gradient-navy);
-  color: var(--white);
-  box-shadow: 0 4px 15px rgba(0, 31, 63, 0.4);
-}
-
-.btn-secondary:hover {
+.btn-secondary:hover,
+button.btn-secondary:hover,
+a.btn-secondary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 31, 63, 0.6);
-  background: var(--gradient-navy-light);
+  box-shadow: 0 6px 20px rgba(0, 31, 63, 0.4);
+  background: var(--navy-primary);
+  color: var(--white);
+  border-color: var(--navy-primary);
+}
+
+/* Button disabled state */
+.btn:disabled,
+button.btn:disabled,
+a.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn:disabled:hover {
+  transform: none !important;
+  box-shadow: 0 4px 15px rgba(0, 31, 63, 0.3) !important;
 }
 
 /* Input Styles */

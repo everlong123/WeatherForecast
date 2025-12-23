@@ -138,3 +138,9 @@
   color: #999;
 }
 
+/* Login form buttons sử dụng style chung từ App.css */
+.login-form .btn {
+  width: 100%;
+  margin-top: 10px;
+}
+

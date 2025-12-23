@@ -78,34 +78,50 @@
   gap: 10px;
 }
 
-/* Đảm bảo các nút trên trang Admin dùng chung style đẹp + viền đen mỏng */
-.admin-page .btn.btn-primary,
-.admin-page .btn.btn-secondary {
-  /* Dùng chung một màu & outline để hai nút giống hệt nhau */
-  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+/* Button Styles - Đồng bộ với style chung */
+.admin-page .btn,
+.admin-page button.btn,
+.admin-page a.btn {
+  padding: 14px 28px;
+  border: none;
+  border-radius: 999px; /* pill shape for all buttons */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1;
+  min-height: 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-page .btn-primary,
+.admin-page button.btn-primary,
+.admin-page a.btn-primary {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
   color: var(--white);
-  border: 1px solid rgba(0, 0, 0, 0.7);
-  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(74, 144, 226, 0.4);
+  font-weight: 600;
+  font-size: 16px;
   padding: 16px 32px;
+  border: 1px solid rgba(0, 0, 0, 0.7); /* viền đen mỏng */
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-weight: 600;
-  font-size: 15px;
   position: relative;
   overflow: hidden;
-  transition: all 0.25s ease;
 }
 
-.admin-page .btn.btn-primary:hover,
-.admin-page .btn.btn-secondary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.55);
-}
-
-/* Hiệu ứng sáng trắng lan ra khi hover – áp dụng cho cả hai nút */
-.admin-page .btn.btn-primary::before,
-.admin-page .btn.btn-secondary::before {
+.admin-page .btn-primary::before,
+.admin-page button.btn-primary::before,
+.admin-page a.btn-primary::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -118,10 +134,77 @@
   transition: width 0.6s, height 0.6s;
 }
 
-.admin-page .btn.btn-primary:hover::before,
-.admin-page .btn.btn-secondary:hover::before {
-  width: 260px;
-  height: 260px;
+.admin-page .btn-primary:hover::before,
+.admin-page button.btn-primary:hover::before,
+.admin-page a.btn-primary:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.admin-page .btn-primary:hover,
+.admin-page button.btn-primary:hover,
+.admin-page a.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(74, 144, 226, 0.5);
+}
+
+.admin-page .btn-primary:active,
+.admin-page button.btn-primary:active,
+.admin-page a.btn-primary:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+}
+
+.admin-page .btn-secondary,
+.admin-page button.btn-secondary,
+.admin-page a.btn-secondary {
+  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.7); /* viền đen mỏng */
+  font-weight: 600;
+  font-size: 16px;
+  padding: 16px 32px;
+  border-radius: 999px; /* bo tròn giống nút primary */
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-page .btn-secondary::before,
+.admin-page button.btn-secondary::before,
+.admin-page a.btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.admin-page .btn-secondary:hover::before,
+.admin-page button.btn-secondary:hover::before,
+.admin-page a.btn-secondary:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.admin-page .btn-secondary:hover,
+.admin-page button.btn-secondary:hover,
+.admin-page a.btn-secondary:hover {
+  background: linear-gradient(135deg, #1e293b 0%, #2563eb 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.5);
+}
+
+.admin-page .btn-secondary:active,
+.admin-page button.btn-secondary:active,
+.admin-page a.btn-secondary:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.4);
 }
 
 .stats-grid {

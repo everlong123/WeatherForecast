@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { weatherAPI, reportAPI } from '../utils/api';
+import { weatherAPI, reportAPI, locationAPI } from '../utils/api';
 import { FiMapPin, FiAlertCircle, FiTrendingUp, FiCloud, FiSun, FiDroplet, FiClock, FiCompass, FiEye, FiActivity, FiCalendar, FiArrowRight } from 'react-icons/fi';
 import './Home.css';
 
@@ -17,6 +17,8 @@ const Home = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState('current'); // 'current', 'forecast', 'history'
+  const [reverseGeocodeAddress, setReverseGeocodeAddress] = useState(null);
+  const [loadingAddress, setLoadingAddress] = useState(false);
 
   useEffect(() => {
     // Check for saved location from localStorage first
@@ -61,6 +63,52 @@ const Home = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Reverse geocode khi có lat/long nhưng không có địa chỉ
+  useEffect(() => {
+    if (currentWeather && 
+        currentWeather.latitude && 
+        currentWeather.longitude && 
+        !currentWeather.city && 
+        !currentWeather.district && 
+        !currentWeather.ward) {
+      const lat = currentWeather.latitude;
+      const lng = currentWeather.longitude;
+      
+      setLoadingAddress(true);
+      setReverseGeocodeAddress(null);
+      
+      locationAPI.getLocationFromCoordinates(lat, lng)
+        .then(response => {
+          if (response.data && Object.keys(response.data).length > 0) {
+            const location = response.data;
+            
+            // Tạo địa chỉ đầy đủ từ các thành phần
+            const addressParts = [];
+            if (location.ward) addressParts.push(location.ward);
+            if (location.district) addressParts.push(location.district);
+            if (location.city) addressParts.push(location.city);
+            
+            // Ưu tiên display_name, sau đó là ward/district/city
+            const fullAddress = location.display_name || 
+              (addressParts.length > 0 ? addressParts.join(', ') : null);
+            
+            if (fullAddress) {
+              setReverseGeocodeAddress(fullAddress);
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error reverse geocoding:', error);
+        })
+        .finally(() => {
+          setLoadingAddress(false);
+        });
+    } else {
+      // Reset địa chỉ nếu đã có city/district/ward
+      setReverseGeocodeAddress(null);
+    }
+  }, [currentWeather]);
 
   const fetchWeather = async (lat, lng) => {
     try {
@@ -123,6 +171,39 @@ const Home = () => {
       setRecentReports(response.data.slice(0, 6));
     } catch (error) {
       console.error('Error fetching reports:', error);
+    }
+  };
+
+  // Reverse geocoding: Lấy địa chỉ từ lat/long
+  const reverseGeocode = async (lat, lng) => {
+    if (!lat || !lng) return;
+    
+    setLoadingAddress(true);
+    setReverseGeocodeAddress(null);
+    
+    try {
+      const response = await locationAPI.getLocationFromCoordinates(lat, lng);
+      if (response.data && Object.keys(response.data).length > 0) {
+        const location = response.data;
+        
+        // Tạo địa chỉ đầy đủ từ các thành phần
+        const addressParts = [];
+        if (location.ward) addressParts.push(location.ward);
+        if (location.district) addressParts.push(location.district);
+        if (location.city) addressParts.push(location.city);
+        
+        // Ưu tiên display_name, sau đó là ward/district/city
+        const fullAddress = location.display_name || 
+          (addressParts.length > 0 ? addressParts.join(', ') : null);
+        
+        if (fullAddress) {
+          setReverseGeocodeAddress(fullAddress);
+        }
+      }
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+    } finally {
+      setLoadingAddress(false);
     }
   };
 
@@ -417,12 +498,26 @@ const Home = () => {
                                   return parts.length > 0 ? parts.join(', ') : 'Vị trí hiện tại';
                                 })()}
                               </h2>
-                              {/* Chỉ hiển thị tọa độ nếu không có địa điểm đầy đủ */}
+                              {/* Hiển thị tọa độ và địa chỉ nếu không có địa điểm đầy đủ */}
                               {currentWeather.latitude && currentWeather.longitude && 
                                !currentWeather.city && !currentWeather.district && !currentWeather.ward && (
-                                <p className="weather-coords">
-                                  {currentWeather.latitude.toFixed(4)}, {currentWeather.longitude.toFixed(4)}
-                                </p>
+                                <>
+                                  {loadingAddress ? (
+                                    <p className="weather-coords">Đang tải địa chỉ...</p>
+                                  ) : reverseGeocodeAddress ? (
+                                    <p className="weather-coords">
+                                      {reverseGeocodeAddress}
+                                      <br />
+                                      <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>
+                                        ({currentWeather.latitude.toFixed(4)}, {currentWeather.longitude.toFixed(4)})
+                                      </span>
+                                    </p>
+                                  ) : (
+                                    <p className="weather-coords">
+                                      {currentWeather.latitude.toFixed(4)}, {currentWeather.longitude.toFixed(4)}
+                                    </p>
+                                  )}
+                                </>
                               )}
                             </div>
                           </div>
