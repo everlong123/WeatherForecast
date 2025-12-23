@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { weatherAPI, reportAPI } from '../utils/api';
-import { FiMapPin, FiAlertCircle, FiTrendingUp, FiCloud, FiSun, FiDroplet, FiClock, FiCompass, FiEye, FiActivity } from 'react-icons/fi';
+import { FiMapPin, FiAlertCircle, FiTrendingUp, FiCloud, FiSun, FiDroplet, FiClock, FiCompass, FiEye, FiActivity, FiCalendar, FiArrowRight } from 'react-icons/fi';
 import './Home.css';
 
 const Home = () => {
   const [currentWeather, setCurrentWeather] = useState(null);
+  const [forecast, setForecast] = useState([]);
+  const [history, setHistory] = useState([]);
   const [recentReports, setRecentReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [forecastLoading, setForecastLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [forecastError, setForecastError] = useState(null);
+  const [historyError, setHistoryError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeTab, setActiveTab] = useState('current'); // 'current', 'forecast', 'history'
 
   useEffect(() => {
     // Get user location
@@ -43,9 +50,52 @@ const Home = () => {
 
   const fetchWeather = async (lat, lng) => {
     try {
-      const response = await weatherAPI.getCurrent(lat, lng);
-      console.log('Weather data received:', response.data);
-      setCurrentWeather(response.data);
+      // Fetch current weather
+      const currentResponse = await weatherAPI.getCurrent(lat, lng);
+      console.log('Weather data received:', currentResponse.data);
+      setCurrentWeather(currentResponse.data);
+      
+      // Fetch forecast (24 hours ahead)
+      setForecastLoading(true);
+      setForecastError(null);
+      try {
+        console.log('Fetching forecast for lat:', lat, 'lng:', lng);
+        const forecastResponse = await weatherAPI.getForecast(lat, lng, 24);
+        console.log('Forecast response:', forecastResponse);
+        if (forecastResponse.data && Array.isArray(forecastResponse.data) && forecastResponse.data.length > 0) {
+          console.log('Forecast data received:', forecastResponse.data.length, 'items');
+          setForecast(forecastResponse.data);
+        } else {
+          console.warn('Forecast data is empty or invalid:', forecastResponse.data);
+          setForecastError('Không có dữ liệu dự báo');
+        }
+      } catch (error) {
+        console.error('Error fetching forecast:', error);
+        setForecastError(error.response?.data?.message || 'Không thể tải dữ liệu dự báo');
+      } finally {
+        setForecastLoading(false);
+      }
+      
+      // Fetch history
+      setHistoryLoading(true);
+      setHistoryError(null);
+      try {
+        console.log('Fetching history for lat:', lat, 'lng:', lng);
+        const historyResponse = await weatherAPI.getHistory(lat, lng);
+        console.log('History response:', historyResponse);
+        if (historyResponse.data && Array.isArray(historyResponse.data) && historyResponse.data.length > 0) {
+          console.log('History data received:', historyResponse.data.length, 'items');
+          setHistory(historyResponse.data);
+        } else {
+          console.warn('History data is empty or invalid:', historyResponse.data);
+          setHistoryError('Chưa có dữ liệu lịch sử');
+        }
+      } catch (error) {
+        console.error('Error fetching history:', error);
+        setHistoryError(error.response?.data?.message || 'Không thể tải dữ liệu lịch sử');
+      } finally {
+        setHistoryLoading(false);
+      }
     } catch (error) {
       console.error('Error fetching weather:', error);
     } finally {
@@ -113,130 +163,349 @@ const Home = () => {
         <div className="spinner"></div>
       ) : (
         <div className="container">
+          {/* Forecast and History Tabs */}
           {currentWeather && (
-            <div className={`weather-card card card-${getTemperatureColor(currentWeather.temperature)} fade-in`}>
-              <div className="weather-card-header">
-                <div className="weather-location-section">
-                  <div className="location-full">
-                    <FiMapPin className="location-icon" />
-                    <div>
-                      <h2 className="weather-location">
-                        {(() => {
-                          const parts = [];
-                          if (currentWeather.city) parts.push(currentWeather.city);
-                          if (currentWeather.district && currentWeather.district !== currentWeather.city) {
-                            parts.push(currentWeather.district);
-                          }
-                          if (currentWeather.ward && currentWeather.ward !== currentWeather.district && currentWeather.ward !== currentWeather.city) {
-                            parts.push(currentWeather.ward);
-                          }
-                          return parts.length > 0 ? parts.join(', ') : 'Vị trí hiện tại';
-                        })()}
-                      </h2>
-                      {currentWeather.latitude && currentWeather.longitude && (
-                        <p className="weather-coords">
-                          {currentWeather.latitude.toFixed(4)}, {currentWeather.longitude.toFixed(4)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="real-time-clock">
-                  <FiClock className="clock-icon" />
-                  <div className="clock-time">
-                    <span className="clock-hours">{currentTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
-                    <span className="clock-date">{currentTime.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                  </div>
-                </div>
+            <div className="weather-tabs-section card fade-in">
+              <div className="tabs-header">
+                <button 
+                  className={`weather-tab-button ${activeTab === 'current' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('current')}
+                >
+                  <FiClock /> Hiện tại
+                </button>
+                <button 
+                  className={`weather-tab-button ${activeTab === 'forecast' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('forecast')}
+                >
+                  <FiArrowRight /> Dự báo (24h)
+                </button>
+                <button 
+                  className={`weather-tab-button ${activeTab === 'history' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('history')}
+                >
+                  <FiCalendar /> Lịch sử
+                </button>
               </div>
-              
-              <div className="weather-main-content">
-                <div className="weather-left-group">
-                  <div className="weather-icon-large">
-                    {getWeatherIcon(currentWeather.mainWeather)}
-                  </div>
-                  <div className="weather-info-main">
-                    <div className="temperature">
-                      <span className="temp-value">{Math.round(currentWeather.temperature)}°C</span>
-                      <span className="temp-feels">
-                        Cảm giác như {Math.round(currentWeather.feelsLike || currentWeather.temperature)}°C
-                      </span>
-                    </div>
-                    <p className="weather-desc">{currentWeather.description || currentWeather.mainWeather || 'N/A'}</p>
-                    {currentWeather.recordedAt && (
-                      <p className="weather-updated">
-                        Cập nhật: {new Date(currentWeather.recordedAt).toLocaleString('vi-VN')}
-                      </p>
+
+              <div className="tab-content">
+                {activeTab === 'forecast' && (
+                  <div className="forecast-content">
+                    <h3 className="tab-title">Dự báo thời tiết 24 giờ tới</h3>
+                    {forecastLoading ? (
+                      <div className="empty-state">
+                        <p>Đang tải dữ liệu dự báo...</p>
+                      </div>
+                    ) : forecastError ? (
+                      <div className="empty-state">
+                        <p style={{ color: '#f44336' }}>{forecastError}</p>
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={() => userLocation && fetchWeather(userLocation.lat, userLocation.lng)}
+                          style={{ marginTop: '15px' }}
+                        >
+                          Thử lại
+                        </button>
+                      </div>
+                    ) : forecast.length > 0 ? (
+                      <div className="forecast-list">
+                        {forecast.slice(0, 24).map((item, index) => {
+                          const date = item.datetime ? new Date(item.datetime) : null;
+                          const timeStr = date
+                            ? date.toLocaleTimeString('vi-VN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : `+${index + 1}h`;
+                          const dayStr = date
+                            ? date.toLocaleDateString('vi-VN', {
+                                weekday: 'short',
+                                day: '2-digit',
+                                month: '2-digit',
+                              })
+                            : '';
+
+                          return (
+                            <div key={index} className="forecast-item">
+                              <div className="forecast-time-badge">
+                                <span className="forecast-time-main">{timeStr}</span>
+                                {dayStr && <span className="forecast-time-sub">{dayStr}</span>}
+                              </div>
+                              <div className="forecast-main">
+                                <div className="forecast-icon">
+                                  {getWeatherIcon(item.mainWeather)}
+                                </div>
+                                <div className="forecast-temp">
+                                  {item.temperature ? Math.round(item.temperature) : 'N/A'}°C
+                                </div>
+                              </div>
+                              <div className="forecast-extra">
+                                <span className="forecast-humidity">
+                                  Độ ẩm: {item.humidity ? `${Math.round(item.humidity)}%` : 'N/A'}
+                                </span>
+                                {item.rainVolume > 0 && (
+                                  <span className="rain-indicator">
+                                    <FiDroplet /> {item.rainVolume.toFixed(1)}mm
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <p>Không có dữ liệu dự báo. Vui lòng thử lại sau.</p>
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={() => userLocation && fetchWeather(userLocation.lat, userLocation.lng)}
+                          style={{ marginTop: '15px' }}
+                        >
+                          Thử lại
+                        </button>
+                      </div>
                     )}
                   </div>
-                </div>
-                
-                <div className="weather-details-section">
-                  <div className="weather-details grid grid-3">
-                  <div className="detail-item">
-                    <FiDroplet className="detail-icon" /> 
-                    <div>
-                      <span className="detail-label">Độ ẩm</span>
-                      <span className="detail-value">{currentWeather.humidity || 0}%</span>
-                    </div>
+                )}
+
+                {activeTab === 'history' && (
+                  <div className="history-content">
+                    <h3 className="tab-title">Lịch sử thời tiết</h3>
+                    {historyLoading ? (
+                      <div className="empty-state">
+                        <p>Đang tải dữ liệu lịch sử...</p>
+                      </div>
+                    ) : historyError ? (
+                      <div className="empty-state">
+                        <p style={{ color: '#f44336' }}>{historyError}</p>
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={() => userLocation && fetchWeather(userLocation.lat, userLocation.lng)}
+                          style={{ marginTop: '15px' }}
+                        >
+                          Thử lại
+                        </button>
+                      </div>
+                    ) : history.length > 0 ? (
+                      <div className="history-list">
+                        {(() => {
+                          // Nhóm lịch sử theo ngày
+                          const groupedByDate = {};
+                          history.forEach((item) => {
+                            if (item.recordedAt) {
+                              const date = new Date(item.recordedAt);
+                              const dateKey = date.toLocaleDateString('vi-VN', { 
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              });
+                              if (!groupedByDate[dateKey]) {
+                                groupedByDate[dateKey] = [];
+                              }
+                              groupedByDate[dateKey].push(item);
+                            }
+                          });
+
+                          return Object.entries(groupedByDate).map(([dateKey, items]) => (
+                            <div key={dateKey} className="history-day-group">
+                              <div className="history-day-header">
+                                <FiCalendar className="day-icon" />
+                                <h4 className="day-title">{dateKey}</h4>
+                                <span className="day-count">{items.length} bản ghi</span>
+                              </div>
+                              <div className="history-day-items">
+                                {items.map((item, index) => {
+                                  const date = new Date(item.recordedAt);
+                                  const timeStr = date.toLocaleTimeString('vi-VN', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit'
+                                  });
+                                  return (
+                                    <div key={index} className="history-item">
+                                      <div className="history-time-badge">
+                                        <FiClock className="time-icon" />
+                                        <span>{timeStr}</span>
+                                      </div>
+                                      <div className="history-main-info">
+                                        <div className="history-icon-large">
+                                          {getWeatherIcon(item.mainWeather)}
+                                        </div>
+                                        <div className="history-temp-large">
+                                          <span className="temp-value">{item.temperature ? Math.round(item.temperature) : 'N/A'}°C</span>
+                                          <span className="temp-desc">{item.description || item.mainWeather || 'N/A'}</span>
+                                        </div>
+                                      </div>
+                                      <div className="history-stats">
+                                        <div className="stat-item">
+                                          <FiDroplet className="stat-icon" />
+                                          <span className="stat-value">{item.humidity || 0}%</span>
+                                        </div>
+                                        <div className="stat-item">
+                                          <FiTrendingUp className="stat-icon" />
+                                          <span className="stat-value">{item.windSpeed?.toFixed(1) || '0.0'} m/s</span>
+                                        </div>
+                                        <div className="stat-item">
+                                          <FiActivity className="stat-icon" />
+                                          <span className="stat-value">{item.pressure ? Math.round(item.pressure) : 'N/A'} hPa</span>
+                                        </div>
+                                        {item.rainVolume > 0 && (
+                                          <div className="stat-item rain-stat">
+                                            <FiDroplet className="stat-icon" style={{ color: '#4A90E2' }} />
+                                            <span className="stat-value">{item.rainVolume.toFixed(1)} mm</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <p>Chưa có dữ liệu lịch sử. Dữ liệu sẽ được lưu khi bạn xem thời tiết.</p>
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={() => userLocation && fetchWeather(userLocation.lat, userLocation.lng)}
+                          style={{ marginTop: '15px' }}
+                        >
+                          Tải lại
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="detail-item">
-                    <FiTrendingUp className="detail-icon" /> 
-                    <div>
-                      <span className="detail-label">Gió</span>
-                      <span className="detail-value">
-                        {currentWeather.windSpeed?.toFixed(1) || '0.0'} m/s
-                        {currentWeather.windDirection && ` ${getWindDirection(currentWeather.windDirection)}`}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="detail-item">
-                    <FiActivity className="detail-icon" /> 
-                    <div>
-                      <span className="detail-label">Áp suất</span>
-                      <span className="detail-value">{currentWeather.pressure ? `${Math.round(currentWeather.pressure)} hPa` : 'N/A'}</span>
-                    </div>
-                  </div>
-                  <div className="detail-item">
-                    <FiEye className="detail-icon" /> 
-                    <div>
-                      <span className="detail-label">Tầm nhìn</span>
-                      <span className="detail-value">
-                        {currentWeather.visibility ? `${(currentWeather.visibility / 1000).toFixed(1)} km` : 'N/A'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="detail-item">
-                    <FiCloud className="detail-icon" /> 
-                    <div>
-                      <span className="detail-label">Mây</span>
-                      <span className="detail-value">{currentWeather.cloudiness || 0}%</span>
-                    </div>
-                  </div>
-                  {(currentWeather.rainVolume > 0 || currentWeather.snowVolume > 0) && (
-                    <>
-                      {currentWeather.rainVolume > 0 && (
-                        <div className="detail-item">
-                          <FiDroplet className="detail-icon" style={{ color: '#4A90E2' }} /> 
-                          <div>
-                            <span className="detail-label">Lượng mưa</span>
-                            <span className="detail-value">{currentWeather.rainVolume.toFixed(1)} mm</span>
+                )}
+
+                {activeTab === 'current' && (
+                  <div className="current-content">
+                    <div className={`weather-card-inline card-${getTemperatureColor(currentWeather.temperature)}`}>
+                      <div className="weather-card-header">
+                        <div className="weather-location-section">
+                          <div className="location-full">
+                            <FiMapPin className="location-icon" />
+                            <div>
+                              <h2 className="weather-location">
+                                {(() => {
+                                  const parts = [];
+                                  if (currentWeather.city) parts.push(currentWeather.city);
+                                  if (currentWeather.district && currentWeather.district !== currentWeather.city) {
+                                    parts.push(currentWeather.district);
+                                  }
+                                  if (currentWeather.ward && currentWeather.ward !== currentWeather.district && currentWeather.ward !== currentWeather.city) {
+                                    parts.push(currentWeather.ward);
+                                  }
+                                  return parts.length > 0 ? parts.join(', ') : 'Vị trí hiện tại';
+                                })()}
+                              </h2>
+                              {currentWeather.latitude && currentWeather.longitude && (
+                                <p className="weather-coords">
+                                  {currentWeather.latitude.toFixed(4)}, {currentWeather.longitude.toFixed(4)}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      )}
-                      {currentWeather.snowVolume > 0 && (
-                        <div className="detail-item">
-                          <FiCloud className="detail-icon" style={{ color: '#B0BEC5' }} /> 
-                          <div>
-                            <span className="detail-label">Lượng tuyết</span>
-                            <span className="detail-value">{currentWeather.snowVolume.toFixed(1)} mm</span>
+                        <div className="real-time-clock">
+                          <FiClock className="clock-icon" />
+                          <div className="clock-time">
+                            <span className="clock-hours">{currentTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                            <span className="clock-date">{currentTime.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                           </div>
                         </div>
-                      )}
-                    </>
-                  )}
+                      </div>
+                      
+                      <div className="weather-main-content">
+                        <div className="weather-left-group">
+                          <div className="weather-icon-large">
+                            {getWeatherIcon(currentWeather.mainWeather)}
+                          </div>
+                          <div className="weather-info-main">
+                            <div className="temperature">
+                              <span className="temp-value">{Math.round(currentWeather.temperature)}°C</span>
+                              <span className="temp-feels">
+                                Cảm giác như {Math.round(currentWeather.feelsLike || currentWeather.temperature)}°C
+                              </span>
+                            </div>
+                            <p className="weather-desc">{currentWeather.description || currentWeather.mainWeather || 'N/A'}</p>
+                            {currentWeather.recordedAt && (
+                              <p className="weather-updated">
+                                Cập nhật: {new Date(currentWeather.recordedAt).toLocaleString('vi-VN')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="weather-details-section">
+                          <div className="weather-details grid grid-3">
+                          <div className="detail-item">
+                            <FiDroplet className="detail-icon" /> 
+                            <div>
+                              <span className="detail-label">Độ ẩm</span>
+                              <span className="detail-value">{currentWeather.humidity || 0}%</span>
+                            </div>
+                          </div>
+                          <div className="detail-item">
+                            <FiTrendingUp className="detail-icon" /> 
+                            <div>
+                              <span className="detail-label">Gió</span>
+                              <span className="detail-value">
+                                {currentWeather.windSpeed?.toFixed(1) || '0.0'} m/s
+                                {currentWeather.windDirection && ` ${getWindDirection(currentWeather.windDirection)}`}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="detail-item">
+                            <FiActivity className="detail-icon" /> 
+                            <div>
+                              <span className="detail-label">Áp suất</span>
+                              <span className="detail-value">{currentWeather.pressure ? `${Math.round(currentWeather.pressure)} hPa` : 'N/A'}</span>
+                            </div>
+                          </div>
+                          <div className="detail-item">
+                            <FiEye className="detail-icon" /> 
+                            <div>
+                              <span className="detail-label">Tầm nhìn</span>
+                              <span className="detail-value">
+                                {currentWeather.visibility ? `${(currentWeather.visibility / 1000).toFixed(1)} km` : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="detail-item">
+                            <FiCloud className="detail-icon" /> 
+                            <div>
+                              <span className="detail-label">Mây</span>
+                              <span className="detail-value">{currentWeather.cloudiness || 0}%</span>
+                            </div>
+                          </div>
+                          {(currentWeather.rainVolume > 0 || currentWeather.snowVolume > 0) && (
+                            <>
+                              {currentWeather.rainVolume > 0 && (
+                                <div className="detail-item">
+                                  <FiDroplet className="detail-icon" style={{ color: '#4A90E2' }} /> 
+                                  <div>
+                                    <span className="detail-label">Lượng mưa</span>
+                                    <span className="detail-value">{currentWeather.rainVolume.toFixed(1)} mm</span>
+                                  </div>
+                                </div>
+                              )}
+                              {currentWeather.snowVolume > 0 && (
+                                <div className="detail-item">
+                                  <FiCloud className="detail-icon" style={{ color: '#B0BEC5' }} /> 
+                                  <div>
+                                    <span className="detail-label">Lượng tuyết</span>
+                                    <span className="detail-value">{currentWeather.snowVolume.toFixed(1)} mm</span>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}

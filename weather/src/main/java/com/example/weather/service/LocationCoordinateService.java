@@ -189,7 +189,8 @@ public class LocationCoordinateService {
      */
     public Map<String, Double> getWardCoordinates(String provinceName, String districtName, String wardName) {
         // Debug logging
-        System.out.println("Getting coordinates for: Province=" + provinceName + ", District=" + districtName + ", Ward=" + wardName);
+        // Log location (URL encoding will be handled by NominatimService)
+        System.out.println("Getting coordinates for location (query will be UTF-8 encoded)");
         
         if (coordinatesData == null || !coordinatesData.containsKey("wards")) {
             Map<String, Double> result = getDistrictCoordinates(provinceName, districtName);

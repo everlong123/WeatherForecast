@@ -1,6 +1,7 @@
 package com.example.weather.controller;
 
 import com.example.weather.service.NominatimService;
+import com.example.weather.service.OpenMeteoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +13,14 @@ import java.util.*;
 @RestController
 @RequestMapping("/locations")
 public class LocationController {
+    @Autowired(required = false)
+    private OpenMeteoService openMeteoService;
+    
     @Autowired
     private NominatimService nominatimService;
+    
+    @Autowired(required = false)
+    private com.example.weather.service.OpenWeatherService openWeatherService;
     
     private static Map<String, Map<String, List<String>>> locationsData;
 
@@ -74,22 +81,37 @@ public class LocationController {
             @RequestParam(required = false) String ward) {
         Map<String, Double> coords = null;
         
-        // Log để debug
-        System.out.println("Getting coordinates for: city=" + city + ", district=" + district + ", ward=" + ward);
+        // Không log Vietnamese text trực tiếp để tránh console font issues
+        // Chỉ log khi có kết quả thành công
         
-        // Sử dụng Nominatim để lấy tọa độ
-        if (nominatimService != null && nominatimService.isAvailable()) {
+        // Ưu tiên Open-Meteo (miễn phí, không cần API key, tốt hơn cho tiếng Việt)
+        if (openMeteoService != null && openMeteoService.isAvailable()) {
+            coords = openMeteoService.getCoordinatesFromLocation(city, district, ward);
+            if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
+                System.out.println("Open-Meteo coordinates found: lat=" + coords.get("lat") + ", lng=" + coords.get("lng"));
+            }
+        }
+        
+        // Fallback: Thử Nominatim nếu Open-Meteo không có kết quả
+        if ((coords == null || coords.isEmpty()) && nominatimService != null && nominatimService.isAvailable()) {
             coords = nominatimService.getCoordinatesFromLocation(city, district, ward);
-        } else {
-            System.out.println("Nominatim service is not available");
+            if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
+                System.out.println("Nominatim coordinates found: lat=" + coords.get("lat") + ", lng=" + coords.get("lng"));
+            }
+        }
+        
+        // Fallback: Thử OpenWeather (nếu có API key) - chỉ cho geocoding
+        if ((coords == null || coords.isEmpty()) && openWeatherService != null && openWeatherService.isAvailable()) {
+            coords = openWeatherService.getCoordinatesFromLocation(city, district, ward);
+            if (coords != null && coords.containsKey("lat") && coords.containsKey("lng")) {
+                System.out.println("OpenWeather coordinates found: lat=" + coords.get("lat") + ", lng=" + coords.get("lng"));
+            }
         }
         
         // Nếu không có kết quả, trả về map rỗng (không có lat/lng)
         if (coords == null || coords.isEmpty()) {
-            System.out.println("No coordinates found, returning empty map");
+            System.out.println("No coordinates found after trying all services, returning empty map");
             coords = new HashMap<>();
-        } else {
-            System.out.println("Coordinates found: " + coords);
         }
         
         return ResponseEntity.ok(coords);
@@ -112,5 +134,28 @@ public class LocationController {
         }
         
         return ResponseEntity.ok(location);
+    }
+    
+    /**
+     * Test endpoint để test trực tiếp Nominatim API với query đơn giản
+     * Ví dụ: /locations/test-nominatim?q=xã đồng lạc
+     */
+    @GetMapping("/test-nominatim")
+    public ResponseEntity<Map<String, Object>> testNominatim(
+            @RequestParam String q) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("query", q);
+        
+        if (nominatimService != null && nominatimService.isAvailable()) {
+            // Test với query đơn giản (giống web UI)
+            Map<String, Double> coords = nominatimService.testNominatimQuery(q);
+            result.put("coordinates", coords);
+            result.put("success", coords != null && !coords.isEmpty());
+        } else {
+            result.put("error", "Nominatim service not available");
+            result.put("success", false);
+        }
+        
+        return ResponseEntity.ok(result);
     }
 }

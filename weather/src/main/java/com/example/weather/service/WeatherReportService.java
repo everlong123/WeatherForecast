@@ -30,6 +30,9 @@ public class WeatherReportService {
     @Autowired(required = false)
     private com.example.weather.service.OpenWeatherService openWeatherService;
     
+    @Autowired(required = false)
+    private OpenMeteoService openMeteoService;
+    
     @Autowired
     private NominatimService nominatimService;
     
@@ -81,18 +84,25 @@ public class WeatherReportService {
         report.setWard(dto.getWard());
         report.setCity(dto.getCity());
         
-        // Tự động lấy tọa độ từ địa điểm bằng Nominatim
+        // Tự động lấy tọa độ từ địa điểm
         if (dto.getLatitude() == null || dto.getLongitude() == null) {
             Map<String, Double> coords = null;
             
-            // Thử Nominatim (miễn phí, không cần API key)
-            if (nominatimService != null && nominatimService.isAvailable()) {
+            // Ưu tiên Open-Meteo (miễn phí, không cần API key, tốt hơn cho tiếng Việt)
+            if (openMeteoService != null && openMeteoService.isAvailable()) {
+                coords = openMeteoService.getCoordinatesFromLocation(
+                    dto.getCity(), dto.getDistrict(), dto.getWard()
+                );
+            }
+            
+            // Fallback: Thử Nominatim nếu Open-Meteo không có kết quả
+            if (coords == null && nominatimService != null && nominatimService.isAvailable()) {
                 coords = nominatimService.getCoordinatesFromLocation(
                     dto.getCity(), dto.getDistrict(), dto.getWard()
                 );
             }
             
-            // Nếu Nominatim không có kết quả, thử OpenWeather (nếu có API key) - chỉ cho geocoding
+            // Fallback: Thử OpenWeather (nếu có API key) - chỉ cho geocoding
             if (coords == null && openWeatherService != null && openWeatherService.isAvailable()) {
                 coords = openWeatherService.getCoordinatesFromLocation(
                     dto.getCity(), dto.getDistrict(), dto.getWard()
@@ -143,21 +153,28 @@ public class WeatherReportService {
         if (dto.getWard() != null) report.setWard(dto.getWard());
         if (dto.getCity() != null) report.setCity(dto.getCity());
         
-        // Cập nhật tọa độ nếu địa điểm thay đổi hoặc chưa có bằng Nominatim
+        // Cập nhật tọa độ nếu địa điểm thay đổi hoặc chưa có
         if (dto.getLatitude() != null && dto.getLongitude() != null) {
             report.setLatitude(dto.getLatitude());
             report.setLongitude(dto.getLongitude());
         } else if (dto.getCity() != null || dto.getDistrict() != null || dto.getWard() != null) {
             Map<String, Double> coords = null;
             
-            // Thử Nominatim (miễn phí, không cần API key)
-            if (nominatimService != null && nominatimService.isAvailable()) {
+            // Ưu tiên Open-Meteo (miễn phí, không cần API key, tốt hơn cho tiếng Việt)
+            if (openMeteoService != null && openMeteoService.isAvailable()) {
+                coords = openMeteoService.getCoordinatesFromLocation(
+                    report.getCity(), report.getDistrict(), report.getWard()
+                );
+            }
+            
+            // Fallback: Thử Nominatim nếu Open-Meteo không có kết quả
+            if (coords == null && nominatimService != null && nominatimService.isAvailable()) {
                 coords = nominatimService.getCoordinatesFromLocation(
                     report.getCity(), report.getDistrict(), report.getWard()
                 );
             }
             
-            // Nếu Nominatim không có kết quả, thử OpenWeather (nếu có API key) - chỉ cho geocoding
+            // Fallback: Thử OpenWeather (nếu có API key) - chỉ cho geocoding
             if (coords == null && openWeatherService != null && openWeatherService.isAvailable()) {
                 coords = openWeatherService.getCoordinatesFromLocation(
                     report.getCity(), report.getDistrict(), report.getWard()

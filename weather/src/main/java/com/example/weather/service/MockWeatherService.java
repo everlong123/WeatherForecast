@@ -182,5 +182,123 @@ public class MockWeatherService {
                 return "🌤️";
         }
     }
+    
+    /**
+     * Tạo nhiều bản ghi lịch sử thời tiết với các thời điểm khác nhau
+     * @param lat Latitude
+     * @param lng Longitude
+     * @param city Tên thành phố
+     * @param district Tên quận/huyện
+     * @param ward Tên phường/xã
+     * @param days Số ngày trong quá khứ để tạo dữ liệu
+     * @param recordsPerDay Số bản ghi mỗi ngày (ví dụ: 24 = mỗi giờ)
+     * @return Số lượng bản ghi đã tạo
+     */
+    public int generateHistoryData(Double lat, Double lng, String city, String district, String ward, 
+                                   int days, int recordsPerDay) {
+        LocalDateTime now = LocalDateTime.now();
+        int totalRecords = 0;
+        
+        for (int day = days; day >= 1; day--) {
+            LocalDateTime baseTime = now.minusDays(day);
+            
+            for (int record = 0; record < recordsPerDay; record++) {
+                // Tính thời gian cho bản ghi này (phân bố đều trong ngày)
+                int hoursOffset = (24 / recordsPerDay) * record;
+                LocalDateTime recordTime = baseTime.plusHours(hoursOffset);
+                
+                // Tạo dữ liệu thời tiết với thời điểm cụ thể
+                WeatherDataDTO dto = generateWeatherDataForTime(lat, lng, city, district, ward, recordTime);
+                weatherDataService.saveWeatherData(dto);
+                totalRecords++;
+            }
+        }
+        
+        return totalRecords;
+    }
+    
+    /**
+     * Tạo dữ liệu thời tiết cho một thời điểm cụ thể
+     */
+    private WeatherDataDTO generateWeatherDataForTime(Double lat, Double lng, String city, 
+                                                      String district, String ward, LocalDateTime time) {
+        WeatherDataDTO dto = new WeatherDataDTO();
+        dto.setLatitude(lat);
+        dto.setLongitude(lng);
+        dto.setCity(city != null ? city : getCityName(lat, lng));
+        dto.setDistrict(district);
+        dto.setWard(ward);
+        
+        int month = time.getMonthValue();
+        WeatherTemplate template = getWeatherTemplate(month);
+        
+        // Tạo nhiệt độ với biến thiên theo giờ trong ngày (nóng nhất vào giữa trưa)
+        int hour = time.getHour();
+        double hourFactor = Math.sin((hour - 6) * Math.PI / 12); // Peak at 12:00
+        hourFactor = Math.max(0, hourFactor); // Không âm
+        double temperature = template.minTemp + (template.maxTemp - template.minTemp) * hourFactor;
+        temperature += (random.nextDouble() - 0.5) * 3; // Thêm biến thiên ngẫu nhiên
+        temperature = Math.max(template.minTemp, Math.min(template.maxTemp, temperature));
+        temperature = Math.round(temperature * 10.0) / 10.0;
+        dto.setTemperature(temperature);
+        
+        // Cảm giác như
+        double feelsLike = temperature + (random.nextDouble() * 3 - 1.5);
+        feelsLike = Math.round(feelsLike * 10.0) / 10.0;
+        dto.setFeelsLike(feelsLike);
+        
+        // Độ ẩm (cao hơn vào ban đêm)
+        double humidityBase = template.minHumidity + (template.maxHumidity - template.minHumidity) * random.nextDouble();
+        if (hour >= 20 || hour <= 6) {
+            humidityBase += 10; // Tăng độ ẩm ban đêm
+        }
+        humidityBase = Math.min(100, humidityBase);
+        dto.setHumidity((double) Math.round(humidityBase));
+        
+        // Áp suất
+        double pressure = 1013 + random.nextDouble() * 7;
+        pressure = Math.round(pressure * 10.0) / 10.0;
+        dto.setPressure(pressure);
+        
+        // Tốc độ gió
+        double windSpeed = template.minWindSpeed + (template.maxWindSpeed - template.minWindSpeed) * random.nextDouble();
+        windSpeed = Math.round(windSpeed * 10.0) / 10.0;
+        dto.setWindSpeed(windSpeed);
+        
+        // Hướng gió
+        double windDirection = random.nextDouble() * 360;
+        dto.setWindDirection((double) Math.round(windDirection));
+        
+        // Tầm nhìn
+        double visibility = 5 + random.nextDouble() * 10;
+        visibility = Math.round(visibility * 10.0) / 10.0;
+        dto.setVisibility(visibility);
+        
+        // Mây
+        double cloudiness = random.nextDouble() * 100;
+        dto.setCloudiness((double) Math.round(cloudiness));
+        
+        // Mưa (nhiều hơn vào buổi chiều trong mùa mưa)
+        double rainVolume = 0;
+        if (month >= 5 && month <= 10) {
+            if (hour >= 14 && hour <= 18) {
+                rainVolume = random.nextDouble() * 20; // Mưa nhiều vào chiều
+            } else {
+                rainVolume = random.nextDouble() * 5; // Ít mưa vào các giờ khác
+            }
+        }
+        dto.setRainVolume(Math.round(rainVolume * 10.0) / 10.0);
+        
+        // Loại thời tiết
+        String weatherType = template.weatherTypes[random.nextInt(template.weatherTypes.length)];
+        String description = template.descriptions[random.nextInt(template.descriptions.length)];
+        dto.setMainWeather(weatherType);
+        dto.setDescription(description);
+        dto.setIcon(getWeatherIcon(weatherType));
+        
+        dto.setRecordedAt(time);
+        
+        return dto;
+    }
 }
 

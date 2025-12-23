@@ -13,7 +13,9 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,6 +42,7 @@ public class OpenWeatherService {
     
     private static final String OPENWEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather";
     private static final String OPENWEATHER_GEOCODING_URL = "http://api.openweathermap.org/geo/1.0/direct";
+    private static final String OPENWEATHER_ONECALL_API_URL = "https://api.openweathermap.org/data/3.0/onecall";
     
     /**
      * Lấy tọa độ (lat/lng) từ tên địa điểm bằng Geocoding API
@@ -245,6 +248,137 @@ public class OpenWeatherService {
         }
         
         return dto;
+    }
+    
+    /**
+     * Lấy hourly forecast từ OpenWeatherMap One Call API 3.0
+     * @param lat Latitude
+     * @param lng Longitude
+     * @param hoursAhead Số giờ dự báo trước (tối đa 48 giờ với free tier)
+     * @return Danh sách forecast theo từng giờ
+     */
+    public List<Map<String, Object>> getHourlyForecast(Double lat, Double lng, int hoursAhead) {
+        if (!enabled || apiKey == null || apiKey.isEmpty() || lat == null || lng == null) {
+            return null;
+        }
+        
+        try {
+            // Xây dựng URL với One Call API 3.0
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(OPENWEATHER_ONECALL_API_URL)
+                    .queryParam("lat", lat)
+                    .queryParam("lon", lng)
+                    .queryParam("appid", apiKey)
+                    .queryParam("units", "metric")
+                    .queryParam("lang", "vi")
+                    .queryParam("exclude", "minutely,daily,alerts"); // Chỉ lấy hourly và current
+            
+            String url = builder.build().toUriString();
+            
+            // Gọi API
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                JsonNode jsonNode = objectMapper.readTree(response.getBody());
+                
+                // Kiểm tra lỗi
+                if (jsonNode.has("cod")) {
+                    System.err.println("OpenWeatherMap One Call API Error: " + jsonNode.toString());
+                    return null;
+                }
+                
+                List<Map<String, Object>> forecasts = new ArrayList<>();
+                
+                // Parse hourly forecast
+                if (jsonNode.has("hourly") && jsonNode.get("hourly").isArray()) {
+                    JsonNode hourlyArray = jsonNode.get("hourly");
+                    int count = Math.min(hourlyArray.size(), hoursAhead);
+                    
+                    for (int i = 0; i < count; i++) {
+                        JsonNode hour = hourlyArray.get(i);
+                        Map<String, Object> forecast = new HashMap<>();
+                        
+                        // DateTime (Unix timestamp)
+                        if (hour.has("dt")) {
+                            long timestamp = hour.get("dt").asLong();
+                            forecast.put("datetime", java.time.Instant.ofEpochSecond(timestamp).toString());
+                        }
+                        
+                        // Temperature
+                        if (hour.has("temp")) {
+                            forecast.put("temperature", hour.get("temp").asDouble());
+                        }
+                        
+                        // Feels like
+                        if (hour.has("feels_like")) {
+                            forecast.put("feelsLike", hour.get("feels_like").asDouble());
+                        }
+                        
+                        // Humidity
+                        if (hour.has("humidity")) {
+                            forecast.put("humidity", (double) hour.get("humidity").asInt());
+                        }
+                        
+                        // Pressure
+                        if (hour.has("pressure")) {
+                            forecast.put("pressure", (double) hour.get("pressure").asInt());
+                        }
+                        
+                        // Wind Speed
+                        if (hour.has("wind_speed")) {
+                            forecast.put("windSpeed", hour.get("wind_speed").asDouble());
+                        }
+                        
+                        // Wind Direction
+                        if (hour.has("wind_deg")) {
+                            forecast.put("windDirection", (double) hour.get("wind_deg").asInt());
+                        }
+                        
+                        // Cloudiness
+                        if (hour.has("clouds")) {
+                            forecast.put("cloudiness", (double) hour.get("clouds").asInt());
+                        }
+                        
+                        // Visibility
+                        if (hour.has("visibility")) {
+                            forecast.put("visibility", hour.get("visibility").asDouble() / 1000.0); // m -> km
+                        }
+                        
+                        // Rain
+                        if (hour.has("rain") && hour.get("rain").has("1h")) {
+                            forecast.put("rainVolume", hour.get("rain").get("1h").asDouble());
+                        }
+                        
+                        // Snow
+                        if (hour.has("snow") && hour.get("snow").has("1h")) {
+                            forecast.put("snowVolume", hour.get("snow").get("1h").asDouble());
+                        }
+                        
+                        // Weather condition
+                        if (hour.has("weather") && hour.get("weather").isArray() && hour.get("weather").size() > 0) {
+                            JsonNode weather = hour.get("weather").get(0);
+                            if (weather.has("main")) {
+                                forecast.put("mainWeather", weather.get("main").asText());
+                            }
+                            if (weather.has("description")) {
+                                forecast.put("description", weather.get("description").asText());
+                            }
+                            if (weather.has("icon")) {
+                                forecast.put("icon", "http://openweathermap.org/img/w/" + weather.get("icon").asText() + ".png");
+                            }
+                        }
+                        
+                        forecasts.add(forecast);
+                    }
+                }
+                
+                return forecasts.isEmpty() ? null : forecasts;
+            }
+            
+            return null;
+        } catch (Exception e) {
+            System.err.println("Error calling OpenWeatherMap One Call API 3.0: " + e.getMessage());
+            return null;
+        }
     }
     
     /**

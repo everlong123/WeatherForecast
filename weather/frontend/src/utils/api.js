@@ -65,6 +65,8 @@ export const weatherAPI = {
     if (ward) params.ward = ward;
     return api.get('/weather/current', { params });
   },
+  getForecast: (lat, lng, hoursAhead = 24) => 
+    api.get('/weather/forecast', { params: { lat, lng, hoursAhead } }),
   getHistory: (lat, lng) => api.get('/weather/history', { params: { lat, lng } }),
   fetch: (lat, lng, city, district, ward) =>
     api.post('/weather/fetch', null, {

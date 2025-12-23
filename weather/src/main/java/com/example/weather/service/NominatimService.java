@@ -34,7 +34,8 @@ public class NominatimService {
     private static final String NOMINATIM_API_URL = "https://nominatim.openstreetmap.org/search";
     
     // User-Agent bắt buộc cho Nominatim (theo policy của họ)
-    private static final String USER_AGENT = "WeatherForecastApp/1.0";
+    // Phải có email để tránh bị block
+    private static final String USER_AGENT = "WeatherForecastApp/1.0 (contact@example.com)";
     
     /**
      * Chuẩn hóa tên địa điểm (bỏ tiền tố "Tỉnh", "Thành phố", "Huyện", "Thị xã", "Thị trấn", "Xã", "Phường")
@@ -91,59 +92,153 @@ public class NominatimService {
         try {
             // LƯU Ý: Console output có thể hiển thị sai ký tự tiếng Việt (do Windows console encoding)
             // nhưng URL thực tế đã được encode đúng UTF-8 bởi UriComponentsBuilder
-            // System.out.println("Trying Nominatim query: " + query);
+            // Ví dụ: Console hiển thị "Ba Bß╗â" nhưng URL encode đúng là "Ba%20B%E1%BB%83"
+            // => API call vẫn hoạt động đúng, chỉ là console hiển thị sai
+            // System.out.println("Trying Nominatim query: " + query); // Comment để tránh spam log
             
             // Xây dựng URL với UTF-8 encoding đảm bảo
             // UriComponentsBuilder tự động encode query parameters với UTF-8
+            // Thử không có countrycodes trước (giống web UI), nếu không có kết quả mới thêm countrycodes
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(NOMINATIM_API_URL)
                     .queryParam("q", query)  // Tự động encode với UTF-8
                     .queryParam("format", "json")
-                    .queryParam("limit", 1)
+                    .queryParam("limit", 10)  // Tăng limit để có nhiều kết quả hơn
                     .queryParam("addressdetails", "1")
-                    .queryParam("countrycodes", "vn"); // Chỉ tìm trong Việt Nam
+                    .queryParam("accept-language", "vi"); // Ưu tiên kết quả tiếng Việt
+            // KHÔNG thêm countrycodes=vn ngay từ đầu (có thể quá hạn chế)
+            // Sẽ filter sau trong code
             
             // Build URL và đảm bảo encoding là UTF-8
             // URL sẽ được encode đúng (ví dụ: "Xã Bàng Trang" -> "X%C3%A3%20B%C3%A0ng%20Trang")
             String url = builder.encode(StandardCharsets.UTF_8).build().toUriString();
             
+            // Log URL đã được encode để debug
+            System.out.println("Nominatim API URL (UTF-8 encoded): " + url);
+            
             // Gọi API với User-Agent header (bắt buộc theo policy của Nominatim)
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.set("User-Agent", USER_AGENT);
+            // Thêm Referer header (một số API yêu cầu)
+            headers.set("Referer", "https://nominatim.openstreetmap.org/");
             org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
             
-            ResponseEntity<String> response = restTemplate.exchange(
+            ResponseEntity<String> response;
+            try {
+                response = restTemplate.exchange(
                 url, 
                 org.springframework.http.HttpMethod.GET, 
                 entity, 
                 String.class
             );
+                System.out.println("Nominatim response status: " + response.getStatusCode());
+            } catch (org.springframework.web.client.ResourceAccessException e) {
+                System.err.println("Nominatim connection error (timeout/network): " + e.getMessage());
+                return null;
+            } catch (org.springframework.web.client.HttpClientErrorException e) {
+                System.err.println("Nominatim HTTP error: " + e.getStatusCode() + " - " + e.getMessage());
+                return null;
+            } catch (org.springframework.web.client.RestClientException e) {
+                System.err.println("Nominatim REST client error: " + e.getMessage());
+                return null;
+            }
+            
+            // Kiểm tra rate limit headers
+            String rateLimitRemaining = response.getHeaders().getFirst("X-RateLimit-Remaining");
+            if (rateLimitRemaining != null) {
+                System.out.println("Nominatim rate limit remaining: " + rateLimitRemaining);
+            }
+            String retryAfter = response.getHeaders().getFirst("Retry-After");
+            if (retryAfter != null) {
+                System.out.println("WARNING: Nominatim rate limited! Retry after: " + retryAfter + " seconds");
+            }
             
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
+                String responseBody = response.getBody().trim();
+                System.out.println("Nominatim response body length: " + responseBody.length());
+                
+                // Log một phần response body để debug (nếu không rỗng)
+                if (responseBody.length() > 2 && !responseBody.equals("[]")) {
+                    System.out.println("Nominatim response preview: " + responseBody.substring(0, Math.min(200, responseBody.length())));
+                }
+                
+                // Kiểm tra nếu response là mảng rỗng
+                if (responseBody.equals("[]") || responseBody.isEmpty()) {
+                    System.out.println("Nominatim returned empty array for query: " + query);
+                    // Có thể là rate limit hoặc địa điểm không tồn tại
+                    return null;
+                }
+                
+                JsonNode jsonNode = objectMapper.readTree(responseBody);
                 
                 // Nominatim API trả về array
                 if (jsonNode.isArray() && jsonNode.size() > 0) {
-                    JsonNode firstResult = jsonNode.get(0);
+                    System.out.println("Nominatim found " + jsonNode.size() + " result(s)");
+                    
+                    // Ưu tiên kết quả có country code = "vn"
+                    JsonNode bestResult = null;
+                    
+                    for (int i = 0; i < jsonNode.size(); i++) {
+                        JsonNode result = jsonNode.get(i);
+                        // Ưu tiên kết quả có addressdetails và country code = "vn"
+                        if (result.has("address")) {
+                            JsonNode address = result.get("address");
+                            if (address.has("country_code") && "vn".equalsIgnoreCase(address.get("country_code").asText())) {
+                                bestResult = result;
+                                System.out.println("Found Vietnam result at index " + i);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Nếu không tìm thấy kết quả có country_code=vn, dùng kết quả đầu tiên
+                    if (bestResult == null) {
+                        bestResult = jsonNode.get(0);
+                        System.out.println("No Vietnam result found, using first result");
+                    }
                     
                     Map<String, Double> coords = new HashMap<>();
-                    if (firstResult.has("lat")) {
-                        coords.put("lat", firstResult.get("lat").asDouble());
+                    if (bestResult.has("lat")) {
+                        coords.put("lat", bestResult.get("lat").asDouble());
                     }
-                    if (firstResult.has("lon")) {
-                        coords.put("lng", firstResult.get("lon").asDouble());
+                    if (bestResult.has("lon")) {
+                        coords.put("lng", bestResult.get("lon").asDouble());
                     }
                     
                     if (coords.containsKey("lat") && coords.containsKey("lng")) {
-                        // Console có thể hiển thị sai ký tự tiếng Việt, nhưng query đã được encode đúng
-                        System.out.println("Nominatim found coordinates: " + coords);
+                        // Log coordinates (chỉ log số, không log Vietnamese text)
+                        System.out.println("Nominatim found coordinates: lat=" + coords.get("lat") + ", lng=" + coords.get("lng"));
                         return coords;
+                    } else {
+                        System.out.println("Result found but missing lat/lon");
                     }
+                } else {
+                    System.out.println("Nominatim returned empty or invalid response");
                 }
+            } else {
+                System.out.println("Nominatim API call failed: status=" + response.getStatusCode() + ", body=" + (response.getBody() != null ? response.getBody().substring(0, Math.min(200, response.getBody().length())) : "null"));
             }
             
             return null;
+        } catch (org.springframework.web.client.ResourceAccessException e) {
+            // Wraps SocketTimeoutException, ConnectTimeoutException, UnknownHostException, etc.
+            Throwable cause = e.getCause();
+            if (cause instanceof java.net.SocketTimeoutException) {
+                System.err.println("Nominatim timeout error for query '" + query + "': " + e.getMessage());
+            } else if (cause instanceof java.net.UnknownHostException) {
+                System.err.println("Nominatim DNS error (cannot resolve host): " + e.getMessage());
+            } else {
+                System.err.println("Nominatim connection error for query '" + query + "': " + e.getMessage());
+            }
+            return null;
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            System.err.println("Nominatim HTTP error for query '" + query + "': " + e.getStatusCode() + " - " + e.getMessage());
+            return null;
+        } catch (org.springframework.web.client.RestClientException e) {
+            System.err.println("Nominatim REST client error for query '" + query + "': " + e.getMessage());
+            return null;
         } catch (Exception e) {
-            System.err.println("Error calling Nominatim with query '" + query + "': " + e.getMessage());
+            System.err.println("Unexpected error calling Nominatim with query '" + query + "': " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
@@ -167,158 +262,97 @@ public class NominatimService {
         String unaccentedWard = normalizedWard != null ? removeVietnameseAccents(normalizedWard) : null;
         String unaccentedDistrict = normalizedDistrict != null ? removeVietnameseAccents(normalizedDistrict) : null;
         String unaccentedCity = normalizedCity != null ? removeVietnameseAccents(normalizedCity) : null;
-        String unaccentedWardFull = ward != null ? removeVietnameseAccents(ward) : null;
         
-        // Danh sách các query format để thử (theo thứ tự ưu tiên - format đầy đủ trước, có dấu trước, không dấu sau)
+        // Danh sách các query format để thử (tối đa 8 queries)
+        // Ưu tiên query đơn giản trước (giống web UI), sau đó mới query phức tạp
         java.util.List<String> queries = new java.util.ArrayList<>();
+        int maxQueries = 8; // Tăng lên 8 để có nhiều format hơn
         
-        // Nếu có đầy đủ ward, district, city - ưu tiên format đầy đủ (có tiền tố)
+        // Nếu có ward, thử query đơn giản trước (giống web UI: "xã đồng lạc")
+        if (ward != null && !ward.trim().isEmpty()) {
+            // Format 1: Ward với tiền tố gốc (giống web UI nhất) - ưu tiên cao nhất
+            queries.add(ward.trim());
+            
+            // Format 2: Ward chuẩn hóa (bỏ tiền tố)
+            if (normalizedWard != null && !normalizedWard.isEmpty() && !normalizedWard.equals(ward.trim())) {
+                queries.add(normalizedWard);
+            }
+            
+            // Format 3: Ward không dấu
+            if (unaccentedWard != null && !unaccentedWard.isEmpty()) {
+                queries.add(unaccentedWard);
+            }
+        }
+        
+        // Nếu có đầy đủ ward, district, city
         if (normalizedWard != null && !normalizedWard.isEmpty() && 
             normalizedDistrict != null && !normalizedDistrict.isEmpty() && 
             normalizedCity != null && !normalizedCity.isEmpty()) {
             
-            // Format 1: Ward đầy đủ (có tiền tố), District đầy đủ, City đầy đủ, Vietnam (ưu tiên nhất)
-            if (ward != null && !ward.isEmpty() && district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
-                queries.add(ward + ", " + district + ", " + city + ", Vietnam");
+            // Format 4: Ward chuẩn hóa, District chuẩn hóa, City chuẩn hóa, Vietnam
+            if (queries.size() < maxQueries) {
+                queries.add(normalizedWard + ", " + normalizedDistrict + ", " + normalizedCity + ", Vietnam");
             }
             
-            // Format 2: Ward đầy đủ, District đầy đủ, City chuẩn hóa, Vietnam
-            if (ward != null && !ward.isEmpty() && district != null && !district.isEmpty()) {
-                queries.add(ward + ", " + district + ", " + normalizedCity + ", Vietnam");
-            }
-            
-            // Format 3: Ward chuẩn hóa, District đầy đủ, City đầy đủ, Vietnam
-            if (district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
-                queries.add(normalizedWard + ", " + district + ", " + city + ", Vietnam");
-            }
-            
-            // Format 4: Ward đầy đủ, District chuẩn hóa, City chuẩn hóa, Vietnam
-            if (ward != null && !ward.isEmpty()) {
-                queries.add(ward + ", " + normalizedDistrict + ", " + normalizedCity + ", Vietnam");
-            }
-            
-            // Format 5: Ward chuẩn hóa, District chuẩn hóa, City chuẩn hóa, Vietnam
-            queries.add(normalizedWard + ", " + normalizedDistrict + ", " + normalizedCity + ", Vietnam");
-            
-            // Format 6: Ward chuẩn hóa, District chuẩn hóa, City chuẩn hóa (không có Vietnam)
-            queries.add(normalizedWard + ", " + normalizedDistrict + ", " + normalizedCity);
-            
-            // Format 7: Ward và District (không có City)
-            queries.add(normalizedWard + ", " + normalizedDistrict + ", Vietnam");
-            if (ward != null && !ward.isEmpty()) {
-                queries.add(ward + ", " + normalizedDistrict + ", Vietnam");
-            }
-            
-            // Format 8: Fallback về District, City nếu không tìm thấy với ward
-            queries.add(normalizedDistrict + ", " + normalizedCity + ", Vietnam");
-            if (district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
-                queries.add(district + ", " + city + ", Vietnam");
+            // Format 5: Không dấu (phổ biến trên Nominatim)
+            if (queries.size() < maxQueries && unaccentedWard != null && unaccentedDistrict != null && unaccentedCity != null) {
+                queries.add(unaccentedWard + ", " + unaccentedDistrict + ", " + unaccentedCity + ", Vietnam");
             }
         }
         
-        // Nếu có district và city (không có ward hoặc ward không tìm thấy)
-        if (normalizedDistrict != null && !normalizedDistrict.isEmpty() && 
+        // Nếu có district và city (fallback nếu không có ward hoặc ward không tìm thấy)
+        if (queries.size() < maxQueries && 
+            normalizedDistrict != null && !normalizedDistrict.isEmpty() && 
             normalizedCity != null && !normalizedCity.isEmpty()) {
             
-            // Ưu tiên format đầy đủ
-            if (district != null && !district.isEmpty() && city != null && !city.isEmpty()) {
-                String fullDistrictCityQuery = district + ", " + city + ", Vietnam";
-                if (!queries.contains(fullDistrictCityQuery)) {
-                    queries.add(fullDistrictCityQuery);
-                }
-            }
+            // Format 6: District, City, Vietnam (chuẩn hóa)
+            queries.add(normalizedDistrict + ", " + normalizedCity + ", Vietnam");
             
-            // Format chuẩn hóa
-            String districtCityQuery = normalizedDistrict + ", " + normalizedCity + ", Vietnam";
-            if (!queries.contains(districtCityQuery)) {
-                queries.add(districtCityQuery);
+            // Format 7: District, City, Vietnam (không dấu)
+            if (queries.size() < maxQueries && unaccentedDistrict != null && unaccentedCity != null) {
+                queries.add(unaccentedDistrict + ", " + unaccentedCity + ", Vietnam");
             }
-            queries.add(normalizedDistrict + ", " + normalizedCity);
         }
         
         // Nếu chỉ có city (fallback cuối cùng)
-        if (normalizedCity != null && !normalizedCity.isEmpty()) {
-            // Ưu tiên format đầy đủ
-            if (city != null && !city.isEmpty()) {
-                String fullCityQuery = city + ", Vietnam";
-                if (!queries.contains(fullCityQuery)) {
-                    queries.add(fullCityQuery);
-                }
-            }
+        if (queries.size() < maxQueries && normalizedCity != null && !normalizedCity.isEmpty()) {
+            // Format 8: City, Vietnam (chuẩn hóa)
+            queries.add(normalizedCity + ", Vietnam");
             
-            // Format chuẩn hóa
-            String cityQuery = normalizedCity + ", Vietnam";
-            if (!queries.contains(cityQuery)) {
-                queries.add(cityQuery);
-            }
-            queries.add(normalizedCity);
-        }
-        
-        // Thêm các query không dấu (fallback) - chỉ thử nếu các query có dấu không tìm thấy
-        // Đây là format phổ biến hơn trên Nominatim (ví dụ: "thi tran phuoc buu" thay vì "Thị trấn Phước Bửu")
-        if (unaccentedWard != null && !unaccentedWard.isEmpty() && 
-            unaccentedDistrict != null && !unaccentedDistrict.isEmpty() && 
-            unaccentedCity != null && !unaccentedCity.isEmpty()) {
-            
-            // Format không dấu: Ward, District, City, Vietnam
-            String unaccentedQuery = unaccentedWard + ", " + unaccentedDistrict + ", " + unaccentedCity + ", Vietnam";
-            if (!queries.contains(unaccentedQuery)) {
-                queries.add(unaccentedQuery);
-            }
-            
-            // Format không dấu: Ward đầy đủ (có tiền tố nhưng không dấu)
-            if (unaccentedWardFull != null && !unaccentedWardFull.isEmpty()) {
-                String unaccentedFullQuery = unaccentedWardFull + ", " + unaccentedDistrict + ", " + unaccentedCity + ", Vietnam";
-                if (!queries.contains(unaccentedFullQuery)) {
-                    queries.add(unaccentedFullQuery);
-                }
-            }
-            
-            // Format đơn giản: chỉ ward không dấu
-            if (!queries.contains(unaccentedWardFull != null && !unaccentedWardFull.isEmpty() ? unaccentedWardFull : unaccentedWard)) {
-                queries.add(unaccentedWardFull != null && !unaccentedWardFull.isEmpty() ? unaccentedWardFull : unaccentedWard);
+            // Format 9: City, Vietnam (không dấu) - chỉ thêm nếu còn chỗ
+            if (queries.size() < maxQueries && unaccentedCity != null) {
+                queries.add(unaccentedCity + ", Vietnam");
             }
         }
         
-        // Nếu chỉ có district và city không dấu
-        if (unaccentedDistrict != null && !unaccentedDistrict.isEmpty() && 
-            unaccentedCity != null && !unaccentedCity.isEmpty()) {
-            String unaccentedDistrictCityQuery = unaccentedDistrict + ", " + unaccentedCity + ", Vietnam";
-            if (!queries.contains(unaccentedDistrictCityQuery)) {
-                queries.add(unaccentedDistrictCityQuery);
-            }
-        }
-        
-        // Nếu chỉ có city không dấu
-        if (unaccentedCity != null && !unaccentedCity.isEmpty()) {
-            String unaccentedCityQuery = unaccentedCity + ", Vietnam";
-            if (!queries.contains(unaccentedCityQuery)) {
-                queries.add(unaccentedCityQuery);
-            }
-            if (!queries.contains(unaccentedCity)) {
-                queries.add(unaccentedCity);
-            }
-        }
-        
-        // Thử từng query cho đến khi tìm thấy
+        // Thử từng query cho đến khi tìm thấy (tối đa maxQueries queries)
+        int attemptCount = 0;
         for (String query : queries) {
+            attemptCount++;
+            if (attemptCount > maxQueries) {
+                break; // Giới hạn số lần thử
+            }
             Map<String, Double> coords = callNominatimAPI(query);
             if (coords != null && !coords.isEmpty()) {
                 return coords;
             }
             
             // Delay giữa các request để tránh rate limit (Nominatim: 1 request/second)
-            // Tăng delay lên 1100ms để đảm bảo không vượt quá rate limit
-            try {
-                Thread.sleep(1100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return null;
+            // QUAN TRỌNG: Nominatim yêu cầu tối thiểu 1 giây giữa các requests
+            // Chỉ delay nếu chưa phải query cuối cùng
+            if (attemptCount < queries.size() && attemptCount < maxQueries) {
+                try {
+                    // Tăng delay lên 1.5 giây để đảm bảo không bị rate limit
+                    Thread.sleep(1500);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
             }
         }
         
-        // Console có thể hiển thị sai ký tự tiếng Việt, nhưng query đã được encode đúng UTF-8
-        System.out.println("Nominatim could not find coordinates for the specified location");
+        // Đã thử tối đa các query formats nhưng không tìm thấy kết quả
+        System.out.println("Nominatim: No coordinates found after trying " + attemptCount + " query format(s)");
         return null;
     }
     
@@ -393,6 +427,19 @@ public class NominatimService {
      */
     public boolean isAvailable() {
         return enabled;
+    }
+    
+    /**
+     * Test method để test trực tiếp với query đơn giản (giống web UI)
+     * Không thử nhiều format, chỉ test với query chính xác như user nhập
+     */
+    public Map<String, Double> testNominatimQuery(String query) {
+        if (!enabled) {
+            return null;
+        }
+        
+        System.out.println("Testing Nominatim with direct query: " + query);
+        return callNominatimAPI(query);
     }
 }
 
