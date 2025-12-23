@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { reportAPI, weatherAPI } from '../utils/api';
 import { FiMapPin, FiAlertCircle, FiCloud, FiSun, FiDroplet, FiLayers, FiX, FiCheck } from 'react-icons/fi';
@@ -131,12 +132,13 @@ const MapClickHandler = ({ onMapClick }) => {
 };
 
 const Map = () => {
+  const navigate = useNavigate();
   const [reports, setReports] = useState([]);
   const [currentWeather, setCurrentWeather] = useState(null);
   const [selectedReport, setSelectedReport] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [center] = useState([16.0583, 108.2772]); // Trung tâm Việt Nam
-  const [zoom] = useState(7); // Zoom level để hiển thị toàn bộ Việt Nam
+  const [center] = useState([16.0583, 106.2772]); // Trung tâm Việt Nam (điều chỉnh)
+  const [zoom] = useState(6); // Zoom level để hiển thị toàn bộ Việt Nam
   const [mapType, setMapType] = useState('standard'); // standard, satellite, terrain
   const [showLayerControl, setShowLayerControl] = useState(false);
   const [clickedPosition, setClickedPosition] = useState(null);
@@ -146,9 +148,9 @@ const Map = () => {
     fetchReports();
     fetchWeather(center[0], center[1]);
     
-    // Kiểm tra nếu có query parameter pickLocation
+    // Kiểm tra nếu có query parameter selectLocation hoặc pickLocation
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('pickLocation') === 'true') {
+    if (urlParams.get('selectLocation') === 'true' || urlParams.get('pickLocation') === 'true') {
       setIsSelectingLocation(true);
     }
   }, []);
@@ -200,7 +202,20 @@ const Map = () => {
 
   const confirmLocation = () => {
     if (clickedPosition) {
-      // Nếu được mở từ window khác (window.opener), gọi callback của parent window
+      // Check if we're in selectLocation mode (from weather card)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('selectLocation') === 'true') {
+        // Save location to localStorage
+        localStorage.setItem('selectedWeatherLocation', JSON.stringify({
+          lat: clickedPosition.lat,
+          lng: clickedPosition.lng
+        }));
+        // Navigate back to home
+        navigate('/');
+        return;
+      }
+      
+      // Legacy support: Nếu được mở từ window khác (window.opener), gọi callback của parent window
       if (window.opener && window.opener.onLocationSelected) {
         window.opener.onLocationSelected(clickedPosition.lat, clickedPosition.lng);
         window.close();
@@ -344,7 +359,15 @@ const Map = () => {
             {isSelectingLocation && (
               <div className="location-picker-hint">
                 <FiMapPin /> Click trên bản đồ để chọn vị trí
-                <button onClick={() => setIsSelectingLocation(false)} className="cancel-pick-btn">
+                <button onClick={() => {
+                  // Check if we came from weather card
+                  const urlParams = new URLSearchParams(window.location.search);
+                  if (urlParams.get('selectLocation') === 'true') {
+                    navigate('/'); // Navigate back to home
+                  } else {
+                    setIsSelectingLocation(false);
+                  }
+                }} className="cancel-pick-btn">
                   <FiX />
                 </button>
               </div>
@@ -354,16 +377,17 @@ const Map = () => {
           <MapContainer
             center={center}
             zoom={zoom}
-            minZoom={6}
+            minZoom={5.5}
             maxZoom={18}
             style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             maxBounds={[
-              [5.0, 100.0], // Southwest corner (southwest of Vietnam)
-              [25.0, 115.0]  // Northeast corner (northeast of Vietnam)
+              [8.0, 102.0],   // Southwest: Cà Mau - Kiên Giang
+              [23.5, 109.6]   // Northeast: Hà Giang - Quảng Bình
             ]}
             maxBoundsViscosity={1.0}
             scrollWheelZoom={true}
             worldCopyJump={false}
+            boundsOptions={{ padding: [20, 20] }}
           >
             <FitVietnamBounds />
             <MapClickHandler onMapClick={handleMapClick} />

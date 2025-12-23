@@ -32,7 +32,6 @@ public class WeatherReport {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
-    private String address;
     private String district;
     private String ward;
     private String city;
@@ -48,8 +47,12 @@ public class WeatherReport {
     @Column(nullable = false)
     private SeverityLevel severity = SeverityLevel.LOW;
 
+    @Column(nullable = false)
+    private Boolean hidden = false;
+
     @ElementCollection
-    @CollectionTable(name = "report_images", joinColumns = @JoinColumn(name = "report_id"))
+    // Khớp với schema.sql: bảng report_images có cột weather_reports_id làm FK
+    @CollectionTable(name = "report_images", joinColumns = @JoinColumn(name = "weather_reports_id"))
     @Column(name = "image_url")
     private List<String> images;
 

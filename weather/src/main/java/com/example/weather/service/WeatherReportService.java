@@ -41,6 +41,8 @@ public class WeatherReportService {
 
     public List<WeatherReportDTO> getAllReports() {
         return reportRepository.findAll().stream()
+                // Ẩn các báo cáo đã được admin đánh dấu hidden; null được coi như chưa ẩn
+                .filter(r -> !Boolean.TRUE.equals(r.getHidden()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -79,7 +81,6 @@ public class WeatherReportService {
         report.setIncidentType(incidentType);
         report.setTitle(dto.getTitle());
         report.setDescription(dto.getDescription());
-        report.setAddress(dto.getAddress());
         report.setDistrict(dto.getDistrict());
         report.setWard(dto.getWard());
         report.setCity(dto.getCity());
@@ -148,7 +149,6 @@ public class WeatherReportService {
 
         if (dto.getTitle() != null) report.setTitle(dto.getTitle());
         if (dto.getDescription() != null) report.setDescription(dto.getDescription());
-        if (dto.getAddress() != null) report.setAddress(dto.getAddress());
         if (dto.getDistrict() != null) report.setDistrict(dto.getDistrict());
         if (dto.getWard() != null) report.setWard(dto.getWard());
         if (dto.getCity() != null) report.setCity(dto.getCity());
@@ -207,7 +207,7 @@ public class WeatherReportService {
         reportRepository.delete(report);
     }
 
-    private WeatherReportDTO convertToDTO(WeatherReport report) {
+    public WeatherReportDTO convertToDTO(WeatherReport report) {
         WeatherReportDTO dto = new WeatherReportDTO();
         dto.setId(report.getId());
         dto.setUserId(report.getUser().getId());
@@ -216,7 +216,6 @@ public class WeatherReportService {
         dto.setIncidentTypeName(report.getIncidentType().getName());
         dto.setTitle(report.getTitle());
         dto.setDescription(report.getDescription());
-        dto.setAddress(report.getAddress());
         dto.setDistrict(report.getDistrict());
         dto.setWard(report.getWard());
         dto.setCity(report.getCity());
@@ -224,6 +223,7 @@ public class WeatherReportService {
         dto.setLongitude(report.getLongitude());
         dto.setStatus(report.getStatus());
         dto.setSeverity(report.getSeverity());
+        dto.setHidden(report.getHidden());
         dto.setImages(report.getImages());
         dto.setIncidentTime(report.getIncidentTime());
         dto.setCreatedAt(report.getCreatedAt());

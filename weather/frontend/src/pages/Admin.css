@@ -78,6 +78,52 @@
   gap: 10px;
 }
 
+/* Đảm bảo các nút trên trang Admin dùng chung style đẹp + viền đen mỏng */
+.admin-page .btn.btn-primary,
+.admin-page .btn.btn-secondary {
+  /* Dùng chung một màu & outline để hai nút giống hệt nhau */
+  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+  color: var(--white);
+  border: 1px solid rgba(0, 0, 0, 0.7);
+  border-radius: 999px;
+  padding: 16px 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.admin-page .btn.btn-primary:hover,
+.admin-page .btn.btn-secondary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.55);
+}
+
+/* Hiệu ứng sáng trắng lan ra khi hover – áp dụng cho cả hai nút */
+.admin-page .btn.btn-primary::before,
+.admin-page .btn.btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.admin-page .btn.btn-primary:hover::before,
+.admin-page .btn.btn-secondary:hover::before {
+  width: 260px;
+  height: 260px;
+}
+
 .stats-grid {
   margin-bottom: 40px;
 }

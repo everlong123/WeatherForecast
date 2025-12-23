@@ -1,13 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { adminAPI, reportAPI, incidentTypeAPI } from '../utils/api';
+import { adminAPI, reportAPI, incidentTypeAPI, locationAPI } from '../utils/api';
 import { isAdmin } from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { 
   FiCheck, FiX, FiCheckCircle, FiShield, FiUsers, FiAlertCircle, 
   FiSettings, FiBarChart2, FiEdit, FiTrash2, FiPlus, FiDownload,
-  FiToggleLeft, FiToggleRight, FiActivity
+  FiToggleLeft, FiToggleRight, FiActivity, FiMapPin, FiEye, FiEyeOff
 } from 'react-icons/fi';
 import './Admin.css';
+
+// Fix for default markers in react-leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Component để lắng nghe click trên map
+const MapClickHandler = ({ onMapClick }) => {
+  useMapEvents({
+    click: (e) => {
+      if (onMapClick) {
+        onMapClick(e.latlng);
+      }
+    },
+  });
+  return null;
+};
 
 const Admin = () => {
   const [reports, setReports] = useState([]);
@@ -41,12 +64,22 @@ const Admin = () => {
     incidentTypeId: '',
     severity: 'LOW',
     status: 'PENDING',
-    address: '',
+    latitude: null,
+    longitude: null,
+    city: '',
     district: '',
     ward: '',
-    city: '',
+    displayAddress: '',
     incidentTime: new Date().toISOString().slice(0, 16),
   });
+  const [mapCenter, setMapCenter] = useState([16.0583, 108.2772]);
+  const [mapZoom, setMapZoom] = useState(6);
+  const [loadingAddress, setLoadingAddress] = useState(false);
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [commentAction, setCommentAction] = useState(null); // 'approve', 'reject', 'resolve'
+  const [commentReportId, setCommentReportId] = useState(null);
+  const [commentText, setCommentText] = useState('');
+  const [severityFilter, setSeverityFilter] = useState('ALL');
 
   useEffect(() => {
     if (!isAdmin()) {
@@ -71,7 +104,7 @@ const Admin = () => {
     try {
       console.log('Fetching admin data...');
       const [reportsRes, usersRes, statsRes] = await Promise.all([
-        reportAPI.getAll(),
+        adminAPI.getAllReports ? adminAPI.getAllReports() : reportAPI.getAll(),
         adminAPI.getAllUsers(),
         adminAPI.getStats(),
       ]);
@@ -105,26 +138,57 @@ const Admin = () => {
   };
 
   const handleApprove = async (id) => {
-    try {
-      await adminAPI.approveReport(id);
-      fetchData();
-    } catch (error) {
-      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
-    }
+    setCommentAction('approve');
+    setCommentReportId(id);
+    setCommentText('');
+    setShowCommentModal(true);
   };
 
   const handleReject = async (id) => {
+    setCommentAction('reject');
+    setCommentReportId(id);
+    setCommentText('');
+    setShowCommentModal(true);
+  };
+
+  const handleResolve = async (id) => {
+    setCommentAction('resolve');
+    setCommentReportId(id);
+    setCommentText('');
+    setShowCommentModal(true);
+  };
+
+  const handleConfirmAction = async () => {
     try {
-      await adminAPI.rejectReport(id);
+      if (commentAction === 'approve') {
+        await adminAPI.approveReport(commentReportId, commentText);
+      } else if (commentAction === 'reject') {
+        await adminAPI.rejectReport(commentReportId, commentText);
+      } else if (commentAction === 'resolve') {
+        await adminAPI.resolveReport(commentReportId, commentText);
+      }
+      setShowCommentModal(false);
+      setCommentText('');
+      setCommentAction(null);
+      setCommentReportId(null);
       fetchData();
     } catch (error) {
       alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
     }
   };
 
-  const handleResolve = async (id) => {
+  const handleHideReport = async (id) => {
     try {
-      await adminAPI.resolveReport(id);
+      await adminAPI.hideReport(id);
+      fetchData();
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
+    }
+  };
+
+  const handleUnhideReport = async (id) => {
+    try {
+      await adminAPI.unhideReport(id);
       fetchData();
     } catch (error) {
       alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
@@ -200,11 +264,43 @@ const Admin = () => {
 
   const handleSaveReport = async (e) => {
     e.preventDefault();
+    if (!reportForm.latitude || !reportForm.longitude) {
+      alert('Vui lòng chọn vị trí trên bản đồ');
+      return;
+    }
     try {
-      await reportAPI.updateReport(editingReport.id, reportForm);
+      const reportData = {
+        title: reportForm.title,
+        description: reportForm.description,
+        incidentTypeId: parseInt(reportForm.incidentTypeId),
+        severity: reportForm.severity,
+        status: reportForm.status,
+        latitude: reportForm.latitude,
+        longitude: reportForm.longitude,
+        city: reportForm.city,
+        district: reportForm.district,
+        ward: reportForm.ward,
+        incidentTime: reportForm.incidentTime,
+      };
+      await reportAPI.updateReport(editingReport.id, reportData);
       setShowReportForm(false);
       setEditingReport(null);
-      setReportForm({ title: '', description: '', incidentTypeId: '', severity: 'LOW', status: 'PENDING', address: '', district: '', ward: '', city: '', incidentTime: new Date().toISOString().slice(0, 16) });
+      setReportForm({ 
+        title: '', 
+        description: '', 
+        incidentTypeId: '', 
+        severity: 'LOW', 
+        status: 'PENDING', 
+        latitude: null, 
+        longitude: null, 
+        city: '', 
+        district: '', 
+        ward: '', 
+        displayAddress: '',
+        incidentTime: new Date().toISOString().slice(0, 16) 
+      });
+      setMapCenter([16.0583, 108.2772]);
+      setMapZoom(6);
       fetchData();
     } catch (error) {
       alert('Lỗi: ' + (error.response?.data?.message || 'Đã xảy ra lỗi'));
@@ -222,6 +318,73 @@ const Admin = () => {
     }
   };
 
+  const reverseGeocode = async (lat, lng) => {
+    if (!lat || !lng) return;
+    setLoadingAddress(true);
+    try {
+      const response = await locationAPI.getLocationFromCoordinates(lat, lng);
+      if (response.data) {
+        const { city, district, ward } = response.data;
+        setReportForm(prev => ({
+          ...prev,
+          city: city || '',
+          district: district || '',
+          ward: ward || '',
+          displayAddress: [ward, district, city].filter(Boolean).join(', ') || '',
+        }));
+      }
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+    } finally {
+      setLoadingAddress(false);
+    }
+  };
+
+  const handleMapClick = async (latlng) => {
+    const lat = latlng.lat;
+    const lng = latlng.lng;
+    setReportForm(prev => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng,
+    }));
+    setMapCenter([lat, lng]);
+    setMapZoom(15);
+    await reverseGeocode(lat, lng);
+  };
+
+  const handleLatitudeChange = async (e) => {
+    const lat = parseFloat(e.target.value);
+    if (!isNaN(lat)) {
+      setReportForm(prev => {
+        const newForm = { ...prev, latitude: lat };
+        if (prev.longitude) {
+          setMapCenter([lat, prev.longitude]);
+          reverseGeocode(lat, prev.longitude);
+        }
+        return newForm;
+      });
+    } else {
+      setReportForm(prev => ({ ...prev, latitude: null }));
+    }
+  };
+
+  const handleLongitudeChange = async (e) => {
+    const lng = parseFloat(e.target.value);
+    if (!isNaN(lng)) {
+      setReportForm(prev => {
+        const newForm = { ...prev, longitude: lng };
+        if (prev.latitude) {
+          setMapCenter([prev.latitude, lng]);
+          reverseGeocode(prev.latitude, lng);
+        }
+        return newForm;
+      });
+    } else {
+      setReportForm(prev => ({ ...prev, longitude: null }));
+    }
+  };
+
   const handleEditReport = (report) => {
     setEditingReport(report);
     setReportForm({
@@ -230,12 +393,18 @@ const Admin = () => {
       incidentTypeId: report.incidentTypeId || '',
       severity: report.severity || 'LOW',
       status: report.status || 'PENDING',
-      address: report.address || '',
+      latitude: report.latitude || null,
+      longitude: report.longitude || null,
+      city: report.city || '',
       district: report.district || '',
       ward: report.ward || '',
-      city: report.city || '',
+      displayAddress: [report.ward, report.district, report.city].filter(Boolean).join(', ') || '',
       incidentTime: report.incidentTime ? new Date(report.incidentTime).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
     });
+    if (report.latitude && report.longitude) {
+      setMapCenter([report.latitude, report.longitude]);
+      setMapZoom(15);
+    }
     setShowReportForm(true);
   };
 
@@ -342,17 +511,31 @@ const Admin = () => {
           <div className="admin-content">
             <div className="section-header">
               <h2>Quản lý Báo cáo</h2>
-              <button className="btn btn-secondary" onClick={() => exportData('reports')}>
-                <FiDownload /> Xuất dữ liệu
-              </button>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <select
+                  value={severityFilter}
+                  onChange={(e) => setSeverityFilter(e.target.value)}
+                  className="input"
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd' }}
+                >
+                  <option value="ALL">Tất cả mức độ</option>
+                  <option value="LOW">Thấp</option>
+                  <option value="MEDIUM">Trung bình</option>
+                  <option value="HIGH">Cao</option>
+                  <option value="CRITICAL">Nghiêm trọng</option>
+                </select>
+                <button className="btn btn-secondary" onClick={() => exportData('reports')}>
+                  <FiDownload /> Xuất dữ liệu
+                </button>
+              </div>
             </div>
             <div className="reports-table">
-              {reports.length === 0 ? (
+              {reports.filter(r => severityFilter === 'ALL' || r.severity === severityFilter).length === 0 ? (
                 <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
                   <p>Chưa có báo cáo nào.</p>
                 </div>
               ) : (
-                reports.map((report) => (
+                reports.filter(r => severityFilter === 'ALL' || r.severity === severityFilter).map((report) => (
                 <div key={report.id} className="admin-report-card card card-navy fade-in">
                   <div className="report-info">
                     <h3>{report.title}</h3>
@@ -369,9 +552,15 @@ const Admin = () => {
                     </div>
                   </div>
                   <div className="report-actions">
-                    <button className="btn-icon" onClick={() => handleEditReport(report)} title="Chỉnh sửa">
-                      <FiEdit />
-                    </button>
+                    {report.hidden ? (
+                      <button className="btn-icon" onClick={() => handleUnhideReport(report.id)} title="Hiện báo cáo">
+                        <FiEyeOff />
+                      </button>
+                    ) : (
+                      <button className="btn-icon" onClick={() => handleHideReport(report.id)} title="Ẩn báo cáo">
+                        <FiEye />
+                      </button>
+                    )}
                     <button className="btn-icon btn-danger" onClick={() => handleDeleteReport(report.id)} title="Xóa">
                       <FiTrash2 />
                     </button>
@@ -571,6 +760,44 @@ const Admin = () => {
           </div>
         )}
 
+        {showCommentModal && (
+          <div className="modal-overlay" onClick={() => {
+            setShowCommentModal(false);
+            setCommentText('');
+            setCommentAction(null);
+            setCommentReportId(null);
+          }}>
+            <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
+              <h2>
+                {commentAction === 'approve' && 'Duyệt báo cáo'}
+                {commentAction === 'reject' && 'Từ chối báo cáo'}
+                {commentAction === 'resolve' && 'Đánh dấu đã xử lý'}
+              </h2>
+              <label className="form-label">Ghi chú (tùy chọn)</label>
+              <textarea
+                placeholder="Nhập ghi chú..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="input"
+                rows="4"
+              />
+              <div className="form-actions" style={{ marginTop: '20px' }}>
+                <button type="button" className="btn btn-primary" onClick={handleConfirmAction}>
+                  Xác nhận
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => {
+                  setShowCommentModal(false);
+                  setCommentText('');
+                  setCommentAction(null);
+                  setCommentReportId(null);
+                }}>
+                  Hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {showReportForm && editingReport && (
           <div className="modal-overlay" onClick={() => {
             setShowReportForm(false);
@@ -631,38 +858,92 @@ const Admin = () => {
                   <option value="REJECTED">Từ chối</option>
                   <option value="RESOLVED">Đã xử lý</option>
                 </select>
-                <label className="form-label">Địa chỉ chi tiết</label>
-                <input
-                  type="text"
-                  placeholder="Nhập địa chỉ cụ thể"
-                  value={reportForm.address}
-                  onChange={(e) => setReportForm({ ...reportForm, address: e.target.value })}
-                  className="input"
-                />
-                <label className="form-label">Quận/Huyện</label>
-                <input
-                  type="text"
-                  placeholder="Nhập quận/huyện"
-                  value={reportForm.district}
-                  onChange={(e) => setReportForm({ ...reportForm, district: e.target.value })}
-                  className="input"
-                />
-                <label className="form-label">Phường/Xã</label>
-                <input
-                  type="text"
-                  placeholder="Nhập phường/xã"
-                  value={reportForm.ward}
-                  onChange={(e) => setReportForm({ ...reportForm, ward: e.target.value })}
-                  className="input"
-                />
-                <label className="form-label">Tỉnh/Thành phố</label>
-                <input
-                  type="text"
-                  placeholder="Nhập tỉnh/thành phố"
-                  value={reportForm.city}
-                  onChange={(e) => setReportForm({ ...reportForm, city: e.target.value })}
-                  className="input"
-                />
+                <label className="form-label" style={{ marginTop: '15px' }}>
+                  <FiMapPin /> Chọn vị trí trên bản đồ <span className="required">*</span>
+                </label>
+                <p style={{ fontSize: '13px', color: '#666', marginBottom: '10px' }}>
+                  Click trên bản đồ để chọn vị trí sự cố
+                </p>
+                
+                <div style={{ 
+                  marginBottom: '15px', 
+                  border: '2px solid #ddd', 
+                  borderRadius: '12px', 
+                  overflow: 'hidden',
+                  height: '320px',
+                  backgroundColor: '#e8f4f8'
+                }}>
+                  <MapContainer
+                    center={mapCenter}
+                    zoom={mapZoom}
+                    style={{ height: '100%', width: '100%' }}
+                    scrollWheelZoom={true}
+                    key={`${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    />
+                    <MapClickHandler onMapClick={handleMapClick} />
+                    {reportForm.latitude && reportForm.longitude && (
+                      <Marker position={[reportForm.latitude, reportForm.longitude]} />
+                    )}
+                  </MapContainer>
+                </div>
+
+                {/* Hiển thị địa chỉ từ reverse geocoding */}
+                {reportForm.latitude && reportForm.longitude && (
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#f0f9ff', 
+                    borderRadius: '8px', 
+                    marginBottom: '15px',
+                    border: '1px solid #0284c7'
+                  }}>
+                    <p style={{ margin: 0, fontWeight: '600', color: '#0369a1', marginBottom: '8px' }}>
+                      📍 Địa chỉ đã chọn:
+                    </p>
+                    {loadingAddress ? (
+                      <p style={{ margin: 0, color: '#666', fontStyle: 'italic' }}>
+                        Đang tìm địa chỉ...
+                      </p>
+                    ) : (
+                      <>
+                        <p style={{ margin: 0, color: '#334155' }}>
+                          {reportForm.displayAddress || 'Chưa có địa chỉ'}
+                        </p>
+                        <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#64748b' }}>
+                          Tọa độ: {reportForm.latitude.toFixed(6)}, {reportForm.longitude.toFixed(6)}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Nhập tọa độ thủ công */}
+                <label className="form-label" style={{ fontSize: '13px', color: '#666', marginTop: '10px' }}>
+                  Hoặc nhập tọa độ trực tiếp:
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' }}>
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="Vĩ độ (Latitude)"
+                    value={reportForm.latitude || ''}
+                    onChange={handleLatitudeChange}
+                    className="input"
+                    style={{ fontSize: '14px' }}
+                  />
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="Kinh độ (Longitude)"
+                    value={reportForm.longitude || ''}
+                    onChange={handleLongitudeChange}
+                    className="input"
+                    style={{ fontSize: '14px' }}
+                  />
+                </div>
                 <label className="form-label">Thời gian sự cố</label>
                 <input
                   type="datetime-local"

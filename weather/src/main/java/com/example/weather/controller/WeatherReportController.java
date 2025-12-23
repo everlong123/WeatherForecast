@@ -5,6 +5,7 @@ import com.example.weather.service.WeatherReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -32,7 +33,18 @@ public class WeatherReportController {
     }
 
     @PostMapping
-    public ResponseEntity<WeatherReportDTO> createReport(@Valid @RequestBody WeatherReportDTO reportDTO, Authentication authentication) {
+    public ResponseEntity<WeatherReportDTO> createReport(@Valid @RequestBody WeatherReportDTO reportDTO,
+                                                        Authentication authentication) {
+        // Không cho ADMIN tạo báo cáo
+        if (authentication != null) {
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .anyMatch(role -> role.equals("ROLE_ADMIN"));
+            if (isAdmin) {
+                throw new RuntimeException("Administrators are not allowed to create reports");
+            }
+        }
+
         // Nếu không có authentication, sử dụng "guest" user (hoặc tạo mới nếu chưa có)
         String username = authentication != null ? authentication.getName() : "guest";
         return ResponseEntity.status(201).body(reportService.createReport(reportDTO, username));

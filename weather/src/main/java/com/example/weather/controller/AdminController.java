@@ -2,6 +2,7 @@ package com.example.weather.controller;
 
 import com.example.weather.dto.UserDTO;
 import com.example.weather.dto.WeatherAlertDTO;
+import com.example.weather.dto.WeatherReportDTO;
 import com.example.weather.entity.IncidentType;
 import com.example.weather.entity.User;
 import com.example.weather.entity.WeatherAlert;
@@ -10,6 +11,7 @@ import com.example.weather.repository.IncidentTypeRepository;
 import com.example.weather.repository.UserRepository;
 import com.example.weather.repository.WeatherAlertRepository;
 import com.example.weather.repository.WeatherReportRepository;
+import com.example.weather.service.WeatherReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,6 +43,9 @@ public class AdminController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private WeatherReportService weatherReportService;
 
     @PutMapping("/reports/{id}/approve")
     public ResponseEntity<WeatherReport> approveReport(
@@ -84,38 +89,19 @@ public class AdminController {
         return ResponseEntity.ok(report);
     }
 
-    @PutMapping("/reports/{id}")
-    public ResponseEntity<WeatherReport> updateReport(@PathVariable Long id, @RequestBody Map<String, Object> reportData) {
+    @PutMapping("/reports/{id}/hide")
+    public ResponseEntity<WeatherReport> hideReport(@PathVariable Long id, Authentication authentication) {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
+        report.setHidden(true);
+        return ResponseEntity.ok(reportRepository.save(report));
+    }
 
-        if (reportData.get("title") != null) report.setTitle((String) reportData.get("title"));
-        if (reportData.get("description") != null) report.setDescription((String) reportData.get("description"));
-        if (reportData.get("address") != null) report.setAddress((String) reportData.get("address"));
-        if (reportData.get("district") != null) report.setDistrict((String) reportData.get("district"));
-        if (reportData.get("ward") != null) report.setWard((String) reportData.get("ward"));
-        if (reportData.get("city") != null) report.setCity((String) reportData.get("city"));
-        if (reportData.get("severity") != null) report.setSeverity(WeatherReport.SeverityLevel.valueOf((String) reportData.get("severity")));
-        if (reportData.get("status") != null) report.setStatus(WeatherReport.ReportStatus.valueOf((String) reportData.get("status")));
-        if (reportData.get("incidentTypeId") != null) {
-            var incidentType = incidentTypeRepository.findById(Long.valueOf(reportData.get("incidentTypeId").toString()))
-                    .orElseThrow(() -> new RuntimeException("Incident type not found"));
-            report.setIncidentType(incidentType);
-        }
-        if (reportData.get("incidentTime") != null && !reportData.get("incidentTime").toString().isEmpty()) {
-            try {
-                String timeStr = reportData.get("incidentTime").toString();
-                // Handle both ISO format and datetime-local format
-                if (timeStr.contains("T")) {
-                    report.setIncidentTime(LocalDateTime.parse(timeStr.replace("Z", "")));
-                } else {
-                    report.setIncidentTime(LocalDateTime.parse(timeStr));
-                }
-            } catch (Exception e) {
-                // If parsing fails, keep the existing incidentTime
-            }
-        }
-
+    @PutMapping("/reports/{id}/unhide")
+    public ResponseEntity<WeatherReport> unhideReport(@PathVariable Long id, Authentication authentication) {
+        WeatherReport report = reportRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Report not found"));
+        report.setHidden(false);
         return ResponseEntity.ok(reportRepository.save(report));
     }
 
@@ -128,6 +114,14 @@ public class AdminController {
         reportRepository.delete(report);
         
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/reports")
+    public ResponseEntity<List<WeatherReportDTO>> getAllReports() {
+        // Admin có thể xem tất cả reports kể cả đã ẩn
+        return ResponseEntity.ok(reportRepository.findAll().stream()
+                .map(r -> weatherReportService.convertToDTO(r))
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/users")

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { reportAPI, incidentTypeAPI, locationAPI, uploadAPI } from '../utils/api';
+import { reportAPI, incidentTypeAPI, locationAPI } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock, FiCheck } from 'react-icons/fi';
 import { incidentTypes as defaultIncidentTypes } from '../data/incidentTypes';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import { isAdmin } from '../utils/auth';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './Reports.css';
@@ -68,20 +67,6 @@ const IncidentTypeSelect = React.memo(({ value, onChange, incidentTypes, require
 
 IncidentTypeSelect.displayName = 'IncidentTypeSelect';
 
-// Helper: Chuẩn hóa URL ảnh (nếu backend trả về đường dẫn tương đối như /uploads/...)
-const getImageUrl = (url) => {
-  if (!url) return '';
-  // Nếu đã là absolute URL (bắt đầu bằng http/https), dùng nguyên
-  if (/^https?:\/\//i.test(url)) return url;
-  // Ngược lại, prepend host của backend
-  const base = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
-  // Đảm bảo không bị trùng dấu '/'
-  if (url.startsWith('/')) {
-    return `${base}${url}`;
-  }
-  return `${base}/${url}`;
-};
-
 const Reports = () => {
   const [reports, setReports] = useState([]);
   const [incidentTypes, setIncidentTypes] = useState(defaultIncidentTypes);
@@ -90,8 +75,6 @@ const Reports = () => {
   const [editingReport, setEditingReport] = useState(null);
   const [error, setError] = useState('');
   const [loadingAddress, setLoadingAddress] = useState(false);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -106,12 +89,10 @@ const Reports = () => {
     latitude: null,
     longitude: null,
     incidentTime: new Date().toISOString().slice(0, 16),
-    imageUrl: '',
   });
   
   const [mapCenter, setMapCenter] = useState([16.0583, 108.2772]); // Trung tâm Việt Nam
   const [mapZoom, setMapZoom] = useState(6);
-  const admin = isAdmin();
 
   useEffect(() => {
     fetchData();
@@ -241,13 +222,6 @@ const Reports = () => {
     }
 
     try {
-      let imageUrl = formData.imageUrl;
-
-      if (imageFile) {
-        const uploadRes = await uploadAPI.uploadImage(imageFile);
-        imageUrl = uploadRes.data?.url || imageUrl;
-      }
-
       const reportData = {
         title: formData.title,
         description: formData.description,
@@ -259,7 +233,6 @@ const Reports = () => {
         latitude: formData.latitude,
         longitude: formData.longitude,
         incidentTime: formData.incidentTime,
-        images: imageUrl ? [imageUrl] : undefined,
       };
 
       if (editingReport) {
@@ -292,7 +265,6 @@ const Reports = () => {
       incidentTime: report.incidentTime
         ? new Date(report.incidentTime).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16),
-      imageUrl: report.images && report.images.length > 0 ? report.images[0] : '',
     });
     
     if (report.latitude && report.longitude) {
@@ -328,15 +300,12 @@ const Reports = () => {
       latitude: null,
       longitude: null,
       incidentTime: new Date().toISOString().slice(0, 16),
-      imageUrl: '',
     });
     setEditingReport(null);
     setShowForm(false);
     setError('');
     setMapCenter([16.0583, 108.2772]);
     setMapZoom(6);
-    setImageFile(null);
-    setImagePreview('');
   };
 
   const getSeverityColor = (severity) => {
@@ -387,11 +356,9 @@ const Reports = () => {
     <div className="reports-container">
       <div className="reports-header">
         <h2>Báo cáo sự cố thời tiết</h2>
-        {!admin && (
-          <button className="btn-primary" onClick={() => setShowForm(true)}>
-            <FiPlus /> Tạo báo cáo mới
-          </button>
-        )}
+        <button className="btn-primary" onClick={() => setShowForm(true)}>
+          <FiPlus /> Tạo báo cáo mới
+        </button>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -455,9 +422,9 @@ const Reports = () => {
               <div style={{ 
                 marginBottom: '15px', 
                 border: '2px solid #ddd', 
-                borderRadius: '12px', 
+                borderRadius: '8px', 
                 overflow: 'hidden',
-                height: '320px',
+                height: '400px',
                 backgroundColor: '#e8f4f8'
               }}>
                 <MapContainer
@@ -540,32 +507,6 @@ const Reports = () => {
                 className="input"
               />
 
-              <label className="form-label">Ảnh minh họa</label>
-              <input
-                type="file"
-                accept="image/*"
-                className="input"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  setImageFile(file || null);
-                  if (file) {
-                    const previewUrl = URL.createObjectURL(file);
-                    setImagePreview(previewUrl);
-                  } else {
-                    setImagePreview('');
-                  }
-                }}
-              />
-              {imagePreview && (
-                <div style={{ marginTop: '10px' }}>
-                  <img
-                    src={imagePreview}
-                    alt="Xem trước ảnh"
-                    style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' }}
-                  />
-                </div>
-              )}
-
               <div className="form-actions">
                 <button type="button" onClick={resetForm} className="btn-secondary">
                   Hủy
@@ -591,25 +532,12 @@ const Reports = () => {
               <div className="report-header">
                 <h3>{report.title}</h3>
                 <div className="report-actions">
-                  {report.status === 'PENDING' && (
-                    <>
-                      <button onClick={() => handleEdit(report)} className="btn-icon" title="Chỉnh sửa">
-                        <FiEdit />
-                      </button>
-                      <button onClick={() => handleDelete(report.id)} className="btn-icon delete" title="Xóa">
-                        <FiTrash2 />
-                      </button>
-                    </>
-                  )}
-                  {report.latitude && report.longitude && (
-                    <button 
-                      onClick={() => window.open(`/map?lat=${report.latitude}&lng=${report.longitude}`, '_blank')}
-                      className="btn-icon"
-                      title="Xem thời tiết tại vị trí này"
-                    >
-                      <FiMapPin />
-                    </button>
-                  )}
+                  <button onClick={() => handleEdit(report)} className="btn-icon">
+                    <FiEdit />
+                  </button>
+                  <button onClick={() => handleDelete(report.id)} className="btn-icon delete">
+                    <FiTrash2 />
+                  </button>
                 </div>
               </div>
 
@@ -634,19 +562,6 @@ const Reports = () => {
                 </span>
               </div>
 
-              {report.images && report.images.length > 0 && (
-                <div className="report-images">
-                  {report.images.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={getImageUrl(img)}
-                      alt={`Ảnh báo cáo ${report.title}`}
-                      style={{ maxWidth: '100%', maxHeight: '180px', borderRadius: '8px', marginTop: '8px' }}
-                    />
-                  ))}
-                </div>
-              )}
-
               <div className="report-location">
                 <FiMapPin />
                 <span>
@@ -668,4 +583,5 @@ const Reports = () => {
 };
 
 export default Reports;
+
 

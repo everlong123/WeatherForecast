@@ -1,6 +1,7 @@
 package com.example.weather.dto;
 
 import com.example.weather.entity.WeatherReport;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,6 @@ public class WeatherReportDTO {
     private String incidentTypeName;
     private String title;
     private String description;
-    private String address;
     private String district;
     private String ward;
     private String city;
@@ -23,8 +23,12 @@ public class WeatherReportDTO {
     private Double longitude;
     private WeatherReport.ReportStatus status;
     private WeatherReport.SeverityLevel severity;
+    private Boolean hidden;
     private List<String> images;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime incidentTime;
+    
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

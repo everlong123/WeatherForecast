@@ -58,14 +58,13 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/public/**").permitAll()
-                .requestMatchers("/weather/current").permitAll()
-                .requestMatchers("/incident-types").permitAll()
-                .requestMatchers("/incident-types/**").permitAll()
-                .requestMatchers("/locations/**").permitAll()
-                .requestMatchers("/reports").permitAll()  // Cho phép GET và POST /reports public
-                .requestMatchers("/reports/**").permitAll()  // Cho phép tất cả endpoints liên quan reports
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/weather/**").permitAll()  // Cho phép tất cả weather endpoints
+                .requestMatchers("/api/incident-types/**").permitAll()
+                .requestMatchers("/api/locations/**").permitAll()
+                .requestMatchers("/api/reports/**").permitAll()  // Cho phép tất cả report endpoints
+                .requestMatchers("/uploads/**").permitAll()      // Cho phép upload + truy cập ảnh
                 .anyRequest().authenticated()
             );
 

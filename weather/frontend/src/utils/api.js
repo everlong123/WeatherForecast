@@ -89,6 +89,19 @@ export const locationAPI = {
     api.get('/locations/reverse', { params: { lat, lng } }),
 };
 
+export const uploadAPI = {
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    // Endpoint upload không dùng prefix /api (được WebConfig loại trừ)
+    return axios.post('http://localhost:8080/uploads', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+};
+
 export const adminAPI = {
   approveReport: (id, comment) =>
     api.put(`/admin/reports/${id}/approve`, null, { params: { comment } }),
@@ -96,6 +109,9 @@ export const adminAPI = {
     api.put(`/admin/reports/${id}/reject`, null, { params: { comment } }),
   resolveReport: (id, comment) =>
     api.put(`/admin/reports/${id}/resolve`, null, { params: { comment } }),
+  hideReport: (id) => api.put(`/admin/reports/${id}/hide`),
+  unhideReport: (id) => api.put(`/admin/reports/${id}/unhide`),
+  getAllReports: () => api.get('/admin/reports'),
   getAllUsers: () => api.get('/admin/users'),
   toggleUserStatus: (id) => api.put(`/admin/users/${id}/toggle`),
   updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),

@@ -34,7 +34,7 @@ const Navbar = () => {
               <FiBarChart2 /> Thống kê
             </Link>
           )}
-          {user && (
+          {user && !admin && (
             <Link to="/reports" className="navbar-item">
               <FiUser /> Báo cáo của tôi
             </Link>

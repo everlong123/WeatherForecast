@@ -291,10 +291,25 @@ public class OpenWeatherService {
                 // Parse hourly forecast
                 if (jsonNode.has("hourly") && jsonNode.get("hourly").isArray()) {
                     JsonNode hourlyArray = jsonNode.get("hourly");
-                    int count = Math.min(hourlyArray.size(), hoursAhead);
                     
-                    for (int i = 0; i < count; i++) {
+                    // Lấy thời gian hiện tại để lọc bỏ các giờ đã qua
+                    long nowTimestamp = System.currentTimeMillis() / 1000; // Convert to seconds
+                    System.out.println("Current timestamp: " + nowTimestamp);
+                    
+                    int count = 0;
+                    for (int i = 0; i < hourlyArray.size() && count < hoursAhead; i++) {
                         JsonNode hour = hourlyArray.get(i);
+                        
+                        // Kiểm tra timestamp để bỏ qua giờ đã qua
+                        if (hour.has("dt")) {
+                            long timestamp = hour.get("dt").asLong();
+                            
+                            // Chỉ lấy các giờ từ hiện tại trở đi (cho phép sai số 5 phút)
+                            if (timestamp < nowTimestamp - 300) { // 300 giây = 5 phút
+                                continue; // Bỏ qua giờ đã qua
+                            }
+                        }
+                        
                         Map<String, Object> forecast = new HashMap<>();
                         
                         // DateTime (Unix timestamp)
@@ -368,7 +383,10 @@ public class OpenWeatherService {
                         }
                         
                         forecasts.add(forecast);
+                        count++; // Tăng số lượng forecast đã thêm
                     }
+                    
+                    System.out.println("OpenWeatherMap forecast processed: " + forecasts.size() + " items (filtered from " + hourlyArray.size() + " total items, starting from current time)");
                 }
                 
                 return forecasts.isEmpty() ? null : forecasts;

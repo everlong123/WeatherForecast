@@ -57,6 +57,31 @@
   flex-wrap: wrap;
 }
 
+.hero-buttons .btn-primary,
+.hero-buttons .btn-secondary {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: white;
+  border: 1px solid rgba(0, 0, 0, 0.7);
+  border-radius: 999px;
+  padding: 16px 32px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 20px rgba(74, 144, 226, 0.4);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hero-buttons .btn-primary:hover,
+.hero-buttons .btn-secondary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(74, 144, 226, 0.5);
+}
+
 .weather-card {
   margin: 40px auto;
   max-width: 900px;
@@ -80,6 +105,40 @@
 .weather-location-section {
   flex: 1;
   min-width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.btn-change-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #4a90e2;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+  border: 2px solid #4a90e2;
+}
+
+.btn-change-location:hover {
+  background: #3b7ec4;
+  border-color: #3b7ec4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+  color: white;
+}
+
+.btn-change-location svg {
+  width: 14px;
+  height: 14px;
 }
 
 .location-full {
@@ -629,6 +688,16 @@
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.forecast-description {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 0 8px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .forecast-extra {

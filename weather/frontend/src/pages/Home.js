@@ -19,7 +19,21 @@ const Home = () => {
   const [activeTab, setActiveTab] = useState('current'); // 'current', 'forecast', 'history'
 
   useEffect(() => {
-    // Get user location
+    // Check for saved location from localStorage first
+    const savedLocation = localStorage.getItem('selectedWeatherLocation');
+    if (savedLocation) {
+      try {
+        const location = JSON.parse(savedLocation);
+        setUserLocation(location);
+        fetchWeather(location.lat, location.lng);
+        fetchRecentReports();
+        return;
+      } catch (e) {
+        console.error('Error parsing saved location:', e);
+      }
+    }
+
+    // Get user location from GPS
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -238,6 +252,11 @@ const Home = () => {
                                   {item.temperature ? Math.round(item.temperature) : 'N/A'}°C
                                 </div>
                               </div>
+                              {item.description && (
+                                <div className="forecast-description">
+                                  {item.description}
+                                </div>
+                              )}
                               <div className="forecast-extra">
                                 <span className="forecast-humidity">
                                   Độ ẩm: {item.humidity ? `${Math.round(item.humidity)}%` : 'N/A'}
@@ -405,6 +424,9 @@ const Home = () => {
                               )}
                             </div>
                           </div>
+                          <Link to="/map?selectLocation=true" className="btn-change-location">
+                            <FiMapPin /> Chọn vị trí khác
+                          </Link>
                         </div>
                         <div className="real-time-clock">
                           <FiClock className="clock-icon" />

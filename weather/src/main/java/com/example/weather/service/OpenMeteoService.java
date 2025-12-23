@@ -374,45 +374,120 @@ public class OpenMeteoService {
     }
     
     /**
-     * Chuyển đổi WMO Weather Code sang mô tả thời tiết
+     * Chuyển đổi WMO Weather Code sang mô tả thời tiết CHI TIẾT
      * Reference: https://open-meteo.com/en/docs#api_form
      */
     private String[] interpretWeatherCode(int code) {
         // WMO Weather Interpretation Codes (WW)
+        // Format: [Main Weather, Description Vietnamese, Description Detail]
         switch (code) {
-            case 0: return new String[]{"Clear", "Bầu trời quang đãng"};
-            case 1: case 2: case 3: return new String[]{"Cloudy", "Có mây"};
-            case 45: case 48: return new String[]{"Fog", "Sương mù"};
-            case 51: case 53: case 55: return new String[]{"Drizzle", "Mưa phùn"};
-            case 56: case 57: return new String[]{"Freezing Drizzle", "Mưa phùn đóng băng"};
-            case 61: case 63: case 65: return new String[]{"Rain", "Mưa"};
-            case 66: case 67: return new String[]{"Freezing Rain", "Mưa đóng băng"};
-            case 71: case 73: case 75: return new String[]{"Snow", "Tuyết"};
-            case 77: return new String[]{"Snow Grains", "Hạt tuyết"};
-            case 80: case 81: case 82: return new String[]{"Rain Showers", "Mưa rào"};
-            case 85: case 86: return new String[]{"Snow Showers", "Tuyết rơi"};
-            case 95: return new String[]{"Thunderstorm", "Dông"};
-            case 96: case 99: return new String[]{"Thunderstorm with Hail", "Dông có mưa đá"};
-            default: return new String[]{"Unknown", "Không xác định"};
+            case 0: return new String[]{"Clear", "Bầu trời quang đãng ☀️"};
+            case 1: return new String[]{"Partly Cloudy", "Ít mây ⛅"};
+            case 2: return new String[]{"Partly Cloudy", "Có mây ⛅"};
+            case 3: return new String[]{"Overcast", "Nhiều mây ☁️"};
+            case 45: case 48: return new String[]{"Fog", "Sương mù dày đặc 🌫️"};
+            case 51: return new String[]{"Drizzle", "Mưa phùn nhẹ 🌦️"};
+            case 53: return new String[]{"Drizzle", "Mưa phùn vừa 🌦️"};
+            case 55: return new String[]{"Drizzle", "Mưa phùn dày đặc 🌧️"};
+            case 56: case 57: return new String[]{"Freezing Drizzle", "Mưa phùn đóng băng ⚠️❄️"};
+            case 61: return new String[]{"Rain", "Mưa nhẹ 🌧️"};
+            case 63: return new String[]{"Rain", "Mưa vừa 🌧️"};
+            case 65: return new String[]{"Rain", "Mưa to 🌧️💧"};
+            case 66: case 67: return new String[]{"Freezing Rain", "Mưa đóng băng ⚠️❄️"};
+            case 71: return new String[]{"Snow", "Tuyết rơi nhẹ ❄️"};
+            case 73: return new String[]{"Snow", "Tuyết rơi vừa ❄️"};
+            case 75: return new String[]{"Snow", "Tuyết rơi dày đặc ❄️❄️"};
+            case 77: return new String[]{"Snow Grains", "Hạt tuyết ❄️"};
+            case 80: return new String[]{"Rain Showers", "Mưa rào nhẹ 🌦️"};
+            case 81: return new String[]{"Rain Showers", "Mưa rào vừa 🌦️💧"};
+            case 82: return new String[]{"Rain Showers", "Mưa rào to 🌧️⚠️"};
+            case 85: return new String[]{"Snow Showers", "Tuyết rơi nhẹ ❄️"};
+            case 86: return new String[]{"Snow Showers", "Tuyết rơi dày ❄️❄️"};
+            case 95: return new String[]{"Thunderstorm", "Dông ⛈️"};
+            case 96: return new String[]{"Thunderstorm with Hail", "Dông có mưa đá ⛈️🧊"};
+            case 99: return new String[]{"Thunderstorm with Hail", "Dông mạnh có mưa đá ⛈️🧊⚠️"};
+            default: return new String[]{"Unknown", "Không xác định (code: " + code + ")"};
         }
     }
     
     /**
-     * Tạo URL icon dựa trên loại thời tiết
+     * Tạo URL icon dựa trên loại thời tiết (hỗ trợ ngày/đêm) - dùng cho current weather
+     * OpenWeatherMap icon codes: https://openweathermap.org/weather-conditions
      */
     private String getWeatherIconUrl(String mainWeather) {
-        // Có thể sử dụng OpenWeatherMap icon hoặc icon khác
-        // Hoặc tạo icon URL riêng
-        String iconCode = "01d"; // default
+        java.time.LocalTime now = java.time.LocalTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        boolean isDay = now.isAfter(java.time.LocalTime.of(6, 0)) && now.isBefore(java.time.LocalTime.of(18, 0));
+        String dayNight = isDay ? "d" : "n";
+        return getWeatherIconUrlWithDayNight(mainWeather, dayNight);
+    }
+    
+    /**
+     * Tạo URL icon cho forecast dựa trên thời gian cụ thể
+     */
+    private String getWeatherIconUrlForTime(String mainWeather, String dateTimeStr) {
+        try {
+            java.time.LocalDateTime forecastTime = java.time.LocalDateTime.parse(dateTimeStr);
+            java.time.LocalTime time = forecastTime.toLocalTime();
+            boolean isDay = time.isAfter(java.time.LocalTime.of(6, 0)) && time.isBefore(java.time.LocalTime.of(18, 0));
+            String dayNight = isDay ? "d" : "n";
+            return getWeatherIconUrlWithDayNight(mainWeather, dayNight);
+        } catch (Exception e) {
+            // Fallback to current time
+            return getWeatherIconUrl(mainWeather);
+        }
+    }
+    
+    /**
+     * Tạo URL icon với day/night suffix
+     */
+    private String getWeatherIconUrlWithDayNight(String mainWeather, String dayNight) {
+        
+        String iconCode = "01" + dayNight; // default: clear
         
         if (mainWeather != null) {
-            switch (mainWeather.toLowerCase()) {
-                case "clear": iconCode = "01d"; break;
-                case "cloudy": iconCode = "02d"; break;
-                case "fog": iconCode = "50d"; break;
-                case "drizzle": case "rain": iconCode = "10d"; break;
-                case "snow": iconCode = "13d"; break;
-                case "thunderstorm": iconCode = "11d"; break;
+            String weather = mainWeather.toLowerCase();
+            switch (weather) {
+                case "clear":
+                    iconCode = "01" + dayNight; // ☀️🌙 quang đãng
+                    break;
+                case "partly cloudy":
+                    iconCode = "02" + dayNight; // ⛅ ít mây
+                    break;
+                case "overcast":
+                    iconCode = "04" + dayNight; // ☁️ nhiều mây
+                    break;
+                case "fog":
+                    iconCode = "50" + dayNight; // 🌫️ sương mù
+                    break;
+                case "drizzle":
+                    iconCode = "09" + dayNight; // 🌦️ mưa phùn
+                    break;
+                case "rain":
+                    iconCode = "10" + dayNight; // 🌧️ mưa
+                    break;
+                case "rain showers":
+                    iconCode = "09" + dayNight; // 🌦️ mưa rào
+                    break;
+                case "freezing rain":
+                case "freezing drizzle":
+                    iconCode = "13" + dayNight; // ❄️ mưa đóng băng
+                    break;
+                case "snow":
+                case "snow grains":
+                    iconCode = "13" + dayNight; // ❄️ tuyết
+                    break;
+                case "snow showers":
+                    iconCode = "13" + dayNight; // ❄️ tuyết rơi
+                    break;
+                case "thunderstorm":
+                    iconCode = "11" + dayNight; // ⛈️ dông
+                    break;
+                case "thunderstorm with hail":
+                    iconCode = "11" + dayNight; // ⛈️🧊 dông có mưa đá
+                    break;
+                default:
+                    iconCode = "03" + dayNight; // mây mặc định
+                    break;
             }
         }
         
@@ -488,18 +563,34 @@ public class OpenMeteoService {
                     List<Map<String, Object>> forecasts = new ArrayList<>();
                     
                     // Lấy mảng time để biết số lượng forecast
-                    if (hourly.has("time") && hourly.get("time").isArray()) {
-                        JsonNode timeArray = hourly.get("time");
-                        int count = Math.min(timeArray.size(), hoursAhead);
-                        System.out.println("Open-Meteo forecast items to process: " + count);
+                if (hourly.has("time") && hourly.get("time").isArray()) {
+                    JsonNode timeArray = hourly.get("time");
+                    
+                    // Lấy thời gian hiện tại để lọc bỏ các giờ đã qua
+                    java.time.LocalDateTime now = java.time.LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+                    System.out.println("Current time (VN): " + now);
+                    
+                    int count = 0;
+                    for (int i = 0; i < timeArray.size() && count < hoursAhead; i++) {
+                        // Parse thời gian từ API
+                        String timeStr = timeArray.get(i).asText();
+                        java.time.LocalDateTime forecastTime;
+                        try {
+                            forecastTime = java.time.LocalDateTime.parse(timeStr);
+                        } catch (Exception e) {
+                            System.err.println("Error parsing forecast time: " + timeStr);
+                            continue;
+                        }
                         
-                        for (int i = 0; i < count; i++) {
-                            Map<String, Object> forecast = new HashMap<>();
-                            
-                            // Time
-                            if (timeArray.get(i) != null) {
-                                forecast.put("datetime", timeArray.get(i).asText());
-                            }
+                        // Chỉ lấy các giờ từ hiện tại trở đi
+                        if (forecastTime.isBefore(now)) {
+                            continue; // Bỏ qua giờ đã qua
+                        }
+                        
+                        Map<String, Object> forecast = new HashMap<>();
+                        
+                        // Time
+                        forecast.put("datetime", timeStr);
                             
                             // Temperature
                             if (hourly.has("temperature_2m") && hourly.get("temperature_2m").isArray() && 
@@ -537,13 +628,16 @@ public class OpenMeteoService {
                                 forecast.put("cloudiness", (double) hourly.get("cloud_cover").get(i).asInt());
                             }
                             
-                            // Weather Code -> Main Weather & Description
+                            // Weather Code -> Main Weather & Description & Icon
                             if (hourly.has("weather_code") && hourly.get("weather_code").isArray() && 
                                 hourly.get("weather_code").size() > i) {
                                 int code = hourly.get("weather_code").get(i).asInt();
                                 String[] weatherInfo = interpretWeatherCode(code);
-                                forecast.put("mainWeather", weatherInfo[0]);
+                                String mainWeather = weatherInfo[0];
+                                forecast.put("mainWeather", mainWeather);
                                 forecast.put("description", weatherInfo[1]);
+                                // Tạo icon URL dựa trên thời gian của forecast (ngày/đêm)
+                                forecast.put("icon", getWeatherIconUrlForTime(mainWeather, timeStr));
                             }
                             
                             // Rain
@@ -557,10 +651,12 @@ public class OpenMeteoService {
                             forecast.put("snowVolume", 0.0);
                             
                             forecasts.add(forecast);
+                            count++; // Tăng số lượng forecast đã thêm
                         }
+                        
+                        System.out.println("Open-Meteo forecast processed: " + forecasts.size() + " items (filtered from " + timeArray.size() + " total items, starting from current time)");
                     }
                     
-                    System.out.println("Open-Meteo forecast processed: " + forecasts.size() + " items");
                     return forecasts.isEmpty() ? null : forecasts;
                 } else {
                     System.out.println("Open-Meteo response does not have 'hourly' field");
