@@ -470,11 +470,15 @@ const Map = () => {
                     <Popup className="marker-popup">
                       <h3>{report.title}</h3>
                       <p><strong>Loại:</strong> {report.incidentTypeName}</p>
-                      <p><strong>Địa điểm:</strong> {report.district || report.city || 'N/A'}</p>
+                      <p><strong>Địa điểm:</strong> {
+                        [report.ward, report.district, report.city]
+                          .filter(Boolean)
+                          .join(', ') || 
+                        (report.latitude && report.longitude 
+                          ? `${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}` 
+                          : 'N/A')
+                      }</p>
                       <p><strong>Trạng thái:</strong> {report.status}</p>
-                      {report.latitude && report.longitude && (
-                        <p><strong>Tọa độ:</strong> {report.latitude.toFixed(4)}, {report.longitude.toFixed(4)}</p>
-                      )}
                     </Popup>
                   </Marker>
                 );

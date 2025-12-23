@@ -417,7 +417,9 @@ const Home = () => {
                                   return parts.length > 0 ? parts.join(', ') : 'Vị trí hiện tại';
                                 })()}
                               </h2>
-                              {currentWeather.latitude && currentWeather.longitude && (
+                              {/* Chỉ hiển thị tọa độ nếu không có địa điểm đầy đủ */}
+                              {currentWeather.latitude && currentWeather.longitude && 
+                               !currentWeather.city && !currentWeather.district && !currentWeather.ward && (
                                 <p className="weather-coords">
                                   {currentWeather.latitude.toFixed(4)}, {currentWeather.longitude.toFixed(4)}
                                 </p>

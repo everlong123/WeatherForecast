@@ -92,6 +92,7 @@ const Reports = () => {
   const [loadingAddress, setLoadingAddress] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [reportAddresses, setReportAddresses] = useState({}); // Cache địa chỉ theo report ID
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -117,6 +118,75 @@ const Reports = () => {
     fetchData();
     fetchIncidentTypes();
   }, []);
+
+  // Tự động reverse geocode cho các report thiếu địa điểm
+  useEffect(() => {
+    if (reports.length > 0) {
+      reports.forEach(report => {
+        // Nếu có lat/long nhưng không có city/district/ward, và chưa có trong cache
+        if (report.latitude && report.longitude && 
+            !report.city && !report.district && !report.ward &&
+            !reportAddresses[report.id]) {
+          fetchAddressForReport(report.id, report.latitude, report.longitude);
+        }
+      });
+    }
+  }, [reports]);
+
+  // Fetch địa chỉ cho một report cụ thể
+  const fetchAddressForReport = async (reportId, lat, lng) => {
+    // Tránh gọi nhiều lần cho cùng một report
+    if (reportAddresses[reportId]) return;
+    
+    try {
+      const response = await locationAPI.getLocationFromCoordinates(lat, lng);
+      if (response.data && Object.keys(response.data).length > 0) {
+        const location = response.data;
+        const address = location.display_name || 
+          [location.ward, location.district, location.city]
+            .filter(Boolean)
+            .join(', ') ||
+          `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        
+        setReportAddresses(prev => ({
+          ...prev,
+          [reportId]: address
+        }));
+      } else {
+        // Fallback về tọa độ nếu không tìm thấy
+        setReportAddresses(prev => ({
+          ...prev,
+          [reportId]: `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching address for report:', error);
+      // Fallback về tọa độ nếu có lỗi
+      setReportAddresses(prev => ({
+        ...prev,
+        [reportId]: `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+      }));
+    }
+  };
+
+  // Helper function để lấy địa chỉ hiển thị cho một report
+  const getReportAddress = (report) => {
+    // Ưu tiên: city/district/ward từ database
+    const dbAddress = [report.ward, report.district, report.city].filter(Boolean).join(', ');
+    if (dbAddress) return dbAddress;
+    
+    // Nếu không có, dùng địa chỉ từ cache (reverse geocoded)
+    if (reportAddresses[report.id]) {
+      return reportAddresses[report.id];
+    }
+    
+    // Fallback cuối cùng: tọa độ
+    if (report.latitude && report.longitude) {
+      return `${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}`;
+    }
+    
+    return 'Chưa có địa điểm';
+  };
 
   const fetchData = async () => {
     try {
@@ -149,38 +219,60 @@ const Reports = () => {
   // Reverse geocoding: lat/long → address
   const reverseGeocode = async (lat, lng) => {
     setLoadingAddress(true);
-    try {
-      const response = await locationAPI.getLocationFromCoordinates(lat, lng);
-      if (response.data && Object.keys(response.data).length > 0) {
-        const location = response.data;
-        setFormData(prev => ({
-          ...prev,
-          city: location.city || '',
-          district: location.district || '',
-          ward: location.ward || '',
-          displayAddress: location.display_name || 
-            [location.ward, location.district, location.city]
-              .filter(Boolean)
-              .join(', '),
-        }));
-      } else {
-        // Không tìm thấy địa chỉ
-        setFormData(prev => ({
-          ...prev,
-          city: '',
-          district: '',
-          ward: '',
-          displayAddress: `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`,
-        }));
+    
+    const tryReverseGeocode = async () => {
+      try {
+        const response = await locationAPI.getLocationFromCoordinates(lat, lng);
+        console.log('Reverse geocoding response:', response.data);
+        
+        if (response.data && Object.keys(response.data).length > 0) {
+          const location = response.data;
+          
+          // Tạo địa chỉ đầy đủ từ các thành phần
+          const addressParts = [];
+          if (location.ward) addressParts.push(location.ward);
+          if (location.district) addressParts.push(location.district);
+          if (location.city) addressParts.push(location.city);
+          
+          // Ưu tiên display_name, sau đó là ward/district/city
+          const fullAddress = location.display_name || 
+            (addressParts.length > 0 ? addressParts.join(', ') : null);
+          
+          if (fullAddress) {
+            setFormData(prev => ({
+              ...prev,
+              city: location.city || '',
+              district: location.district || '',
+              ward: location.ward || '',
+              displayAddress: fullAddress,
+            }));
+            setLoadingAddress(false);
+            return true; // Thành công
+          }
+        }
+        return false; // Không tìm thấy
+      } catch (error) {
+        console.error('Error reverse geocoding:', error);
+        return false; // Có lỗi
       }
-    } catch (error) {
-      console.error('Error reverse geocoding:', error);
-      setFormData(prev => ({
-        ...prev,
-        displayAddress: `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)} (Không tìm thấy địa chỉ)`,
-      }));
-    } finally {
-      setLoadingAddress(false);
+    };
+    
+    // Thử lần đầu
+    const success = await tryReverseGeocode();
+    
+    // Nếu không thành công, thử lại sau 1.5 giây (Nominatim có rate limit)
+    if (!success) {
+      setTimeout(async () => {
+        const retrySuccess = await tryReverseGeocode();
+        if (!retrySuccess) {
+          // Vẫn không thành công sau retry - hiển thị tọa độ
+          setFormData(prev => ({
+            ...prev,
+            displayAddress: `Tọa độ: ${lat.toFixed(6)}, ${lng.toFixed(6)} (Không tìm thấy địa chỉ)`,
+          }));
+          setLoadingAddress(false);
+        }
+      }, 1500);
     }
   };
 
@@ -496,12 +588,15 @@ const Reports = () => {
                     </p>
                   ) : (
                     <>
-                      <p style={{ margin: 0, color: '#334155' }}>
-                        {formData.displayAddress || 'Chưa có địa chỉ'}
+                      <p style={{ margin: 0, color: '#334155', fontWeight: '500' }}>
+                        {formData.displayAddress || 'Đang tìm địa chỉ...'}
                       </p>
-                      <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#64748b' }}>
-                        Tọa độ: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
-                      </p>
+                      {/* Chỉ hiển thị tọa độ nếu địa chỉ không chứa "Tọa độ:" (tức là đã có tên địa điểm) */}
+                      {formData.displayAddress && !formData.displayAddress.includes('Tọa độ:') && (
+                        <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#64748b' }}>
+                          Tọa độ: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
@@ -650,8 +745,7 @@ const Reports = () => {
               <div className="report-location">
                 <FiMapPin />
                 <span>
-                  {[report.ward, report.district, report.city].filter(Boolean).join(', ') || 
-                   `${report.latitude?.toFixed(4)}, ${report.longitude?.toFixed(4)}`}
+                  {getReportAddress(report)}
                 </span>
               </div>
 

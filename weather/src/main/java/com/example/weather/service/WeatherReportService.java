@@ -36,6 +36,9 @@ public class WeatherReportService {
     @Autowired
     private NominatimService nominatimService;
     
+    @Autowired(required = false)
+    private com.example.weather.service.BigDataCloudService bigDataCloudService;
+    
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -85,7 +88,7 @@ public class WeatherReportService {
         report.setWard(dto.getWard());
         report.setCity(dto.getCity());
         
-        // Tự động lấy tọa độ từ địa điểm
+        // Tự động lấy tọa độ từ địa điểm HOẶC lấy địa điểm từ tọa độ
         if (dto.getLatitude() == null || dto.getLongitude() == null) {
             Map<String, Double> coords = null;
             
@@ -121,6 +124,46 @@ public class WeatherReportService {
         } else {
             report.setLatitude(dto.getLatitude());
             report.setLongitude(dto.getLongitude());
+            
+            // Nếu có tọa độ nhưng thiếu địa điểm, tự động reverse geocode
+            if ((dto.getCity() == null || dto.getCity().isEmpty()) && 
+                (dto.getDistrict() == null || dto.getDistrict().isEmpty()) &&
+                (dto.getWard() == null || dto.getWard().isEmpty())) {
+                
+                Map<String, String> location = null;
+                
+                // Ưu tiên 1: BigDataCloud (miễn phí, không cần API key)
+                if (bigDataCloudService != null && bigDataCloudService.isAvailable()) {
+                    location = bigDataCloudService.getLocationFromCoordinates(
+                        dto.getLatitude(), dto.getLongitude()
+                    );
+                }
+                
+                // Fallback 2: Nominatim cho reverse geocoding
+                if (location == null && nominatimService != null && nominatimService.isAvailable()) {
+                    location = nominatimService.getLocationFromCoordinates(
+                        dto.getLatitude(), dto.getLongitude()
+                    );
+                }
+                
+                // Fallback: Thử OpenWeather nếu có
+                if (location == null && openWeatherService != null && openWeatherService.isAvailable()) {
+                    // OpenWeather có thể có reverse geocoding, nhưng cần kiểm tra
+                }
+                
+                // Cập nhật địa điểm nếu tìm thấy
+                if (location != null) {
+                    if (location.containsKey("city") && (report.getCity() == null || report.getCity().isEmpty())) {
+                        report.setCity(location.get("city"));
+                    }
+                    if (location.containsKey("district") && (report.getDistrict() == null || report.getDistrict().isEmpty())) {
+                        report.setDistrict(location.get("district"));
+                    }
+                    if (location.containsKey("ward") && (report.getWard() == null || report.getWard().isEmpty())) {
+                        report.setWard(location.get("ward"));
+                    }
+                }
+            }
         }
         
         report.setStatus(dto.getStatus() != null ? dto.getStatus() : WeatherReport.ReportStatus.PENDING);
@@ -157,6 +200,41 @@ public class WeatherReportService {
         if (dto.getLatitude() != null && dto.getLongitude() != null) {
             report.setLatitude(dto.getLatitude());
             report.setLongitude(dto.getLongitude());
+            
+            // Nếu có tọa độ nhưng thiếu địa điểm, tự động reverse geocode
+            if ((report.getCity() == null || report.getCity().isEmpty()) && 
+                (report.getDistrict() == null || report.getDistrict().isEmpty()) &&
+                (report.getWard() == null || report.getWard().isEmpty())) {
+                
+                Map<String, String> location = null;
+                
+                // Ưu tiên 1: BigDataCloud (miễn phí, không cần API key)
+                if (bigDataCloudService != null && bigDataCloudService.isAvailable()) {
+                    location = bigDataCloudService.getLocationFromCoordinates(
+                        dto.getLatitude(), dto.getLongitude()
+                    );
+                }
+                
+                // Fallback 2: Nominatim cho reverse geocoding
+                if (location == null && nominatimService != null && nominatimService.isAvailable()) {
+                    location = nominatimService.getLocationFromCoordinates(
+                        dto.getLatitude(), dto.getLongitude()
+                    );
+                }
+                
+                // Cập nhật địa điểm nếu tìm thấy
+                if (location != null) {
+                    if (location.containsKey("city") && (report.getCity() == null || report.getCity().isEmpty())) {
+                        report.setCity(location.get("city"));
+                    }
+                    if (location.containsKey("district") && (report.getDistrict() == null || report.getDistrict().isEmpty())) {
+                        report.setDistrict(location.get("district"));
+                    }
+                    if (location.containsKey("ward") && (report.getWard() == null || report.getWard().isEmpty())) {
+                        report.setWard(location.get("ward"));
+                    }
+                }
+            }
         } else if (dto.getCity() != null || dto.getDistrict() != null || dto.getWard() != null) {
             Map<String, Double> coords = null;
             

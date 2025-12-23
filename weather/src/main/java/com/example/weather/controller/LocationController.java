@@ -22,6 +22,9 @@ public class LocationController {
     @Autowired(required = false)
     private com.example.weather.service.OpenWeatherService openWeatherService;
     
+    @Autowired(required = false)
+    private com.example.weather.service.BigDataCloudService bigDataCloudService;
+    
     private static Map<String, Map<String, List<String>>> locationsData;
 
     static {
@@ -123,9 +126,22 @@ public class LocationController {
             @RequestParam Double lng) {
         Map<String, String> location = null;
         
-        // Sử dụng Nominatim để reverse geocoding
-        if (nominatimService != null && nominatimService.isAvailable()) {
+        // Ưu tiên 1: BigDataCloud (miễn phí, không cần API key, không có rate limit nghiêm ngặt)
+        if (bigDataCloudService != null && bigDataCloudService.isAvailable()) {
+            location = bigDataCloudService.getLocationFromCoordinates(lat, lng);
+            if (location != null && !location.isEmpty()) {
+                System.out.println("BigDataCloud reverse geocoding found location");
+                return ResponseEntity.ok(location);
+            }
+        }
+        
+        // Fallback 2: Nominatim (nếu BigDataCloud không có kết quả)
+        if (location == null && nominatimService != null && nominatimService.isAvailable()) {
             location = nominatimService.getLocationFromCoordinates(lat, lng);
+            if (location != null && !location.isEmpty()) {
+                System.out.println("Nominatim reverse geocoding found location");
+                return ResponseEntity.ok(location);
+            }
         }
         
         // Nếu không có kết quả, trả về map rỗng
