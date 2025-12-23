@@ -52,7 +52,7 @@ ENV/
 *.sqlite
 
 # Config files with secrets
-**/application.properties
+# **/application.properties - Removed: allow tracking application.properties
 !**/application.properties.example
 
 # Zip files
@@ -116,7 +116,7 @@ ENV/
 *.sqlite
 
 # Config files with secrets
-**/application.properties
+# **/application.properties - Removed: allow tracking application.properties
 !**/application.properties.example
 
 # Zip files
