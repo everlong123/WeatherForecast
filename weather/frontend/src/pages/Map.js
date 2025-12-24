@@ -425,17 +425,11 @@ const Map = () => {
           <MapContainer
             center={center}
             zoom={zoom}
-            minZoom={5.5}
+            minZoom={2}
             maxZoom={18}
             style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            maxBounds={[
-              [8.0, 102.0],   // Southwest: Cà Mau - Kiên Giang
-              [23.5, 109.6]   // Northeast: Hà Giang - Quảng Bình
-            ]}
-            maxBoundsViscosity={1.0}
             scrollWheelZoom={true}
             worldCopyJump={false}
-            boundsOptions={{ padding: [20, 20] }}
           >
             <FitVietnamBounds />
             <MapClickHandler onMapClick={handleMapClick} />
