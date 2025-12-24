@@ -56,17 +56,14 @@ public class TrustScoreService {
     /**
      * Lấy trust level dựa trên score
      * Trust score không giới hạn, nhưng level vẫn dựa trên các mốc chuẩn
+     * Đã giảm ngưỡng để thăng hạng dễ hơn
      */
     public String getTrustLevel(int trustScore) {
-        if (trustScore >= 200) {
+        if (trustScore >= 100) {
             return "EXPERT"; // Chuyên gia
-        } else if (trustScore >= 150) {
-            return "ADVANCED"; // Nâng cao
-        } else if (trustScore >= 100) {
-            return "ADVANCED"; // Nâng cao
-        } else if (trustScore >= 80) {
-            return "INTERMEDIATE"; // Trung cấp
-        } else if (trustScore >= 60) {
+        } else if (trustScore >= 50) {
+            return "ADVANCED"; // Cao cấp
+        } else if (trustScore >= 30) {
             return "INTERMEDIATE"; // Trung cấp
         } else {
             return "BEGINNER"; // Sơ cấp (bao gồm cả người mới)
@@ -75,24 +72,17 @@ public class TrustScoreService {
     
     /**
      * Lấy màu sắc cho trust level
+     * Đã giảm ngưỡng để thăng hạng dễ hơn
      */
     public String getTrustLevelColor(int trustScore) {
-        if (trustScore >= 200) {
-            return "#9333ea"; // Purple - Huyền thoại
-        } else if (trustScore >= 150) {
-            return "#ec4899"; // Pink - Bậc thầy
-        } else if (trustScore >= 100) {
-            return "#10b981"; // Green - Chuyên gia
-        } else if (trustScore >= 80) {
-            return "#10b981"; // Green - Xuất sắc
-        } else if (trustScore >= 60) {
-            return "#3b82f6"; // Blue - Tốt
-        } else if (trustScore >= 40) {
-            return "#f59e0b"; // Yellow/Orange - Trung bình
-        } else if (trustScore >= 20) {
-            return "#ef4444"; // Red - Thấp
+        if (trustScore >= 100) {
+            return "#9333ea"; // Purple - Chuyên gia
+        } else if (trustScore >= 50) {
+            return "#10b981"; // Green - Cao cấp
+        } else if (trustScore >= 30) {
+            return "#3b82f6"; // Blue - Trung cấp
         } else {
-            return "#991b1b"; // Dark Red - Rất thấp
+            return "#f59e0b"; // Yellow/Orange - Sơ cấp
         }
     }
 }

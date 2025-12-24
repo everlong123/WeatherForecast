@@ -145,6 +145,17 @@ public class AdminController {
         String username = authentication != null ? authentication.getName() : null;
         // Admin có thể xem tất cả reports kể cả đã ẩn
         List<WeatherReportDTO> reports = reportRepository.findAll().stream()
+                // Sắp xếp theo thời gian tạo giảm dần (mới nhất trước)
+                .sorted((a, b) -> {
+                    if (a.getCreatedAt() != null && b.getCreatedAt() != null) {
+                        return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    }
+                    // Fallback: sắp xếp theo id giảm dần nếu createdAt null
+                    return Long.compare(
+                        b.getId() != null ? b.getId() : 0L,
+                        a.getId() != null ? a.getId() : 0L
+                    );
+                })
                 .map(r -> {
                     WeatherReportDTO dto = weatherReportService.convertToDTO(r, username);
                     // Thêm admin suggestions

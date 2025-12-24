@@ -92,29 +92,26 @@ const Admin = () => {
 
   // Helper functions for trust score
   const getTrustScoreColor = (score) => {
-    if (score >= 200) return 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)'; // Purple
-    if (score >= 150) return 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)'; // Pink
-    if (score >= 100) return 'linear-gradient(135deg, #10b981 0%, #059669 100%)'; // Green - Advanced
-    if (score >= 80) return 'linear-gradient(135deg, #10b981 0%, #059669 100%)'; // Green - Intermediate
-    if (score >= 60) return 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'; // Blue - Intermediate
+    // Đã giảm ngưỡng để thăng hạng dễ hơn
+    if (score >= 100) return 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)'; // Purple - Expert
+    if (score >= 50) return 'linear-gradient(135deg, #10b981 0%, #059669 100%)'; // Green - Advanced
+    if (score >= 30) return 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'; // Blue - Intermediate
     return 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; // Orange - Beginner
   };
 
   const getTrustLevelLabel = (score) => {
-    if (score >= 200) return 'Chuyên gia';
-    if (score >= 150) return 'Nâng cao';
-    if (score >= 100) return 'Nâng cao';
-    if (score >= 80) return 'Trung cấp';
-    if (score >= 60) return 'Trung cấp';
+    // Đã giảm ngưỡng để thăng hạng dễ hơn
+    if (score >= 100) return 'Chuyên gia';
+    if (score >= 50) return 'Cao cấp';
+    if (score >= 30) return 'Trung cấp';
     return 'Sơ cấp';
   };
 
   const getTrustLevelIcon = (score) => {
-    if (score >= 200) return '●';
-    if (score >= 150) return '●';
+    // Đã giảm ngưỡng để thăng hạng dễ hơn
     if (score >= 100) return '●';
-    if (score >= 80) return '✓';
-    if (score >= 60) return '✓';
+    if (score >= 50) return '●';
+    if (score >= 30) return '✓';
     return '○';
   };
 

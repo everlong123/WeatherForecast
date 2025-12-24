@@ -197,20 +197,18 @@ const Profile = () => {
   };
 
   const getTrustLevel = (score) => {
-    if (score >= 200) return { label: 'Chuyên gia', color: '#9333ea', icon: '●' };
-    if (score >= 150) return { label: 'Nâng cao', color: '#ec4899', icon: '●' };
-    if (score >= 100) return { label: 'Nâng cao', color: '#10b981', icon: '●' };
-    if (score >= 80) return { label: 'Trung cấp', color: '#10b981', icon: '✓' };
-    if (score >= 60) return { label: 'Trung cấp', color: '#3b82f6', icon: '✓' };
+    // Đã giảm ngưỡng để thăng hạng dễ hơn
+    if (score >= 100) return { label: 'Chuyên gia', color: '#9333ea', icon: '●' };
+    if (score >= 50) return { label: 'Cao cấp', color: '#10b981', icon: '●' };
+    if (score >= 30) return { label: 'Trung cấp', color: '#3b82f6', icon: '✓' };
     return { label: 'Sơ cấp', color: '#f59e0b', icon: '○' };
   };
 
   const getTrustScoreColor = (score) => {
-    if (score >= 200) return 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)'; // Purple
-    if (score >= 150) return 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)'; // Pink
-    if (score >= 100) return 'linear-gradient(135deg, #10b981 0%, #059669 100%)'; // Green - Advanced
-    if (score >= 80) return 'linear-gradient(135deg, #10b981 0%, #059669 100%)'; // Green - Intermediate
-    if (score >= 60) return 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'; // Blue - Intermediate
+    // Đã giảm ngưỡng để thăng hạng dễ hơn
+    if (score >= 100) return 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)'; // Purple - Expert
+    if (score >= 50) return 'linear-gradient(135deg, #10b981 0%, #059669 100%)'; // Green - Advanced
+    if (score >= 30) return 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'; // Blue - Intermediate
     return 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; // Orange - Beginner
   };
 
@@ -235,6 +233,7 @@ const Profile = () => {
   }
 
   const trustLevel = getTrustLevel(user.trustScore || 0);
+  const isAdminUser = user.role === 'ADMIN';
 
   return (
     <div className="profile-page">
@@ -255,43 +254,45 @@ const Profile = () => {
           )}
         </div>
 
-        {/* Trust Score Card */}
-        <div className="trust-score-card card">
-          <div className="trust-score-header">
-            <FiShield className="trust-icon" />
-            <h2>Độ Tin Cậy</h2>
-          </div>
-          <div className="trust-score-content">
-            <div 
-              className="trust-score-badge-large"
-              style={{
-                background: getTrustScoreColor(user.trustScore || 0),
-              }}
-            >
-              <div className="trust-score-value">{user.trustScore || 0}</div>
+        {/* Trust Score Card - chỉ hiển thị cho USER, không hiển thị cho ADMIN */}
+        {!isAdminUser && (
+          <div className="trust-score-card card">
+            <div className="trust-score-header">
+              <FiShield className="trust-icon" />
+              <h2>Độ Tin Cậy</h2>
             </div>
-            <div className="trust-level-info">
-              <span className="trust-level-label" style={{ color: trustLevel.color }}>
-                {trustLevel.label}
-              </span>
-            </div>
-            <div className="trust-score-description">
-              <p>
-                Độ tin cậy của bạn được tính dựa trên chất lượng các báo cáo bạn đã gửi.
-                Báo cáo được duyệt sẽ tăng điểm, báo cáo bị từ chối sẽ giảm điểm.
-              </p>
-              <div className="trust-score-tips">
-                <h4>💡 Mẹo để tăng độ tin cậy:</h4>
-                <ul>
-                  <li>Gửi báo cáo chính xác và chi tiết</li>
-                  <li>Đính kèm hình ảnh rõ ràng</li>
-                  <li>Chọn đúng loại sự cố và mức độ nghiêm trọng</li>
-                  <li>Báo cáo kịp thời khi phát hiện sự cố</li>
-                </ul>
+            <div className="trust-score-content">
+              <div 
+                className="trust-score-badge-large"
+                style={{
+                  background: getTrustScoreColor(user.trustScore || 0),
+                }}
+              >
+                <div className="trust-score-value">{user.trustScore || 0}</div>
+              </div>
+              <div className="trust-level-info">
+                <span className="trust-level-label" style={{ color: trustLevel.color }}>
+                  {trustLevel.label}
+                </span>
+              </div>
+              <div className="trust-score-description">
+                <p>
+                  Độ tin cậy của bạn được tính dựa trên chất lượng các báo cáo bạn đã gửi.
+                  Báo cáo được duyệt sẽ tăng điểm, báo cáo bị từ chối sẽ giảm điểm.
+                </p>
+                <div className="trust-score-tips">
+                  <h4>💡 Mẹo để tăng độ tin cậy:</h4>
+                  <ul>
+                    <li>Gửi báo cáo chính xác và chi tiết</li>
+                    <li>Đính kèm hình ảnh rõ ràng</li>
+                    <li>Chọn đúng loại sự cố và mức độ nghiêm trọng</li>
+                    <li>Báo cáo kịp thời khi phát hiện sự cố</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* User Information Card */}
         <div className="profile-info-card card">
@@ -441,27 +442,29 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Stats Card */}
-        <div className="profile-stats-card card">
-          <h2>Thống Kê</h2>
-          <div className="stats-grid">
-            <div className="stat-item">
-              <FiBarChart2 className="stat-icon" />
-              <div className="stat-value">{stats.totalReports || 0}</div>
-              <div className="stat-label">Tổng báo cáo</div>
-            </div>
-            <div className="stat-item">
-              <FiTrendingUp className="stat-icon" />
-              <div className="stat-value">{stats.approvedReports || 0}</div>
-              <div className="stat-label">Báo cáo đã duyệt</div>
-            </div>
-            <div className="stat-item">
-              <FiAward className="stat-icon" />
-              <div className="stat-value">{user.trustScore || 0}</div>
-              <div className="stat-label">Điểm tin cậy</div>
+        {/* Stats Card - chỉ hiển thị cho USER, không hiển thị cho ADMIN */}
+        {!isAdminUser && (
+          <div className="profile-stats-card card">
+            <h2>Thống Kê</h2>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <FiBarChart2 className="stat-icon" />
+                <div className="stat-value">{stats.totalReports || 0}</div>
+                <div className="stat-label">Tổng báo cáo</div>
+              </div>
+              <div className="stat-item">
+                <FiTrendingUp className="stat-icon" />
+                <div className="stat-value">{stats.approvedReports || 0}</div>
+                <div className="stat-label">Báo cáo đã duyệt</div>
+              </div>
+              <div className="stat-item">
+                <FiAward className="stat-icon" />
+                <div className="stat-value">{user.trustScore || 0}</div>
+                <div className="stat-label">Điểm tin cậy</div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

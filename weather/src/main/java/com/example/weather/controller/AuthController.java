@@ -60,8 +60,10 @@ public class AuthController {
         
         List<WeatherReport> userReports = reportRepository.findByUser(user);
         long totalReports = userReports.size();
+        // "Báo cáo đã duyệt" bao gồm cả APPROVED và RESOLVED (vì cả 2 đều đã được duyệt)
         long approvedReports = userReports.stream()
-                .filter(r -> r.getStatus() == WeatherReport.ReportStatus.APPROVED)
+                .filter(r -> r.getStatus() == WeatherReport.ReportStatus.APPROVED 
+                          || r.getStatus() == WeatherReport.ReportStatus.RESOLVED)
                 .count();
         
         Map<String, Object> stats = new HashMap<>();

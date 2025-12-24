@@ -54,6 +54,17 @@ public class WeatherReportService {
         return reportRepository.findAll().stream()
                 // Ẩn các báo cáo đã được admin đánh dấu hidden; null được coi như chưa ẩn
                 .filter(r -> !Boolean.TRUE.equals(r.getHidden()))
+                // Sắp xếp theo thời gian tạo giảm dần (mới nhất trước)
+                .sorted((a, b) -> {
+                    if (a.getCreatedAt() != null && b.getCreatedAt() != null) {
+                        return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    }
+                    // Fallback: sắp xếp theo id giảm dần nếu createdAt null
+                    return Long.compare(
+                        b.getId() != null ? b.getId() : 0L,
+                        a.getId() != null ? a.getId() : 0L
+                    );
+                })
                 .map(r -> convertToDTO(r, currentUsername))
                 .collect(Collectors.toList());
     }
@@ -65,7 +76,14 @@ public class WeatherReportService {
     public List<WeatherReportDTO> getUserReports(String username, String currentUsername) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Sắp xếp báo cáo của user theo thứ tự mới nhất trước (id giảm dần)
+        // để trong mục "Báo cáo của tôi", báo cáo mới tạo sẽ hiển thị trên cùng.
         return reportRepository.findByUser(user).stream()
+                .sorted((a, b) -> Long.compare(
+                        b.getId() != null ? b.getId() : 0L,
+                        a.getId() != null ? a.getId() : 0L
+                ))
                 .map(r -> convertToDTO(r, currentUsername))
                 .collect(Collectors.toList());
     }
