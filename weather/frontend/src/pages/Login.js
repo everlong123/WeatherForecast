@@ -171,7 +171,10 @@ const Login = () => {
       
       <div className="login-card fade-in">
         <div className="login-header">
-          <h1>🌍 ClimateShare</h1>
+          <div className="login-logo">
+            <span className="logo-icon">🌍</span>
+            <h1 className="logo-text">ClimateShare</h1>
+          </div>
           <p>{isLogin ? 'Đăng nhập vào hệ thống' : 'Tạo tài khoản mới'}</p>
         </div>
 
