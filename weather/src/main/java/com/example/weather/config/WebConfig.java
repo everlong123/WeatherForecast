@@ -36,7 +36,11 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Cho phép truy cập file upload qua /uploads/**
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/");
+                .addResourceLocations("file:uploads/")
+                .setCachePeriod(3600);
+        
+        // Đảm bảo không xử lý /api/** như static resources
+        // REST controllers sẽ được xử lý trước nhờ configurePathMatch
     }
     
     @Bean

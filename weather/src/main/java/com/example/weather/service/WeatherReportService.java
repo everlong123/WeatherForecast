@@ -310,6 +310,7 @@ public class WeatherReportService {
         dto.setId(report.getId());
         dto.setUserId(report.getUser().getId());
         dto.setUsername(report.getUser().getUsername());
+        dto.setUserTrustScore(report.getUser().getTrustScore());
         dto.setIncidentTypeId(report.getIncidentType().getId());
         dto.setIncidentTypeName(report.getIncidentType().getName());
         dto.setTitle(report.getTitle());

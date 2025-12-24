@@ -51,6 +51,9 @@ public class AdminController {
     
     @Autowired(required = false)
     private AdminSuggestionService adminSuggestionService;
+    
+    @Autowired
+    private com.example.weather.service.TrustScoreService trustScoreService;
 
     @PutMapping("/reports/{id}/approve")
     public ResponseEntity<WeatherReport> approveReport(
@@ -60,8 +63,16 @@ public class AdminController {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
+        // Chỉ update trust score nếu report chưa được approve trước đó
+        boolean wasPending = report.getStatus() == WeatherReport.ReportStatus.PENDING;
+        
         report.setStatus(WeatherReport.ReportStatus.APPROVED);
         report = reportRepository.save(report);
+        
+        // Update trust score nếu đây là lần đầu approve
+        if (wasPending && trustScoreService != null) {
+            trustScoreService.onReportApproved(report);
+        }
 
         return ResponseEntity.ok(report);
     }
@@ -74,8 +85,16 @@ public class AdminController {
         WeatherReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
+        // Chỉ update trust score nếu report chưa được reject trước đó
+        boolean wasPending = report.getStatus() == WeatherReport.ReportStatus.PENDING;
+        
         report.setStatus(WeatherReport.ReportStatus.REJECTED);
         report = reportRepository.save(report);
+        
+        // Update trust score nếu đây là lần đầu reject
+        if (wasPending && trustScoreService != null) {
+            trustScoreService.onReportRejected(report);
+        }
 
         return ResponseEntity.ok(report);
     }

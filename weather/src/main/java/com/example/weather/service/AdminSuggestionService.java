@@ -14,6 +14,9 @@ public class AdminSuggestionService {
     @Autowired
     private ReportVoteRepository voteRepository;
     
+    @Autowired(required = false)
+    private TrustScoreService trustScoreService;
+    
     /**
      * Tính priority score cho báo cáo
      * Score cao = nên duyệt, Score thấp = nên từ chối
@@ -71,7 +74,22 @@ public class AdminSuggestionService {
             score += 10.0;
         }
         
-        // 5. Penalty nếu có nhiều reject
+        // 5. User Trust Score (20%) - User uy tín = report đáng tin hơn
+        // Trust score không giới hạn, nhưng priority score vẫn giới hạn ở 20 điểm
+        if (report.getUser() != null && trustScoreService != null) {
+            int trustScore = report.getUser().getTrustScore();
+            // Sử dụng công thức log scale để trust score cao hơn vẫn có lợi nhưng không quá áp đảo
+            // Trust score >= 100 sẽ đạt gần max priority (20 điểm)
+            double trustScorePoints;
+            if (trustScore >= 100) {
+                trustScorePoints = 20.0; // Max priority cho trust score >= 100
+            } else {
+                trustScorePoints = (trustScore / 100.0) * 20.0; // Linear cho trust score < 100
+            }
+            score += trustScorePoints;
+        }
+        
+        // 6. Penalty nếu có nhiều reject
         if (rejectCount != null && rejectCount > 0) {
             if (rejectCount >= 3) {
                 score -= 20.0; // Nhiều reject = giảm score

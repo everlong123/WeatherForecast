@@ -56,6 +56,8 @@ public class AuthService {
         user.setAddress(request.getAddress());
         user.setDistrict(request.getDistrict());
         user.setWard(request.getWard());
+        user.setLatitude(request.getLatitude());
+        user.setLongitude(request.getLongitude());
         user.setRole(User.Role.USER);
         user.setEnabled(true);
 

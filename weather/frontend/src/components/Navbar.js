@@ -18,8 +18,8 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          <span className="logo-icon">🌦️</span>
-          <span className="logo-text">Weather Alert</span>
+          <span className="logo-icon">🌍</span>
+          <span className="logo-text">ClimateShare</span>
         </Link>
         
         <div className="navbar-menu">
@@ -45,6 +45,11 @@ const Navbar = () => {
           {admin && (
             <Link to="/admin" className="navbar-item admin">
               <FiShield /> Quản trị
+            </Link>
+          )}
+          {user && (
+            <Link to="/profile" className="navbar-item">
+              <FiUser /> Hồ sơ
             </Link>
           )}
         </div>

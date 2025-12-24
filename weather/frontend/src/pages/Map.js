@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
-import { reportAPI, weatherAPI } from '../utils/api';
+import { reportAPI } from '../utils/api';
 import { FiMapPin, FiAlertCircle, FiCloud, FiSun, FiDroplet, FiLayers, FiX, FiCheck } from 'react-icons/fi';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -134,7 +134,6 @@ const MapClickHandler = ({ onMapClick }) => {
 const Map = () => {
   const navigate = useNavigate();
   const [reports, setReports] = useState([]);
-  const [currentWeather, setCurrentWeather] = useState(null);
   const [selectedReport, setSelectedReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [center] = useState([16.0583, 106.2772]); // Trung tâm Việt Nam (điều chỉnh)
@@ -146,7 +145,6 @@ const Map = () => {
 
   useEffect(() => {
     fetchReports();
-    fetchWeather(center[0], center[1]);
     
     // Kiểm tra nếu có query parameter selectLocation hoặc pickLocation
     const urlParams = new URLSearchParams(window.location.search);
@@ -174,15 +172,6 @@ const Map = () => {
       console.error('Error response:', error.response);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchWeather = async (lat, lng) => {
-    try {
-      const response = await weatherAPI.getCurrent(lat, lng);
-      setCurrentWeather(response.data);
-    } catch (error) {
-      console.error('Error fetching weather:', error);
     }
   };
 
@@ -316,20 +305,6 @@ const Map = () => {
               </span>
             </div>
           </div>
-
-          {currentWeather && (
-            <div className="weather-widget card">
-              <h3>Thời tiết hiện tại</h3>
-              <div className="weather-widget-content">
-                <div className="weather-temp">{Math.round(currentWeather.temperature)}°C</div>
-                <div className="weather-desc">{currentWeather.description}</div>
-                <div className="weather-details">
-                  <div>Độ ẩm: {currentWeather.humidity}%</div>
-                  <div>Gió: {currentWeather.windSpeed?.toFixed(1)} m/s</div>
-                </div>
-              </div>
-            </div>
-          )}
 
           <div className="reports-list">
             <h3>Danh sách báo cáo</h3>

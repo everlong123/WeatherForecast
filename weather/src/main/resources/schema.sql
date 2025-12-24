@@ -17,7 +17,10 @@ CREATE TABLE IF NOT EXISTS users (
     address VARCHAR(500),
     district VARCHAR(255),
     ward VARCHAR(255),
+    latitude DOUBLE,
+    longitude DOUBLE,
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    trust_score INT NOT NULL DEFAULT 0,
     created_at DATETIME(6),
     updated_at DATETIME(6)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

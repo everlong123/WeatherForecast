@@ -24,6 +24,8 @@ public class RegisterRequest {
     private String address;
     private String district;
     private String ward;
+    private Double latitude;  // Tọa độ từ map khi đăng ký
+    private Double longitude; // Tọa độ từ map khi đăng ký
 }
 
 

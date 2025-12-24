@@ -32,14 +32,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         
-        // Skip JWT filter for public endpoints (context path is /api, so paths don't include /api)
+        // Skip JWT filter for public endpoints
+        // Note: Path includes /api prefix due to WebConfig.addPathPrefix
         String path = request.getRequestURI();
-        if (path.startsWith("/auth/") || path.startsWith("/public/") || 
-            path.startsWith("/weather/current") || path.startsWith("/incident-types") ||
-            path.startsWith("/locations/")) {
+        if (path.startsWith("/api/auth/login") || path.startsWith("/api/auth/register") || 
+            path.startsWith("/api/public/") || path.startsWith("/api/weather/current") || 
+            path.startsWith("/api/incident-types") || path.startsWith("/api/locations/")) {
             chain.doFilter(request, response);
             return;
         }
+        
+        // /api/auth/me requires authentication, so don't skip JWT filter
 
         final String authorizationHeader = request.getHeader("Authorization");
 

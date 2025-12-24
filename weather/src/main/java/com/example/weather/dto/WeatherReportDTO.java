@@ -12,6 +12,7 @@ public class WeatherReportDTO {
     private Long id;
     private Long userId;
     private String username;
+    private Integer userTrustScore; // Trust score của user tạo report
     private Long incidentTypeId;
     private String incidentTypeName;
     private String title;

@@ -36,6 +36,9 @@ const Login = () => {
     phone: '',
     latitude: null,
     longitude: null,
+    district: '',
+    ward: '',
+    city: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,6 +65,14 @@ const Login = () => {
             .filter(Boolean)
             .join(', ');
         setDisplayAddress(address || `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`);
+        
+        // Lưu district, ward, city vào formData để gửi lên backend
+        setFormData(prev => ({
+          ...prev,
+          district: location.district || '',
+          ward: location.ward || '',
+          city: location.city || '',
+        }));
       } else {
         setDisplayAddress(`Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`);
       }
@@ -111,9 +122,11 @@ const Login = () => {
           password: formData.password,
           fullName: formData.fullName,
           phone: formData.phone || null,
-          address: displayAddress || null, // Lưu địa chỉ từ map nếu có
-          district: null, // Không dùng nữa
-          ward: null, // Không dùng nữa
+          address: displayAddress || null, // Lưu địa chỉ đầy đủ từ map
+          district: formData.district || null, // Quận/Huyện từ reverse geocode
+          ward: formData.ward || null, // Phường/Xã từ reverse geocode
+          latitude: formData.latitude || null, // Tọa độ từ map khi đăng ký
+          longitude: formData.longitude || null, // Tọa độ từ map khi đăng ký
         };
         response = await authAPI.register(registerData);
       }
@@ -158,7 +171,7 @@ const Login = () => {
       
       <div className="login-card fade-in">
         <div className="login-header">
-          <h1>🌦️ Weather Alert</h1>
+          <h1>🌍 ClimateShare</h1>
           <p>{isLogin ? 'Đăng nhập vào hệ thống' : 'Tạo tài khoản mới'}</p>
         </div>
 

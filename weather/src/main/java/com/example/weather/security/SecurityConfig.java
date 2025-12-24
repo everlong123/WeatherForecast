@@ -58,7 +58,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                .requestMatchers("/api/auth/me").authenticated()  // /auth/me cần authentication
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/weather/**").permitAll()  // Cho phép tất cả weather endpoints
                 .requestMatchers("/api/incident-types/**").permitAll()

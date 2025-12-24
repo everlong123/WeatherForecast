@@ -17,12 +17,12 @@ const Footer = () => {
           <div className="footer-section">
             <div className="footer-logo">
               <FiCloud className="footer-logo-icon" />
-              <span className="footer-logo-text">Weather Alert</span>
+              <span className="footer-logo-text">ClimateShare</span>
             </div>
             <p className="footer-description">
-              Hệ thống cảnh báo thời tiết thông minh, kết nối cộng đồng để chia sẻ 
-              và cảnh báo về các sự cố thời tiết một cách nhanh chóng và chính xác. 
-              Giúp mọi người chủ động ứng phó và bảo vệ an toàn.
+              Nền tảng cộng đồng chia sẻ thông tin thời tiết và cảnh báo sự cố. 
+              Kết nối mọi người để cùng chia sẻ, theo dõi và cảnh báo về các sự cố thời tiết, 
+              giúp cộng đồng chủ động ứng phó và bảo vệ an toàn.
             </p>
             <div className="footer-project-badge">
               <FiBook className="badge-icon" />

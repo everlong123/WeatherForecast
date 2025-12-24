@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
 import Admin from './pages/Admin';
 import About from './pages/About';
+import Profile from './pages/Profile';
 import { isAuthenticated, isAdmin } from './utils/auth';
 import './App.css';
 
@@ -60,6 +61,14 @@ function AppContent() {
             <AdminRoute>
               <Admin />
             </AdminRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
           }
         />
       </Routes>

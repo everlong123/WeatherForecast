@@ -15,14 +15,14 @@ const About = () => {
           <div className="hero-content">
             <h1 className="hero-title">
               <FiCloud className="hero-icon" />
-              Weather Alert
+              ClimateShare
             </h1>
             <p className="hero-subtitle">
-              Hệ thống Cảnh báo Thời tiết Dựa trên Dữ liệu Cộng đồng
+              Cộng đồng chia sẻ thông tin thời tiết và cảnh báo sự cố
             </p>
             <p className="hero-description">
-              Nền tảng kết nối cộng đồng để chia sẻ và cảnh báo về các sự cố thời tiết, 
-              giúp mọi người chủ động ứng phó và bảo vệ an toàn.
+              Nền tảng kết nối cộng đồng để cùng chia sẻ, theo dõi và cảnh báo về các sự cố thời tiết. 
+              Giúp mọi người chủ động ứng phó và bảo vệ an toàn thông qua việc chia sẻ thông tin kịp thời và chính xác.
             </p>
           </div>
         </div>
@@ -37,8 +37,8 @@ const About = () => {
             </h2>
             <div className="section-content">
               <p>
-                <strong>Weather Alert</strong> được xây dựng với mục tiêu tạo ra một cộng đồng 
-                chia sẻ thông tin về thời tiết và các sự cố liên quan, giúp người dùng:
+                <strong>ClimateShare</strong> được xây dựng với mục tiêu tạo ra một cộng đồng 
+                chia sẻ thông tin về thời tiết, khí hậu và các sự cố liên quan, giúp người dùng:
               </p>
               <ul className="feature-list">
                 <li>📊 Theo dõi thời tiết hiện tại, dự báo 24h và lịch sử</li>
@@ -268,7 +268,7 @@ const About = () => {
           <section className="about-cta">
             <div className="cta-content card fade-in">
               <h2>Sẵn sàng bắt đầu?</h2>
-              <p>Tham gia cộng đồng Weather Alert ngay hôm nay</p>
+              <p>Tham gia cộng đồng ClimateShare ngay hôm nay</p>
               <div className="cta-buttons">
                 <Link to="/" className="btn btn-primary">
                   <FiCloud /> Xem Thời tiết
@@ -291,4 +291,6 @@ const About = () => {
 };
 
 export default About;
+
+
 

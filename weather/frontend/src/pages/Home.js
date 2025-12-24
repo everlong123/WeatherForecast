@@ -239,12 +239,12 @@ const Home = () => {
       <div className="hero-section">
         <div className="hero-content fade-in">
           <h1 className="hero-title">
-            Hệ thống Cảnh báo Thời tiết
+            <span className="gradient-text">ClimateShare</span>
             <br />
-            <span className="gradient-text">Dựa trên Dữ liệu Cộng đồng</span>
+            <span style={{ fontSize: '0.85em', fontWeight: '500' }}>Cộng đồng chia sẻ thông tin thời tiết</span>
           </h1>
           <p className="hero-subtitle">
-            Theo dõi thời tiết realtime và báo cáo sự cố thời tiết tại Việt Nam
+            Nền tảng kết nối cộng đồng để chia sẻ, theo dõi và cảnh báo về các sự cố thời tiết tại Việt Nam
           </p>
           <div className="hero-buttons">
             <Link to="/map" className="btn btn-primary">

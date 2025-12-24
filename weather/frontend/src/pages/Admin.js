@@ -90,6 +90,34 @@ const Admin = () => {
   const [userSortBy, setUserSortBy] = useState('createdAt');
   const [userSortOrder, setUserSortOrder] = useState('desc');
 
+  // Helper functions for trust score
+  const getTrustScoreColor = (score) => {
+    if (score >= 200) return 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)'; // Purple
+    if (score >= 150) return 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)'; // Pink
+    if (score >= 100) return 'linear-gradient(135deg, #10b981 0%, #059669 100%)'; // Green - Advanced
+    if (score >= 80) return 'linear-gradient(135deg, #10b981 0%, #059669 100%)'; // Green - Intermediate
+    if (score >= 60) return 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'; // Blue - Intermediate
+    return 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; // Orange - Beginner
+  };
+
+  const getTrustLevelLabel = (score) => {
+    if (score >= 200) return 'Chuyên gia';
+    if (score >= 150) return 'Nâng cao';
+    if (score >= 100) return 'Nâng cao';
+    if (score >= 80) return 'Trung cấp';
+    if (score >= 60) return 'Trung cấp';
+    return 'Sơ cấp';
+  };
+
+  const getTrustLevelIcon = (score) => {
+    if (score >= 200) return '●';
+    if (score >= 150) return '●';
+    if (score >= 100) return '●';
+    if (score >= 80) return '✓';
+    if (score >= 60) return '✓';
+    return '○';
+  };
+
   const [incidentTypeForm, setIncidentTypeForm] = useState({
     name: '',
     description: '',
@@ -426,6 +454,10 @@ const Admin = () => {
         case 'role':
           aVal = a.role === 'ADMIN' ? 1 : 0;
           bVal = b.role === 'ADMIN' ? 1 : 0;
+          break;
+        case 'trustScore':
+          aVal = a.trustScore !== null && a.trustScore !== undefined ? a.trustScore : 0;
+          bVal = b.trustScore !== null && b.trustScore !== undefined ? b.trustScore : 0;
           break;
         default:
           aVal = 0;
@@ -788,6 +820,37 @@ const Admin = () => {
                       <span>Mức độ: {report.severity}</span>
                       <span>Địa điểm: {report.district || 'N/A'}</span>
                       <span>Người báo: {report.username}</span>
+                      {report.userTrustScore !== undefined && report.userTrustScore !== null && (
+                        <span 
+                          className="trust-score-badge trust-score-badge-small" 
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            background: getTrustScoreColor(report.userTrustScore),
+                            color: 'white',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                            cursor: 'default'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.08)';
+                            e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+                          }}
+                          title={`Độ tin cậy người báo: ${report.userTrustScore} - ${getTrustLevelLabel(report.userTrustScore)}`}
+                        >
+                          <FiShield style={{ fontSize: '14px' }} />
+                          Trust: {report.userTrustScore}
+                        </span>
+                      )}
                       <span>Thời gian: {new Date(report.createdAt).toLocaleString('vi-VN')}</span>
                     </div>
                     <div className={`report-status status-${report.status.toLowerCase()}`}>
@@ -902,6 +965,7 @@ const Admin = () => {
                     <option value="username">Tên đăng nhập</option>
                     <option value="email">Email</option>
                     <option value="role">Vai trò</option>
+                    <option value="trustScore">Độ tin cậy</option>
                   </select>
                 </div>
                 <button 
@@ -940,6 +1004,44 @@ const Admin = () => {
                       <span>Quận: {user.district || 'N/A'}</span>
                       <span>Đăng ký: {new Date(user.createdAt).toLocaleDateString('vi-VN')}</span>
                     </div>
+                    {user.trustScore !== undefined && user.trustScore !== null && (
+                      <div className="user-trust-score-container" style={{ margin: '12px 0' }}>
+                        <div className="trust-score-badge" style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px 16px',
+                          borderRadius: '20px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          background: getTrustScoreColor(user.trustScore),
+                          color: 'white',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                          cursor: 'default'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                        }}
+                        title={`Độ tin cậy: ${user.trustScore} - ${getTrustLevelLabel(user.trustScore)}`}
+                        >
+                          <FiShield style={{ fontSize: '16px' }} />
+                          <span>Trust Score: {user.trustScore}</span>
+                          <span style={{ 
+                            fontSize: '11px', 
+                            opacity: 0.9,
+                            marginLeft: '4px'
+                          }}>
+                            {getTrustLevelIcon(user.trustScore)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     <div className="user-actions">
                       <div className={`user-role role-${user.role.toLowerCase()}`}>
                         {user.role}

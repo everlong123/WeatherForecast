@@ -1,6 +1,6 @@
 {
-  "short_name": "Weather Alert",
-  "name": "Weather Alert - Cảnh báo thời tiết",
+  "short_name": "ClimateShare",
+  "name": "ClimateShare - Cộng đồng chia sẻ thông tin thời tiết",
   "icons": [
     {
       "src": "favicon.ico",

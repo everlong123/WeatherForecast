@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { reportAPI, incidentTypeAPI, locationAPI, uploadAPI } from '../utils/api';
+import { reportAPI, incidentTypeAPI, locationAPI, uploadAPI, authAPI } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock, FiCheck, FiThumbsUp, FiX } from 'react-icons/fi';
 import { incidentTypes as defaultIncidentTypes } from '../data/incidentTypes';
@@ -82,6 +82,19 @@ const getImageUrl = (url) => {
   return `${base}/${url}`;
 };
 
+// Helper function: Tính khoảng cách giữa 2 điểm (Haversine formula)
+const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  const R = 6371; // Bán kính Trái Đất (km)
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Khoảng cách (km)
+};
+
 const Reports = () => {
   const [reports, setReports] = useState([]);
   const [incidentTypes, setIncidentTypes] = useState(defaultIncidentTypes);
@@ -94,6 +107,11 @@ const Reports = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [reportAddresses, setReportAddresses] = useState({}); // Cache địa chỉ theo report ID
   const [viewMode, setViewMode] = useState('all'); // 'all' hoặc 'my'
+  const [userLocation, setUserLocation] = useState(null); // { lat, lng } từ địa chỉ user
+  const [locationSource, setLocationSource] = useState(() => {
+    // Lấy từ localStorage hoặc mặc định là 'profile'
+    return localStorage.getItem('locationSource') || 'profile';
+  }); // 'gps' hoặc 'profile'
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -123,7 +141,132 @@ const Reports = () => {
     }
     fetchData();
     fetchIncidentTypes();
+    fetchUserLocation();
   }, [admin, navigate]);
+
+  // Lưu locationSource vào localStorage và re-fetch location khi thay đổi
+  useEffect(() => {
+    localStorage.setItem('locationSource', locationSource);
+    // Re-fetch location khi source thay đổi
+    if (!admin) {
+      fetchUserLocation();
+    }
+  }, [locationSource]);
+
+  // Fetch và geocode địa chỉ user thành lat/lng
+  // Có 2 options: GPS hiện tại hoặc địa chỉ trong profile
+  const fetchUserLocation = async () => {
+    if (locationSource === 'gps') {
+      // Option 1: Lấy từ GPS hiện tại (laptop/web)
+      getGPSLocation();
+    } else {
+      // Option 2: Lấy từ địa chỉ trong profile
+      fetchLocationFromProfile();
+    }
+  };
+
+  // Lấy vị trí từ GPS hiện tại
+  const getGPSLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          console.log('Đã lấy vị trí từ GPS:', {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error('Error getting GPS location:', error);
+          console.warn('Không thể lấy vị trí GPS. Vui lòng cho phép truy cập vị trí hoặc chuyển sang dùng địa chỉ trong profile.');
+          // Fallback về profile nếu GPS không khả dụng
+          fetchLocationFromProfile();
+        },
+        { timeout: 10000, enableHighAccuracy: true }
+      );
+    } else {
+      console.warn('Trình duyệt không hỗ trợ GPS. Chuyển sang dùng địa chỉ trong profile.');
+      fetchLocationFromProfile();
+    }
+  };
+
+  // Lấy vị trí từ địa chỉ trong profile
+  const fetchLocationFromProfile = async () => {
+    try {
+      const response = await authAPI.getCurrentUser();
+      const user = response.data;
+      
+      // Ưu tiên 1: Dùng lat/lng trực tiếp từ profile (nếu có - từ khi đăng ký)
+      if (user.latitude != null && user.longitude != null) {
+        setUserLocation({
+          lat: user.latitude,
+          lng: user.longitude
+        });
+        console.log('Đã lấy vị trí từ profile (lat/lng):', {
+          lat: user.latitude,
+          lng: user.longitude
+        });
+        return; // Thành công, không cần geocode
+      }
+      
+      // Ưu tiên 2: Nếu không có lat/lng nhưng có address, thử reverse geocode từ address
+      // (Fallback để user không cần phải vào Profile chọn lại)
+      if (user.address && user.address.trim() && (user.latitude == null || user.longitude == null)) {
+        try {
+          // Thử reverse geocode từ address string
+          // Parse address để lấy các phần có thể geocode được
+          const addressParts = user.address.split(',').map(s => s.trim()).filter(s => {
+            const lower = s.toLowerCase();
+            return !lower.includes('việt nam') && !lower.includes('vietnam') && !lower.includes('lat:') && !lower.includes('lng:');
+          });
+          
+          if (addressParts.length > 0) {
+            // Thử geocode với phần đầu tiên của address (thường là địa điểm cụ thể nhất)
+            const locationResponse = await locationAPI.getCoordinates(
+              addressParts[addressParts.length - 1] || '', // Phần cuối thường là tỉnh/thành phố
+              addressParts[addressParts.length - 2] || '', // Phần giữa thường là quận/huyện
+              addressParts[0] || '' // Phần đầu thường là phường/xã
+            );
+            
+            if (locationResponse?.data && locationResponse.data.latitude && locationResponse.data.longitude) {
+              setUserLocation({
+                lat: locationResponse.data.latitude,
+                lng: locationResponse.data.longitude
+              });
+              console.log('Đã lấy vị trí từ profile address (geocoded):', {
+                address: user.address,
+                lat: locationResponse.data.latitude,
+                lng: locationResponse.data.longitude
+              });
+              return; // Thành công
+            }
+          }
+          
+          // Nếu không geocode được, thử với toàn bộ address string
+          // Sử dụng Nominatim hoặc Open-Meteo để geocode từ address string
+          console.warn('Không thể geocode từ address. Vui lòng vào trang Profile và chọn lại vị trí trên bản đồ để có độ chính xác cao nhất.');
+          setUserLocation(null);
+        } catch (error) {
+          console.error('Error geocoding from address:', error);
+          console.warn('Vui lòng vào trang Profile và chọn lại vị trí trên bản đồ.');
+          setUserLocation(null);
+        }
+        return;
+      }
+      
+      // Nếu không có lat/lng và không có address
+      if (!user.address && (user.latitude == null || user.longitude == null)) {
+        console.warn('User chưa có địa chỉ và tọa độ trong profile. Vui lòng vào trang Profile và cập nhật địa chỉ.');
+        setUserLocation(null);
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      setUserLocation(null);
+    }
+  };
 
   // Tự động reverse geocode cho các report thiếu địa điểm
   useEffect(() => {
@@ -413,43 +556,54 @@ const Reports = () => {
 
   const handleVote = async (reportId, voteType) => {
     try {
-      // Lấy vị trí GPS của user
+      // Lấy vị trí của user dựa trên locationSource đã chọn
       let userLat = null;
       let userLng = null;
       
-      // Thử lấy từ localStorage (nếu đã lưu trước đó)
-      const savedLocation = localStorage.getItem('userLocation');
-      if (savedLocation) {
-        try {
-          const location = JSON.parse(savedLocation);
-          userLat = location.lat;
-          userLng = location.lng;
-        } catch (e) {
-          console.error('Error parsing saved location:', e);
-        }
-      }
-      
-      // Nếu không có trong localStorage, lấy từ GPS
-      if (userLat === null || userLng === null) {
-        if (navigator.geolocation) {
-          await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                userLat = position.coords.latitude;
-                userLng = position.coords.longitude;
-                // Lưu vào localStorage
-                localStorage.setItem('userLocation', JSON.stringify({ lat: userLat, lng: userLng }));
-                resolve();
-              },
-              (error) => {
-                console.error('Error getting location:', error);
-                reject(new Error('Không thể lấy vị trí GPS. Vui lòng cho phép truy cập vị trí để vote.'));
-              },
-              { timeout: 10000, enableHighAccuracy: true }
-            );
-          });
+      if (locationSource === 'profile') {
+        // Option 1: Dùng địa chỉ từ profile
+        if (userLocation && userLocation.lat && userLocation.lng) {
+          userLat = userLocation.lat;
+          userLng = userLocation.lng;
         } else {
-          throw new Error('Trình duyệt không hỗ trợ GPS. Vui lòng sử dụng trình duyệt khác.');
+          throw new Error('Chưa có vị trí từ profile. Vui lòng cập nhật địa chỉ trong profile hoặc chuyển sang dùng GPS.');
+        }
+      } else {
+        // Option 2: Dùng GPS hiện tại
+        // Thử lấy từ localStorage (nếu đã lưu trước đó)
+        const savedLocation = localStorage.getItem('userLocation');
+        if (savedLocation) {
+          try {
+            const location = JSON.parse(savedLocation);
+            userLat = location.lat;
+            userLng = location.lng;
+          } catch (e) {
+            console.error('Error parsing saved location:', e);
+          }
+        }
+        
+        // Nếu không có trong localStorage, lấy từ GPS
+        if (userLat === null || userLng === null) {
+          if (navigator.geolocation) {
+            await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  userLat = position.coords.latitude;
+                  userLng = position.coords.longitude;
+                  // Lưu vào localStorage
+                  localStorage.setItem('userLocation', JSON.stringify({ lat: userLat, lng: userLng }));
+                  resolve();
+                },
+                (error) => {
+                  console.error('Error getting location:', error);
+                  reject(new Error('Không thể lấy vị trí GPS. Vui lòng cho phép truy cập vị trí để vote hoặc chuyển sang dùng địa chỉ trong profile.'));
+                },
+                { timeout: 10000, enableHighAccuracy: true }
+              );
+            });
+          } else {
+            throw new Error('Trình duyệt không hỗ trợ GPS. Vui lòng chuyển sang dùng địa chỉ trong profile.');
+          }
         }
       }
       
@@ -584,6 +738,104 @@ const Reports = () => {
           )}
         </div>
       </div>
+
+      {/* Location Source Selector - Chỉ hiển thị khi viewMode === 'all' */}
+      {viewMode === 'all' && (
+        <div style={{
+          marginBottom: '20px',
+          padding: '12px 16px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '8px',
+          border: '1px solid #e0e0e0'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            flexWrap: 'wrap'
+          }}>
+            <span style={{
+              fontWeight: '500',
+              color: '#333',
+              fontSize: '14px'
+            }}>
+              <FiMapPin style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+              Lọc báo cáo theo vị trí:
+            </span>
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'center'
+            }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}>
+                <input
+                  type="radio"
+                  name="locationSource"
+                  value="profile"
+                  checked={locationSource === 'profile'}
+                  onChange={(e) => setLocationSource(e.target.value)}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span>Địa chỉ trong profile</span>
+              </label>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}>
+                <input
+                  type="radio"
+                  name="locationSource"
+                  value="gps"
+                  checked={locationSource === 'gps'}
+                  onChange={(e) => setLocationSource(e.target.value)}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span>Vị trí hiện tại (GPS)</span>
+              </label>
+            </div>
+            {userLocation && (
+              <span style={{
+                fontSize: '12px',
+                color: '#666',
+                fontStyle: 'italic'
+              }}>
+                ({locationSource === 'profile' ? 'Từ profile' : 'Từ GPS'}: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)})
+              </span>
+            )}
+            {locationSource === 'profile' && !userLocation && (
+              <span style={{
+                fontSize: '12px',
+                color: '#f59e0b',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                ⚠️ Chưa có vị trí trong profile. 
+                <a 
+                  href="/profile" 
+                  style={{ color: '#3b82f6', textDecoration: 'underline' }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = '/profile';
+                  }}
+                >
+                  Cập nhật ngay
+                </a>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {error && <div className="error-message">{error}</div>}
 
@@ -776,13 +1028,53 @@ const Reports = () => {
       )}
 
       <div className="reports-list">
-        {reports.length === 0 ? (
-          <div className="empty-state">
-            <FiAlertCircle size={48} color="#ccc" />
-            <p>Chưa có báo cáo nào</p>
-          </div>
-        ) : (
-          reports.map((report) => (
+        {(() => {
+          // Lọc reports dựa trên khoảng cách khi viewMode === 'all' và có userLocation
+          let filteredReports = reports;
+          
+          if (viewMode === 'all' && userLocation) {
+            filteredReports = reports.filter(report => {
+              // Nếu report không có tọa độ, không hiển thị
+              if (!report.latitude || !report.longitude) {
+                return false;
+              }
+              
+              // Tính khoảng cách
+              const distance = calculateDistance(
+                userLocation.lat,
+                userLocation.lng,
+                report.latitude,
+                report.longitude
+              );
+              
+              // Chỉ hiển thị reports trong bán kính 10km
+              return distance <= 10;
+            });
+          }
+          
+          return filteredReports.length === 0 ? (
+            <div className="empty-state">
+              <FiAlertCircle size={48} color="#ccc" />
+              <p>
+                {viewMode === 'all' && userLocation 
+                  ? 'Không có báo cáo nào trong bán kính 10km từ vị trí của bạn'
+                  : 'Chưa có báo cáo nào'}
+              </p>
+            </div>
+          ) : (
+            filteredReports.map((report) => {
+              // Tính khoảng cách để hiển thị (nếu có userLocation)
+              let distance = null;
+              if (viewMode === 'all' && userLocation && report.latitude && report.longitude) {
+                distance = calculateDistance(
+                  userLocation.lat,
+                  userLocation.lng,
+                  report.latitude,
+                  report.longitude
+                );
+              }
+              
+              return (
             <div key={report.id} className="report-card">
               <div className="report-header">
                 <h3>{report.title}</h3>
@@ -847,6 +1139,16 @@ const Reports = () => {
                 <FiMapPin />
                 <span>
                   {getReportAddress(report)}
+                  {distance !== null && (
+                    <span style={{ 
+                      marginLeft: '8px', 
+                      fontSize: '0.9em', 
+                      color: '#666',
+                      fontWeight: '500'
+                    }}>
+                      ({distance.toFixed(1)} km)
+                    </span>
+                  )}
                 </span>
               </div>
 
@@ -937,8 +1239,10 @@ const Reports = () => {
                 );
               })()}
             </div>
-          ))
-        )}
+              );
+            })
+          );
+        })()}
       </div>
       </div>
     </div>

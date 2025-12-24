@@ -41,9 +41,14 @@ public class User implements UserDetails {
     private String address;
     private String district;
     private String ward;
+    private Double latitude;  // Tọa độ từ map khi đăng ký
+    private Double longitude; // Tọa độ từ map khi đăng ký
 
     @Column(nullable = false)
     private Boolean enabled = true;
+
+    @Column(nullable = false)
+    private Integer trustScore = 0; // Default trust score: 0 (start from zero)
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

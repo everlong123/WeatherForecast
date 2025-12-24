@@ -20,7 +20,10 @@ public class UserDTO {
     private String address;
     private String district;
     private String ward;
+    private Double latitude;
+    private Double longitude;
     private Boolean enabled;
+    private Integer trustScore;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -38,7 +41,10 @@ public class UserDTO {
         dto.setAddress(user.getAddress());
         dto.setDistrict(user.getDistrict());
         dto.setWard(user.getWard());
+        dto.setLatitude(user.getLatitude());
+        dto.setLongitude(user.getLongitude());
         dto.setEnabled(user.getEnabled());
+        dto.setTrustScore(user.getTrustScore());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
         return dto;
