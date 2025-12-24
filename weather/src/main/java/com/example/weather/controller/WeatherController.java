@@ -1,6 +1,9 @@
 package com.example.weather.controller;
 
 import com.example.weather.dto.WeatherDataDTO;
+import com.example.weather.dto.WeatherAlertDTO;
+import com.example.weather.entity.WeatherAlert;
+import com.example.weather.repository.WeatherAlertRepository;
 import com.example.weather.service.WeatherDataService;
 import com.example.weather.service.MockWeatherService;
 import com.example.weather.service.WeatherPredictionService;
@@ -11,9 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/weather")
@@ -38,6 +43,9 @@ public class WeatherController {
     
     @Autowired(required = false)
     private WeatherDecisionService weatherDecisionService;
+
+    @Autowired
+    private WeatherAlertRepository alertRepository;
 
     @GetMapping("/current")
     public ResponseEntity<WeatherDataDTO> getCurrentWeather(
@@ -280,6 +288,45 @@ public class WeatherController {
         }
         
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/alerts")
+    public ResponseEntity<List<WeatherAlertDTO>> getActiveAlerts() {
+        try {
+            if (alertRepository == null) {
+                System.out.println("WeatherController: alertRepository is null");
+                return ResponseEntity.ok(List.of());
+            }
+            LocalDateTime now = LocalDateTime.now();
+            List<WeatherAlert> allActiveAlerts = alertRepository.findByActiveTrue();
+            System.out.println("WeatherController: Found " + allActiveAlerts.size() + " active alerts");
+            
+            List<WeatherAlert> alerts = allActiveAlerts.stream()
+                    .filter(alert -> {
+                        // Chỉ lấy alerts đã bắt đầu
+                        if (alert.getStartTime() != null && alert.getStartTime().isAfter(now)) {
+                            System.out.println("WeatherController: Alert " + alert.getId() + " not started yet");
+                            return false;
+                        }
+                        // Chỉ lấy alerts chưa kết thúc (nếu có endTime)
+                        if (alert.getEndTime() != null && alert.getEndTime().isBefore(now)) {
+                            System.out.println("WeatherController: Alert " + alert.getId() + " already ended");
+                            return false;
+                        }
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+            
+            System.out.println("WeatherController: Returning " + alerts.size() + " valid alerts");
+            List<WeatherAlertDTO> alertDTOs = alerts.stream()
+                    .map(WeatherAlertDTO::fromEntity)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(alertDTOs);
+        } catch (Exception e) {
+            System.err.println("WeatherController: Error getting alerts: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.ok(List.of());
+        }
     }
 }
 

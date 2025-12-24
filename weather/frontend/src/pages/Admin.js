@@ -10,7 +10,8 @@ import {
   FiCheck, FiX, FiCheckCircle, FiShield, FiUsers, FiAlertCircle, 
   FiSettings, FiBarChart2, FiEdit, FiTrash2, FiPlus, FiDownload,
   FiToggleLeft, FiToggleRight, FiActivity, FiMapPin, FiEye, FiEyeOff,
-  FiTrendingUp, FiTrendingDown, FiArrowUp, FiArrowDown, FiFilter, FiSliders
+  FiTrendingUp, FiTrendingDown, FiArrowUp, FiArrowDown, FiFilter, FiSliders,
+  FiClock
 } from 'react-icons/fi';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './Admin.css';
@@ -40,10 +41,18 @@ const Admin = () => {
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState(null);
   const [incidentTypes, setIncidentTypes] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('reports'); // Đổi default từ 'dashboard' sang 'reports'
   const [showIncidentTypeForm, setShowIncidentTypeForm] = useState(false);
   const [editingIncidentType, setEditingIncidentType] = useState(null);
+  const [showAlertForm, setShowAlertForm] = useState(false);
+  const [editingAlert, setEditingAlert] = useState(null);
+  const [showAlertMap, setShowAlertMap] = useState(false);
+  const [alertMapCenter, setAlertMapCenter] = useState([16.0583, 108.2772]);
+  const [alertMapZoom, setAlertMapZoom] = useState(6);
+  const [loadingAlertAddress, setLoadingAlertAddress] = useState(false);
+  const [alertFormError, setAlertFormError] = useState('');
   const [showUserForm, setShowUserForm] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -130,6 +139,21 @@ const Admin = () => {
     color: '#001f3f',
   });
 
+  const [alertForm, setAlertForm] = useState({
+    title: '',
+    message: '',
+    level: 'INFO',
+    city: '',
+    district: '',
+    ward: '',
+    latitude: null,
+    longitude: null,
+    displayAddress: '',
+    startTime: new Date().toISOString().slice(0, 16),
+    endTime: '',
+    active: true,
+  });
+
   useEffect(() => {
     if (!isAdmin()) {
       navigate('/');
@@ -138,12 +162,13 @@ const Admin = () => {
     
     // Check URL params for tab
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['reports', 'users', 'incident-types'].includes(tabParam)) {
+    if (tabParam && ['reports', 'users', 'incident-types', 'alerts'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
     
     fetchData();
     fetchIncidentTypes();
+    fetchAlerts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -168,6 +193,153 @@ const Admin = () => {
       console.error('Error message:', error.message);
       alert('Lỗi khi tải loại sự cố: ' + (error.response?.data?.message || error.message || 'Đã xảy ra lỗi'));
       setIncidentTypes([]);
+    }
+  };
+
+  const fetchAlerts = async () => {
+    try {
+      console.log('Admin: Fetching all alerts...');
+      const response = await adminAPI.getAllAlerts();
+      console.log('Admin: Alerts response:', response);
+      const allAlerts = Array.isArray(response.data) ? response.data : [];
+      console.log('Admin: Total alerts:', allAlerts.length);
+      // Admin panel hiển thị TẤT CẢ alerts (kể cả inactive, đã hết hạn) để quản lý
+      setAlerts(allAlerts);
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+      console.error('Error details:', error.response);
+      setAlerts([]);
+    }
+  };
+
+  const handleSaveAlert = async (e) => {
+    e.preventDefault();
+    setAlertFormError('');
+    
+    // Validation: Kiểm tra title và message
+    if (!alertForm.title || alertForm.title.trim() === '') {
+      setAlertFormError('Tiêu đề là bắt buộc');
+      return;
+    }
+    
+    if (!alertForm.message || alertForm.message.trim() === '') {
+      setAlertFormError('Nội dung là bắt buộc');
+      return;
+    }
+    
+    // Validation: Kiểm tra startTime
+    if (!alertForm.startTime) {
+      setAlertFormError('Thời gian bắt đầu là bắt buộc');
+      return;
+    }
+    
+    // Validation: Kiểm tra endTime phải sau startTime
+    if (alertForm.endTime && alertForm.endTime.trim() !== '') {
+      const startTime = new Date(alertForm.startTime);
+      const endTime = new Date(alertForm.endTime);
+      
+      if (endTime <= startTime) {
+        setAlertFormError('Thời gian kết thúc phải sau thời gian bắt đầu');
+        return;
+      }
+    }
+    
+    try {
+      const dataToSend = {
+        ...alertForm,
+        startTime: new Date(alertForm.startTime).toISOString(),
+        endTime: alertForm.endTime && alertForm.endTime.trim() !== '' 
+          ? new Date(alertForm.endTime).toISOString() 
+          : null,
+        latitude: alertForm.latitude || null,
+        longitude: alertForm.longitude || null,
+      };
+
+      if (editingAlert) {
+        await adminAPI.updateAlert(editingAlert.id, dataToSend);
+      } else {
+        await adminAPI.createAlert(dataToSend);
+      }
+
+      setShowAlertForm(false);
+      setEditingAlert(null);
+      setAlertFormError('');
+      setAlertForm({
+        title: '',
+        message: '',
+        level: 'INFO',
+        city: '',
+        district: '',
+        ward: '',
+        latitude: null,
+        longitude: null,
+        displayAddress: '',
+        startTime: new Date().toISOString().slice(0, 16),
+        endTime: '',
+        active: true,
+      });
+      setAlertMapCenter([16.0583, 108.2772]);
+      setAlertMapZoom(6);
+      fetchAlerts();
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+      setAlertFormError(errorMessage);
+      console.error('Error saving alert:', error);
+    }
+  };
+
+  const handleDeleteAlert = async (id) => {
+    if (window.confirm('Bạn có chắc muốn xóa cảnh báo này?')) {
+      try {
+        await adminAPI.deleteAlert(id);
+        fetchAlerts();
+      } catch (error) {
+        alert('Lỗi: ' + (error.response?.data?.message || error.message || 'Đã xảy ra lỗi'));
+      }
+    }
+  };
+
+  const handleEditAlert = (alert) => {
+    setEditingAlert(alert);
+    setAlertFormError('');
+    setAlertForm({
+      title: alert.title || '',
+      message: alert.message || '',
+      level: alert.level || 'INFO',
+      city: alert.city || '',
+      district: alert.district || '',
+      ward: alert.ward || '',
+      latitude: alert.latitude || null,
+      longitude: alert.longitude || null,
+      displayAddress: [alert.ward, alert.district, alert.city].filter(Boolean).join(', ') || '',
+      startTime: alert.startTime ? new Date(alert.startTime).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+      endTime: alert.endTime ? new Date(alert.endTime).toISOString().slice(0, 16) : '',
+      active: alert.active !== undefined ? alert.active : true,
+    });
+    if (alert.latitude && alert.longitude) {
+      setAlertMapCenter([alert.latitude, alert.longitude]);
+      setAlertMapZoom(15);
+    }
+    setShowAlertForm(true);
+  };
+
+  const getAlertLevelColor = (level) => {
+    switch (level) {
+      case 'CRITICAL': return '#dc2626';
+      case 'DANGER': return '#ea580c';
+      case 'WARNING': return '#f59e0b';
+      case 'INFO': return '#3b82f6';
+      default: return '#6b7280';
+    }
+  };
+
+  const getAlertLevelLabel = (level) => {
+    switch (level) {
+      case 'CRITICAL': return 'Nghiêm trọng';
+      case 'DANGER': return 'Nguy hiểm';
+      case 'WARNING': return 'Cảnh báo';
+      case 'INFO': return 'Thông tin';
+      default: return level;
     }
   };
 
@@ -683,6 +855,42 @@ const Admin = () => {
     await reverseGeocode(lat, lng);
   };
 
+  const reverseGeocodeAlert = async (lat, lng) => {
+    if (!lat || !lng) return;
+    setLoadingAlertAddress(true);
+    try {
+      const response = await locationAPI.getLocationFromCoordinates(lat, lng);
+      if (response.data) {
+        const { city, district, ward, display_name } = response.data;
+        const address = display_name || [ward, district, city].filter(Boolean).join(', ') || '';
+        setAlertForm(prev => ({
+          ...prev,
+          city: city || '',
+          district: district || '',
+          ward: ward || '',
+          displayAddress: address,
+        }));
+      }
+    } catch (error) {
+      console.error('Error reverse geocoding alert:', error);
+    } finally {
+      setLoadingAlertAddress(false);
+    }
+  };
+
+  const handleAlertMapClick = async (latlng) => {
+    const lat = latlng.lat;
+    const lng = latlng.lng;
+    setAlertForm(prev => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng,
+    }));
+    setAlertMapCenter([lat, lng]);
+    setAlertMapZoom(15);
+    await reverseGeocodeAlert(lat, lng);
+  };
+
   const handleLatitudeChange = async (e) => {
     const lat = parseFloat(e.target.value);
     if (!isNaN(lat)) {
@@ -770,7 +978,8 @@ const Admin = () => {
   }
 
   const pendingReports = reports.filter((r) => r.status === 'PENDING');
-  const totalReports = reports.length;
+  // Dùng reportsTotalElements thay vì reports.length để hiển thị tổng số báo cáo (không chỉ 1 trang)
+  const totalReports = reportsTotalElements > 0 ? reportsTotalElements : reports.length;
 
   return (
     <div className="admin-page">
@@ -802,6 +1011,15 @@ const Admin = () => {
             }}
           >
             <FiSettings /> Loại sự cố ({incidentTypes.length})
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'alerts' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('alerts');
+              fetchAlerts();
+            }}
+          >
+            <FiAlertCircle /> Cảnh báo ({alerts.length})
           </button>
         </div>
 
@@ -847,6 +1065,97 @@ const Admin = () => {
                     </div>
                 </div>
               ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'alerts' && (
+          <div className="admin-content">
+            <div className="section-header">
+              <h2>Quản lý Cảnh báo</h2>
+              <div>
+                <button className="btn btn-primary" onClick={() => {
+                  setEditingAlert(null);
+                  setAlertFormError('');
+                  setAlertForm({
+                    title: '',
+                    message: '',
+                    level: 'INFO',
+                    city: '',
+                    district: '',
+                    ward: '',
+                    latitude: null,
+                    longitude: null,
+                    displayAddress: '',
+                    startTime: new Date().toISOString().slice(0, 16),
+                    endTime: '',
+                    active: true,
+                  });
+                  setAlertMapCenter([16.0583, 108.2772]);
+                  setAlertMapZoom(6);
+                  setShowAlertForm(true);
+                }}>
+                  <FiPlus /> Tạo cảnh báo
+                </button>
+              </div>
+            </div>
+            <div className="alerts-list">
+              {alerts.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
+                  <p>Chưa có cảnh báo nào. Hãy tạo cảnh báo mới.</p>
+                </div>
+              ) : (
+                alerts.map((alert) => (
+                  <div key={alert.id} className="alert-card card fade-in" style={{
+                    borderLeft: `4px solid ${getAlertLevelColor(alert.level)}`,
+                    marginBottom: '1rem'
+                  }}>
+                    <div className="alert-header">
+                      <div>
+                        <h3 style={{ margin: 0, color: getAlertLevelColor(alert.level) }}>
+                          {alert.title}
+                        </h3>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '8px', flexWrap: 'wrap' }}>
+                          <span style={{
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            background: getAlertLevelColor(alert.level),
+                            color: 'white'
+                          }}>
+                            {getAlertLevelLabel(alert.level)}
+                          </span>
+                          {alert.active ? (
+                            <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '12px', background: '#10b981', color: 'white' }}>
+                              Đang hoạt động
+                            </span>
+                          ) : (
+                            <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '12px', background: '#6b7280', color: 'white' }}>
+                              Đã tắt
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="btn-icon" onClick={() => handleEditAlert(alert)} title="Chỉnh sửa">
+                          <FiEdit />
+                        </button>
+                        <button className="btn-icon btn-danger" onClick={() => handleDeleteAlert(alert.id)} title="Xóa">
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </div>
+                    <p style={{ margin: '12px 0', color: '#666' }}>{alert.message}</p>
+                    <div className="alert-meta" style={{ fontSize: '12px', color: '#999', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                      {alert.city && <span><FiMapPin /> {[alert.ward, alert.district, alert.city].filter(Boolean).join(', ')}</span>}
+                      <span><FiClock /> Bắt đầu: {new Date(alert.startTime).toLocaleString('vi-VN')}</span>
+                      {alert.endTime && <span>Kết thúc: {new Date(alert.endTime).toLocaleString('vi-VN')}</span>}
+                      {alert.adminUsername && <span>Tạo bởi: {alert.adminUsername}</span>}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>
@@ -1577,6 +1886,256 @@ const Admin = () => {
                     setShowIncidentTypeForm(false);
                     setEditingIncidentType(null);
                     setIncidentTypeForm({ name: '', description: '', icon: '', color: '#001f3f' });
+                  }}>
+                    Hủy
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal form cho Alert */}
+        {showAlertForm && (
+          <div className="modal-overlay" onClick={() => {
+            setShowAlertForm(false);
+            setEditingAlert(null);
+          }}>
+            <div className="modal-content card card-navy" onClick={(e) => e.stopPropagation()}>
+              <h2>{editingAlert ? 'Chỉnh sửa Cảnh báo' : 'Tạo Cảnh báo mới'}</h2>
+              {alertFormError && (
+                <div style={{
+                  padding: '12px',
+                  marginBottom: '1rem',
+                  borderRadius: '8px',
+                  background: '#fee',
+                  border: '1px solid #fcc',
+                  color: '#c33',
+                  fontSize: '0.9rem'
+                }}>
+                  {alertFormError}
+                </div>
+              )}
+              <form onSubmit={handleSaveAlert}>
+                <label className="form-label">Tiêu đề <span className="required">*</span></label>
+                <input
+                  type="text"
+                  placeholder="Nhập tiêu đề cảnh báo"
+                  value={alertForm.title}
+                  onChange={(e) => setAlertForm({ ...alertForm, title: e.target.value })}
+                  required
+                  className="input"
+                />
+                <label className="form-label">Nội dung <span className="required">*</span></label>
+                <textarea
+                  placeholder="Nhập nội dung cảnh báo chi tiết"
+                  value={alertForm.message}
+                  onChange={(e) => setAlertForm({ ...alertForm, message: e.target.value })}
+                  required
+                  className="input"
+                  rows="4"
+                />
+                <label className="form-label">Mức độ <span className="required">*</span></label>
+                <select
+                  value={alertForm.level}
+                  onChange={(e) => setAlertForm({ ...alertForm, level: e.target.value })}
+                  className="input"
+                  required
+                >
+                  <option value="INFO">Thông tin</option>
+                  <option value="WARNING">Cảnh báo</option>
+                  <option value="DANGER">Nguy hiểm</option>
+                  <option value="CRITICAL">Nghiêm trọng</option>
+                </select>
+                <label className="form-label">Vị trí</label>
+                <div style={{ marginBottom: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAlertMap(!showAlertMap)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      backgroundColor: showAlertMap ? '#e3f2fd' : '#f5f5f5',
+                      border: '2px solid #ddd',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: showAlertMap ? '#1976d2' : '#666',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <FiMapPin />
+                    {showAlertMap ? 'Ẩn bản đồ' : 'Chọn vị trí trên bản đồ'}
+                  </button>
+                  
+                  {showAlertMap && (
+                    <div style={{ 
+                      marginTop: '12px', 
+                      border: '2px solid #ddd', 
+                      borderRadius: '12px', 
+                      overflow: 'hidden',
+                      height: '300px',
+                      backgroundColor: '#e8f4f8'
+                    }}>
+                      <MapContainer
+                        center={alertMapCenter}
+                        zoom={alertMapZoom}
+                        style={{ height: '100%', width: '100%' }}
+                        scrollWheelZoom={true}
+                        key={`${alertMapCenter[0]}-${alertMapCenter[1]}-${alertMapZoom}`}
+                      >
+                        <TileLayer
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        />
+                        <MapClickHandler onMapClick={handleAlertMapClick} />
+                        {alertForm.latitude && alertForm.longitude && (
+                          <Marker position={[alertForm.latitude, alertForm.longitude]} />
+                        )}
+                      </MapContainer>
+                    </div>
+                  )}
+                  
+                  {alertForm.latitude && alertForm.longitude && (
+                    <div style={{ 
+                      marginTop: '10px', 
+                      padding: '12px', 
+                      backgroundColor: '#f0f9ff', 
+                      borderRadius: '8px', 
+                      fontSize: '13px',
+                      color: '#0369a1'
+                    }}>
+                      {loadingAlertAddress ? (
+                        <span>Đang tìm địa chỉ...</span>
+                      ) : (
+                        <div>
+                          <strong>Địa chỉ:</strong> {alertForm.displayAddress || [alertForm.ward, alertForm.district, alertForm.city].filter(Boolean).join(', ') || 'Chưa có địa chỉ'}
+                          <br />
+                          <small>Lat: {alertForm.latitude.toFixed(6)}, Lng: {alertForm.longitude.toFixed(6)}</small>
+                          {alertForm.city && (
+                            <>
+                              <br />
+                              <small style={{ display: 'block', marginTop: '4px' }}>
+                                <strong>Thành phố:</strong> {alertForm.city}
+                                {alertForm.district && <>, <strong>Quận/Huyện:</strong> {alertForm.district}</>}
+                                {alertForm.ward && <>, <strong>Phường/Xã:</strong> {alertForm.ward}</>}
+                              </small>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label className="form-label">Thời gian bắt đầu <span className="required">*</span></label>
+                    <input
+                      type="datetime-local"
+                      value={alertForm.startTime}
+                      onChange={(e) => {
+                        const newStartTime = e.target.value;
+                        setAlertForm({ ...alertForm, startTime: newStartTime });
+                        // Clear error nếu đã sửa
+                        if (alertFormError && alertForm.endTime) {
+                          const endTime = new Date(alertForm.endTime);
+                          const startTime = new Date(newStartTime);
+                          if (endTime > startTime) {
+                            setAlertFormError('');
+                          }
+                        }
+                      }}
+                      required
+                      className="input"
+                      min={new Date().toISOString().slice(0, 16)}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Thời gian kết thúc</label>
+                    <input
+                      type="datetime-local"
+                      value={alertForm.endTime}
+                      onChange={(e) => {
+                        const newEndTime = e.target.value;
+                        setAlertForm({ ...alertForm, endTime: newEndTime });
+                        // Validation real-time
+                        if (newEndTime && alertForm.startTime) {
+                          const endTime = new Date(newEndTime);
+                          const startTime = new Date(alertForm.startTime);
+                          if (endTime <= startTime) {
+                            setAlertFormError('Thời gian kết thúc phải sau thời gian bắt đầu');
+                          } else {
+                            setAlertFormError('');
+                          }
+                        } else {
+                          setAlertFormError('');
+                        }
+                      }}
+                      className="input"
+                      min={alertForm.startTime || new Date().toISOString().slice(0, 16)}
+                    />
+                    {alertForm.endTime && alertForm.startTime && (
+                      (() => {
+                        const endTime = new Date(alertForm.endTime);
+                        const startTime = new Date(alertForm.startTime);
+                        if (endTime <= startTime) {
+                          return (
+                            <div style={{ fontSize: '12px', color: '#c33', marginTop: '4px' }}>
+                              ⚠️ Thời gian kết thúc phải sau thời gian bắt đầu
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()
+                    )}
+                  </div>
+                </div>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={alertForm.active}
+                    onChange={(e) => setAlertForm({ ...alertForm, active: e.target.checked })}
+                  />
+                  Cảnh báo đang hoạt động
+                </label>
+                <div className="form-actions">
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary"
+                    disabled={!!alertFormError || (alertForm.endTime && alertForm.startTime && new Date(alertForm.endTime) <= new Date(alertForm.startTime))}
+                    style={{
+                      opacity: (!!alertFormError || (alertForm.endTime && alertForm.startTime && new Date(alertForm.endTime) <= new Date(alertForm.startTime))) ? 0.5 : 1,
+                      cursor: (!!alertFormError || (alertForm.endTime && alertForm.startTime && new Date(alertForm.endTime) <= new Date(alertForm.startTime))) ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Lưu
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={() => {
+                    setShowAlertForm(false);
+                    setEditingAlert(null);
+                    setAlertFormError('');
+                    setAlertFormError('');
+                    setAlertForm({
+                      title: '',
+                      message: '',
+                      level: 'INFO',
+                      city: '',
+                      district: '',
+                      ward: '',
+                      latitude: null,
+                      longitude: null,
+                      displayAddress: '',
+                      startTime: new Date().toISOString().slice(0, 16),
+                      endTime: '',
+                      active: true,
+                    });
+                    setAlertMapCenter([16.0583, 108.2772]);
+                    setAlertMapZoom(6);
                   }}>
                     Hủy
                   </button>

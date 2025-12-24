@@ -57,10 +57,6 @@ const Pagination = ({
 
   return (
     <div className="pagination-container">
-      <div className="pagination-info">
-        Hiển thị {startItem}-{endItem} trong tổng số {totalElements} báo cáo
-        {totalPages > 1 && ` (Trang ${currentPage + 1}/${totalPages})`}
-      </div>
       {showControls && (
         <div className="pagination-controls">
           <button

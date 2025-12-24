@@ -12,6 +12,7 @@ const Home = () => {
   const [forecast, setForecast] = useState([]);
   const [history, setHistory] = useState([]);
   const [recentReports, setRecentReports] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [forecastLoading, setForecastLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -32,6 +33,7 @@ const Home = () => {
         setUserLocation(location);
         fetchWeather(location.lat, location.lng);
         fetchRecentReports();
+        fetchAlerts();
         return;
       } catch (e) {
         console.error('Error parsing saved location:', e);
@@ -56,6 +58,7 @@ const Home = () => {
     }
 
     fetchRecentReports();
+    fetchAlerts();
   }, []);
 
   // Update clock every second
@@ -186,6 +189,42 @@ const Home = () => {
     } catch (error) {
       console.error('Error fetching reports:', error);
       setRecentReports([]);
+    }
+  };
+
+  const fetchAlerts = async () => {
+    try {
+      console.log('Fetching alerts...');
+      const response = await weatherAPI.getAlerts();
+      console.log('Alerts response:', response);
+      const allAlerts = Array.isArray(response.data) ? response.data : [];
+      console.log('Alerts count:', allAlerts.length);
+      // Backend đã filter rồi, chỉ cần set trực tiếp
+      setAlerts(allAlerts);
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+      console.error('Error details:', error.response);
+      setAlerts([]);
+    }
+  };
+
+  const getAlertLevelColor = (level) => {
+    switch (level) {
+      case 'CRITICAL': return '#dc2626';
+      case 'DANGER': return '#ea580c';
+      case 'WARNING': return '#f59e0b';
+      case 'INFO': return '#3b82f6';
+      default: return '#6b7280';
+    }
+  };
+
+  const getAlertLevelLabel = (level) => {
+    switch (level) {
+      case 'CRITICAL': return 'Nghiêm trọng';
+      case 'DANGER': return 'Nguy hiểm';
+      case 'WARNING': return 'Cảnh báo';
+      case 'INFO': return 'Thông tin';
+      default: return level;
     }
   };
 
@@ -708,6 +747,59 @@ const Home = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {alerts.length > 0 && (
+            <div className="alerts-section card fade-in" style={{ marginBottom: '2rem', padding: '1.5rem', background: '#ffffff' }}>
+              <h2 className="section-title" style={{ marginBottom: '1rem', color: '#1a1a1a' }}>
+                <FiAlertCircle /> Cảnh báo thời tiết
+              </h2>
+              <div className="alerts-list">
+                {alerts.map((alert) => (
+                  <div 
+                    key={alert.id} 
+                    className="alert-item"
+                    style={{
+                      padding: '1.25rem',
+                      marginBottom: '1rem',
+                      borderRadius: '12px',
+                      borderLeft: `4px solid ${getAlertLevelColor(alert.level)}`,
+                      background: '#ffffff',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      border: '1px solid #e5e5e5'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                      <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '600', color: getAlertLevelColor(alert.level) }}>
+                        {alert.title}
+                      </h3>
+                      <span style={{
+                        padding: '6px 12px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        background: getAlertLevelColor(alert.level),
+                        color: 'white',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {getAlertLevelLabel(alert.level)}
+                      </span>
+                    </div>
+                    <p style={{ margin: '0.75rem 0', color: '#333', fontSize: '0.95rem', lineHeight: '1.6' }}>{alert.message}</p>
+                    <div style={{ fontSize: '13px', color: '#666', display: 'flex', gap: '15px', flexWrap: 'wrap', marginTop: '0.75rem', alignItems: 'center' }}>
+                      {alert.city && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <FiMapPin size={14} /> {[alert.ward, alert.district, alert.city].filter(Boolean).join(', ')}
+                        </span>
+                      )}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FiClock size={14} /> {new Date(alert.startTime).toLocaleString('vi-VN')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

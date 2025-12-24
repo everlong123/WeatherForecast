@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -55,6 +57,33 @@ public class AdminController {
     
     @Autowired
     private com.example.weather.service.TrustScoreService trustScoreService;
+
+    // Helper method to parse ISO datetime string to LocalDateTime
+    private LocalDateTime parseDateTime(String dateTimeStr) {
+        if (dateTimeStr == null || dateTimeStr.isEmpty()) {
+            return null;
+        }
+        try {
+            // Remove timezone (Z, +HH:mm, -HH:mm) and milliseconds if present
+            String cleaned = dateTimeStr.replace("Z", "");
+            if (cleaned.contains(".")) {
+                cleaned = cleaned.substring(0, cleaned.indexOf("."));
+            }
+            // Remove timezone offset if present
+            if (cleaned.contains("+")) {
+                cleaned = cleaned.substring(0, cleaned.indexOf("+"));
+            } else if (cleaned.contains("-") && cleaned.length() > 19) {
+                // Check if it's a timezone offset (not part of date)
+                int lastDash = cleaned.lastIndexOf("-");
+                if (lastDash > 19) {
+                    cleaned = cleaned.substring(0, lastDash);
+                }
+            }
+            return LocalDateTime.parse(cleaned, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (DateTimeParseException e) {
+            throw new RuntimeException("Invalid datetime format: " + dateTimeStr, e);
+        }
+    }
 
     @PutMapping("/reports/{id}/approve")
     public ResponseEntity<WeatherReport> approveReport(
@@ -241,11 +270,36 @@ public class AdminController {
         if (alertData.get("radius") != null) {
             alert.setRadius(((Number) alertData.get("radius")).doubleValue());
         }
-        alert.setStartTime(LocalDateTime.parse((String) alertData.get("startTime")));
-        if (alertData.get("endTime") != null) {
-            alert.setEndTime(LocalDateTime.parse((String) alertData.get("endTime")));
+        // Parse startTime
+        String startTimeStr = (String) alertData.get("startTime");
+        LocalDateTime startTime = null;
+        if (startTimeStr != null && !startTimeStr.isEmpty()) {
+            startTime = parseDateTime(startTimeStr);
+            alert.setStartTime(startTime);
+        } else {
+            throw new RuntimeException("Thời gian bắt đầu là bắt buộc");
         }
-        alert.setActive(true);
+        
+        // Parse endTime
+        LocalDateTime endTime = null;
+        if (alertData.get("endTime") != null) {
+            String endTimeStr = (String) alertData.get("endTime");
+            if (endTimeStr != null && !endTimeStr.isEmpty()) {
+                endTime = parseDateTime(endTimeStr);
+                alert.setEndTime(endTime);
+                
+                // Validation: endTime phải sau startTime
+                if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
+                    throw new RuntimeException("Thời gian kết thúc phải sau thời gian bắt đầu");
+                }
+            }
+        }
+        
+        if (alertData.get("active") != null) {
+            alert.setActive((Boolean) alertData.get("active"));
+        } else {
+            alert.setActive(true);
+        }
 
         return ResponseEntity.ok(alertRepository.save(alert));
     }
@@ -266,6 +320,43 @@ public class AdminController {
         if (alertData.get("title") != null) alert.setTitle((String) alertData.get("title"));
         if (alertData.get("message") != null) alert.setMessage((String) alertData.get("message"));
         if (alertData.get("level") != null) alert.setLevel(WeatherAlert.AlertLevel.valueOf((String) alertData.get("level")));
+        if (alertData.get("city") != null) alert.setCity((String) alertData.get("city"));
+        if (alertData.get("district") != null) alert.setDistrict((String) alertData.get("district"));
+        if (alertData.get("ward") != null) alert.setWard((String) alertData.get("ward"));
+        if (alertData.get("latitude") != null) {
+            alert.setLatitude(((Number) alertData.get("latitude")).doubleValue());
+        }
+        if (alertData.get("longitude") != null) {
+            alert.setLongitude(((Number) alertData.get("longitude")).doubleValue());
+        }
+        // Parse startTime if provided
+        LocalDateTime startTime = alert.getStartTime();
+        if (alertData.get("startTime") != null) {
+            String startTimeStr = (String) alertData.get("startTime");
+            if (startTimeStr != null && !startTimeStr.isEmpty()) {
+                startTime = parseDateTime(startTimeStr);
+                alert.setStartTime(startTime);
+            }
+        }
+        
+        // Parse endTime if provided
+        LocalDateTime endTime = alert.getEndTime();
+        if (alertData.get("endTime") != null) {
+            String endTimeStr = (String) alertData.get("endTime");
+            if (endTimeStr != null && !endTimeStr.isEmpty()) {
+                endTime = parseDateTime(endTimeStr);
+                alert.setEndTime(endTime);
+                
+                // Validation: endTime phải sau startTime
+                if (startTime != null && (endTime.isBefore(startTime) || endTime.isEqual(startTime))) {
+                    throw new RuntimeException("Thời gian kết thúc phải sau thời gian bắt đầu");
+                }
+            } else {
+                // Nếu endTime được set thành empty string, xóa nó
+                alert.setEndTime(null);
+            }
+        }
+        
         if (alertData.get("active") != null) alert.setActive((Boolean) alertData.get("active"));
         return ResponseEntity.ok(alertRepository.save(alert));
     }

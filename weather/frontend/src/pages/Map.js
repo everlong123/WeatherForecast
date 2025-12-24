@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
-import { reportAPI } from '../utils/api';
+import { reportAPI, weatherAPI } from '../utils/api';
 import { FiMapPin, FiAlertCircle, FiCloud, FiSun, FiDroplet, FiLayers, FiX, FiCheck } from 'react-icons/fi';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -134,8 +134,10 @@ const MapClickHandler = ({ onMapClick }) => {
 const Map = () => {
   const navigate = useNavigate();
   const [reports, setReports] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [selectedReport, setSelectedReport] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAlerts, setShowAlerts] = useState(true);
   const [center] = useState([16.0583, 106.2772]); // Trung tâm Việt Nam (điều chỉnh)
   const [zoom] = useState(6); // Zoom level để hiển thị toàn bộ Việt Nam
   const [mapType, setMapType] = useState('standard'); // standard, satellite, terrain
@@ -145,6 +147,7 @@ const Map = () => {
 
   useEffect(() => {
     fetchReports();
+    fetchAlerts();
     
     // Kiểm tra nếu có query parameter selectLocation hoặc pickLocation
     const urlParams = new URLSearchParams(window.location.search);
@@ -152,6 +155,42 @@ const Map = () => {
       setIsSelectingLocation(true);
     }
   }, []);
+
+  const fetchAlerts = async () => {
+    try {
+      console.log('Map: Fetching alerts...');
+      const response = await weatherAPI.getAlerts();
+      console.log('Map: Alerts response:', response);
+      const allAlerts = Array.isArray(response.data) ? response.data : [];
+      console.log('Map: Alerts count:', allAlerts.length);
+      // Backend đã filter rồi, chỉ cần set trực tiếp
+      setAlerts(allAlerts);
+    } catch (error) {
+      console.error('Map: Error fetching alerts:', error);
+      console.error('Map: Error details:', error.response);
+      setAlerts([]);
+    }
+  };
+
+  const getAlertLevelColor = (level) => {
+    switch (level) {
+      case 'CRITICAL': return '#dc2626';
+      case 'DANGER': return '#ea580c';
+      case 'WARNING': return '#f59e0b';
+      case 'INFO': return '#3b82f6';
+      default: return '#6b7280';
+    }
+  };
+
+  const getAlertLevelLabel = (level) => {
+    switch (level) {
+      case 'CRITICAL': return 'Nghiêm trọng';
+      case 'DANGER': return 'Nguy hiểm';
+      case 'WARNING': return 'Cảnh báo';
+      case 'INFO': return 'Thông tin';
+      default: return level;
+    }
+  };
 
   const fetchReports = async () => {
     try {
@@ -346,6 +385,108 @@ const Map = () => {
               </span>
             </div>
           </div>
+
+          {alerts.length > 0 && showAlerts && (
+            <div className="alerts-panel" style={{
+              marginBottom: '1rem',
+              padding: '1rem',
+              background: '#ffffff',
+              borderRadius: '12px',
+              border: '1px solid #e5e5e5',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#1a1a1a', fontWeight: '600' }}>
+                <FiAlertCircle style={{ color: '#f59e0b' }} /> Cảnh báo ({alerts.length})
+              </h3>
+              <button 
+                onClick={() => setShowAlerts(false)}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: '#666'
+                }}
+                title="Ẩn cảnh báo"
+              >
+                <FiX size={16} />
+              </button>
+            </div>
+            <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+              {alerts.slice(0, 3).map((alert) => (
+                <div 
+                  key={alert.id}
+                  style={{
+                    padding: '0.875rem',
+                    marginBottom: '0.75rem',
+                    borderRadius: '8px',
+                    borderLeft: `3px solid ${getAlertLevelColor(alert.level)}`,
+                    background: '#f9f9f9',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <strong style={{ color: getAlertLevelColor(alert.level), fontSize: '0.9rem', fontWeight: '600' }}>
+                      {alert.title}
+                    </strong>
+                    <span style={{
+                      padding: '3px 8px',
+                      borderRadius: '8px',
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      background: getAlertLevelColor(alert.level),
+                      color: 'white',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {getAlertLevelLabel(alert.level)}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0.5rem 0', color: '#333', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                    {alert.message.length > 60 ? alert.message.substring(0, 60) + '...' : alert.message}
+                  </p>
+                    {alert.city && (
+                      <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FiMapPin size={12} /> {[alert.ward, alert.district, alert.city].filter(Boolean).join(', ')}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {alerts.length > 3 && (
+                  <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '0.5rem', fontWeight: '500' }}>
+                    +{alerts.length - 3} cảnh báo khác
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {alerts.length > 0 && !showAlerts && (
+            <button 
+              onClick={() => setShowAlerts(true)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                marginBottom: '1rem',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)'
+              }}
+            >
+              <FiAlertCircle /> Hiển thị {alerts.length} cảnh báo
+            </button>
+          )}
 
           <div className="reports-list">
             <h3>Danh sách báo cáo</h3>

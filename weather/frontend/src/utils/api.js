@@ -90,6 +90,7 @@ export const weatherAPI = {
     api.post('/weather/fetch', null, {
       params: { lat, lng, city, district, ward },
     }),
+  getAlerts: () => api.get('/weather/alerts'),
 };
 
 export const dashboardAPI = {

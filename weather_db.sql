@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 23, 2025 at 09:41 PM
+-- Generation Time: Dec 25, 2025 at 12:08 AM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -177,68 +177,71 @@ CREATE TABLE `report_votes` (
 --
 
 INSERT INTO `report_votes` (`id`, `report_id`, `user_id`, `vote_type`, `created_at`, `updated_at`) VALUES
-(1, 2, 5, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 11 HOUR), DATE_SUB(NOW(), INTERVAL 11 HOUR)),
-(2, 2, 6, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 10 HOUR), DATE_SUB(NOW(), INTERVAL 10 HOUR)),
-(3, 2, 7, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 9 HOUR), DATE_SUB(NOW(), INTERVAL 9 HOUR)),
-(4, 3, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 23 HOUR), DATE_SUB(NOW(), INTERVAL 23 HOUR)),
-(5, 3, 13, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 22 HOUR), DATE_SUB(NOW(), INTERVAL 22 HOUR)),
-(6, 3, 14, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 21 HOUR), DATE_SUB(NOW(), INTERVAL 21 HOUR)),
-(7, 3, 15, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 20 HOUR), DATE_SUB(NOW(), INTERVAL 20 HOUR)),
-(8, 3, 16, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 19 HOUR), DATE_SUB(NOW(), INTERVAL 19 HOUR)),
-(9, 4, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 35 HOUR), DATE_SUB(NOW(), INTERVAL 35 HOUR)),
-(10, 4, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 34 HOUR), DATE_SUB(NOW(), INTERVAL 34 HOUR)),
-(11, 4, 13, 'REJECT', DATE_SUB(NOW(), INTERVAL 33 HOUR), DATE_SUB(NOW(), INTERVAL 33 HOUR)),
-(12, 6, 4, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 47 HOUR), DATE_SUB(NOW(), INTERVAL 47 HOUR)),
-(13, 6, 5, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 46 HOUR), DATE_SUB(NOW(), INTERVAL 46 HOUR)),
-(14, 6, 7, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 45 HOUR), DATE_SUB(NOW(), INTERVAL 45 HOUR)),
-(15, 6, 8, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 44 HOUR), DATE_SUB(NOW(), INTERVAL 44 HOUR)),
-(16, 8, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 17 HOUR), DATE_SUB(NOW(), INTERVAL 17 HOUR)),
-(17, 8, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 16 HOUR), DATE_SUB(NOW(), INTERVAL 16 HOUR)),
-(18, 8, 13, 'REJECT', DATE_SUB(NOW(), INTERVAL 15 HOUR), DATE_SUB(NOW(), INTERVAL 15 HOUR)),
-(19, 9, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 95 HOUR), DATE_SUB(NOW(), INTERVAL 95 HOUR)),
-(20, 9, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 94 HOUR), DATE_SUB(NOW(), INTERVAL 94 HOUR)),
-(21, 9, 13, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 93 HOUR), DATE_SUB(NOW(), INTERVAL 93 HOUR)),
-(22, 9, 14, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 92 HOUR), DATE_SUB(NOW(), INTERVAL 92 HOUR)),
-(23, 9, 15, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 91 HOUR), DATE_SUB(NOW(), INTERVAL 91 HOUR)),
-(24, 12, 5, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 7 HOUR), DATE_SUB(NOW(), INTERVAL 7 HOUR)),
-(25, 12, 6, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 6 HOUR), DATE_SUB(NOW(), INTERVAL 6 HOUR)),
-(26, 12, 7, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 5 HOUR), DATE_SUB(NOW(), INTERVAL 5 HOUR)),
-(27, 13, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 14 HOUR), DATE_SUB(NOW(), INTERVAL 14 HOUR)),
-(28, 13, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 13 HOUR), DATE_SUB(NOW(), INTERVAL 13 HOUR)),
-(29, 14, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 19 HOUR), DATE_SUB(NOW(), INTERVAL 19 HOUR)),
-(30, 14, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 18 HOUR), DATE_SUB(NOW(), INTERVAL 18 HOUR)),
-(31, 15, 5, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 29 HOUR), DATE_SUB(NOW(), INTERVAL 29 HOUR)),
-(32, 19, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 13 HOUR), DATE_SUB(NOW(), INTERVAL 13 HOUR)),
-(33, 19, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 12 HOUR), DATE_SUB(NOW(), INTERVAL 12 HOUR)),
-(34, 19, 13, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 11 HOUR), DATE_SUB(NOW(), INTERVAL 11 HOUR)),
-(35, 24, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 39 HOUR), DATE_SUB(NOW(), INTERVAL 39 HOUR)),
-(36, 24, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 38 HOUR), DATE_SUB(NOW(), INTERVAL 38 HOUR)),
-(37, 24, 13, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 37 HOUR), DATE_SUB(NOW(), INTERVAL 37 HOUR)),
-(38, 24, 14, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 36 HOUR), DATE_SUB(NOW(), INTERVAL 36 HOUR)),
-(39, 24, 15, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 35 HOUR), DATE_SUB(NOW(), INTERVAL 35 HOUR)),
-(40, 30, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 64 HOUR), DATE_SUB(NOW(), INTERVAL 64 HOUR)),
-(41, 30, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 63 HOUR), DATE_SUB(NOW(), INTERVAL 63 HOUR)),
-(42, 30, 13, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 62 HOUR), DATE_SUB(NOW(), INTERVAL 62 HOUR)),
-(43, 30, 14, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 61 HOUR), DATE_SUB(NOW(), INTERVAL 61 HOUR)),
-(44, 30, 15, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 60 HOUR), DATE_SUB(NOW(), INTERVAL 60 HOUR)),
-(45, 40, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 79 HOUR), DATE_SUB(NOW(), INTERVAL 79 HOUR)),
-(46, 40, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 78 HOUR), DATE_SUB(NOW(), INTERVAL 78 HOUR)),
-(47, 40, 13, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 77 HOUR), DATE_SUB(NOW(), INTERVAL 77 HOUR)),
-(48, 44, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 99 HOUR), DATE_SUB(NOW(), INTERVAL 99 HOUR)),
-(49, 44, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 98 HOUR), DATE_SUB(NOW(), INTERVAL 98 HOUR)),
-(50, 44, 13, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 97 HOUR), DATE_SUB(NOW(), INTERVAL 97 HOUR)),
-(51, 44, 14, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 96 HOUR), DATE_SUB(NOW(), INTERVAL 96 HOUR)),
-(52, 44, 15, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 95 HOUR), DATE_SUB(NOW(), INTERVAL 95 HOUR)),
-(53, 49, 11, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 124 HOUR), DATE_SUB(NOW(), INTERVAL 124 HOUR)),
-(54, 49, 12, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 123 HOUR), DATE_SUB(NOW(), INTERVAL 123 HOUR)),
-(55, 49, 13, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 122 HOUR), DATE_SUB(NOW(), INTERVAL 122 HOUR)),
-(56, 49, 14, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 121 HOUR), DATE_SUB(NOW(), INTERVAL 121 HOUR)),
-(57, 49, 15, 'CONFIRM', DATE_SUB(NOW(), INTERVAL 120 HOUR), DATE_SUB(NOW(), INTERVAL 120 HOUR)),
-(58, 5, 11, 'REJECT', DATE_SUB(NOW(), INTERVAL 5 HOUR), DATE_SUB(NOW(), INTERVAL 5 HOUR)),
-(59, 11, 12, 'REJECT', DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_SUB(NOW(), INTERVAL 2 HOUR)),
-(60, 16, 11, 'REJECT', DATE_SUB(NOW(), INTERVAL 9 HOUR), DATE_SUB(NOW(), INTERVAL 9 HOUR)),
-(61, 18, 12, 'REJECT', DATE_SUB(NOW(), INTERVAL 4 HOUR), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
-(62, 27, 11, 'REJECT', DATE_SUB(NOW(), INTERVAL 1 HOUR), DATE_SUB(NOW(), INTERVAL 1 HOUR));
+(1, 2, 5, 'CONFIRM', '2025-12-24 11:31:40', '2025-12-24 11:31:40'),
+(2, 2, 6, 'CONFIRM', '2025-12-24 12:31:40', '2025-12-24 12:31:40'),
+(3, 2, 7, 'CONFIRM', '2025-12-24 13:31:40', '2025-12-24 13:31:40'),
+(4, 3, 12, 'CONFIRM', '2025-12-23 23:31:40', '2025-12-23 23:31:40'),
+(5, 3, 13, 'CONFIRM', '2025-12-24 00:31:40', '2025-12-24 00:31:40'),
+(6, 3, 14, 'CONFIRM', '2025-12-24 01:31:40', '2025-12-24 01:31:40'),
+(7, 3, 15, 'CONFIRM', '2025-12-24 02:31:40', '2025-12-24 02:31:40'),
+(8, 3, 16, 'CONFIRM', '2025-12-24 03:31:40', '2025-12-24 03:31:40'),
+(9, 4, 11, 'CONFIRM', '2025-12-23 11:31:40', '2025-12-23 11:31:40'),
+(10, 4, 12, 'CONFIRM', '2025-12-23 12:31:40', '2025-12-23 12:31:40'),
+(11, 4, 13, 'REJECT', '2025-12-23 13:31:40', '2025-12-23 13:31:40'),
+(12, 6, 4, 'CONFIRM', '2025-12-22 23:31:40', '2025-12-22 23:31:40'),
+(13, 6, 5, 'CONFIRM', '2025-12-23 00:31:40', '2025-12-23 00:31:40'),
+(14, 6, 7, 'CONFIRM', '2025-12-23 01:31:40', '2025-12-23 01:31:40'),
+(15, 6, 8, 'CONFIRM', '2025-12-23 02:31:40', '2025-12-23 02:31:40'),
+(16, 8, 11, 'CONFIRM', '2025-12-24 05:31:40', '2025-12-24 05:31:40'),
+(17, 8, 12, 'CONFIRM', '2025-12-24 06:31:40', '2025-12-24 06:31:40'),
+(18, 8, 13, 'REJECT', '2025-12-24 07:31:40', '2025-12-24 07:31:40'),
+(19, 9, 11, 'CONFIRM', '2025-12-20 23:31:40', '2025-12-20 23:31:40'),
+(20, 9, 12, 'CONFIRM', '2025-12-21 00:31:40', '2025-12-21 00:31:40'),
+(21, 9, 13, 'CONFIRM', '2025-12-21 01:31:40', '2025-12-21 01:31:40'),
+(22, 9, 14, 'CONFIRM', '2025-12-21 02:31:40', '2025-12-21 02:31:40'),
+(23, 9, 15, 'CONFIRM', '2025-12-21 03:31:40', '2025-12-21 03:31:40'),
+(24, 12, 5, 'CONFIRM', '2025-12-24 15:31:40', '2025-12-24 15:31:40'),
+(25, 12, 6, 'CONFIRM', '2025-12-24 16:31:40', '2025-12-24 16:31:40'),
+(26, 12, 7, 'CONFIRM', '2025-12-24 17:31:40', '2025-12-24 17:31:40'),
+(27, 13, 11, 'CONFIRM', '2025-12-24 08:31:40', '2025-12-24 08:31:40'),
+(28, 13, 12, 'CONFIRM', '2025-12-24 09:31:40', '2025-12-24 09:31:40'),
+(29, 14, 11, 'CONFIRM', '2025-12-24 03:31:40', '2025-12-24 03:31:40'),
+(30, 14, 12, 'CONFIRM', '2025-12-24 04:31:40', '2025-12-24 04:31:40'),
+(31, 15, 5, 'CONFIRM', '2025-12-23 17:31:40', '2025-12-23 17:31:40'),
+(32, 19, 11, 'CONFIRM', '2025-12-24 09:31:40', '2025-12-24 09:31:40'),
+(33, 19, 12, 'CONFIRM', '2025-12-24 10:31:40', '2025-12-24 10:31:40'),
+(34, 19, 13, 'CONFIRM', '2025-12-24 11:31:40', '2025-12-24 11:31:40'),
+(35, 24, 11, 'CONFIRM', '2025-12-23 07:31:40', '2025-12-23 07:31:40'),
+(36, 24, 12, 'CONFIRM', '2025-12-23 08:31:40', '2025-12-23 08:31:40'),
+(37, 24, 13, 'CONFIRM', '2025-12-23 09:31:40', '2025-12-23 09:31:40'),
+(38, 24, 14, 'CONFIRM', '2025-12-23 10:31:40', '2025-12-23 10:31:40'),
+(39, 24, 15, 'CONFIRM', '2025-12-23 11:31:40', '2025-12-23 11:31:40'),
+(40, 30, 11, 'CONFIRM', '2025-12-22 06:31:40', '2025-12-22 06:31:40'),
+(41, 30, 12, 'CONFIRM', '2025-12-22 07:31:40', '2025-12-22 07:31:40'),
+(42, 30, 13, 'CONFIRM', '2025-12-22 08:31:40', '2025-12-22 08:31:40'),
+(43, 30, 14, 'CONFIRM', '2025-12-22 09:31:40', '2025-12-22 09:31:40'),
+(44, 30, 15, 'CONFIRM', '2025-12-22 10:31:40', '2025-12-22 10:31:40'),
+(45, 40, 11, 'CONFIRM', '2025-12-21 15:31:40', '2025-12-21 15:31:40'),
+(46, 40, 12, 'CONFIRM', '2025-12-21 16:31:40', '2025-12-21 16:31:40'),
+(47, 40, 13, 'CONFIRM', '2025-12-21 17:31:40', '2025-12-21 17:31:40'),
+(48, 44, 11, 'CONFIRM', '2025-12-20 19:31:40', '2025-12-20 19:31:40'),
+(49, 44, 12, 'CONFIRM', '2025-12-20 20:31:40', '2025-12-20 20:31:40'),
+(50, 44, 13, 'CONFIRM', '2025-12-20 21:31:40', '2025-12-20 21:31:40'),
+(51, 44, 14, 'CONFIRM', '2025-12-20 22:31:40', '2025-12-20 22:31:40'),
+(52, 44, 15, 'CONFIRM', '2025-12-20 23:31:40', '2025-12-20 23:31:40'),
+(53, 49, 11, 'CONFIRM', '2025-12-19 18:31:40', '2025-12-19 18:31:40'),
+(54, 49, 12, 'CONFIRM', '2025-12-19 19:31:40', '2025-12-19 19:31:40'),
+(55, 49, 13, 'CONFIRM', '2025-12-19 20:31:40', '2025-12-19 20:31:40'),
+(56, 49, 14, 'CONFIRM', '2025-12-19 21:31:40', '2025-12-19 21:31:40'),
+(57, 49, 15, 'CONFIRM', '2025-12-19 22:31:40', '2025-12-19 22:31:40'),
+(58, 5, 11, 'REJECT', '2025-12-24 17:31:40', '2025-12-24 17:31:40'),
+(59, 11, 12, 'REJECT', '2025-12-24 20:31:40', '2025-12-24 20:31:40'),
+(60, 16, 11, 'REJECT', '2025-12-24 13:31:40', '2025-12-24 13:31:40'),
+(61, 18, 12, 'REJECT', '2025-12-24 18:31:40', '2025-12-24 18:31:40'),
+(62, 27, 11, 'REJECT', '2025-12-24 21:31:40', '2025-12-24 21:31:40'),
+(63, 11, 51, 'CONFIRM', '2025-12-24 15:52:26', '2025-12-24 15:52:26'),
+(64, 32, 51, 'CONFIRM', '2025-12-24 15:52:27', '2025-12-24 15:52:28'),
+(65, 16, 51, 'CONFIRM', '2025-12-24 15:52:30', '2025-12-24 15:52:30');
 
 -- --------------------------------------------------------
 
@@ -253,69 +256,73 @@ CREATE TABLE `users` (
   `district` varchar(255) DEFAULT NULL,
   `email` varchar(255) NOT NULL,
   `enabled` bit(1) NOT NULL,
+  `trust_score` int(11) NOT NULL DEFAULT 0,
   `full_name` varchar(255) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `phone` varchar(255) DEFAULT NULL,
   `role` enum('ADMIN','USER') NOT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   `username` varchar(255) NOT NULL,
-  `ward` varchar(255) DEFAULT NULL
+  `ward` varchar(255) DEFAULT NULL,
+  `latitude` double DEFAULT NULL,
+  `longitude` double DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `address`, `created_at`, `district`, `email`, `enabled`, `full_name`, `password`, `phone`, `role`, `updated_at`, `username`, `ward`) VALUES
-(1, NULL, '2025-12-23 15:35:28.000000', NULL, 'admin@weather.com', b'1', 'Administrator', '$2a$10$0oNcUixUWbAWPMiTGbrhl.W5RXRaMsWVtJXPN4Iu.Ltb2Z2eZ4Gby', NULL, 'ADMIN', '2025-12-23 15:35:28.000000', 'admin', NULL),
-(2, 'Lat: 10.762942, Lng: 106.701292', '2025-12-23 15:42:39.000000', NULL, '22110095@student.hcmute.edu.vn', b'1', 'Phan Hoàng An', '$2a$10$bbkCD46Pneh8KjxLiQJVPOS6Pgg6xiqLSad5yQtmKE2BafCitx4pO', '0913869208', 'USER', '2025-12-23 15:42:39.000000', 'bob', NULL),
-(3, '456 Đường Trần Hưng Đạo', '2025-12-24 03:40:25.000000', 'Quận 1', 'admin1@weather.vn', b'1', 'Nguyễn Văn Admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0901000002', 'ADMIN', '2025-12-24 03:40:25.000000', 'admin1', 'Bến Nghé'),
-(4, '12 Phố Hàng Bông', '2025-11-24 03:40:25.000000', 'Hoàn Kiếm', 'nguyenvana@email.com', b'1', 'Nguyễn Văn A', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345678', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_001', 'Hàng Gai'),
-(5, '25 Phố Lý Quốc Sư', '2025-11-26 03:40:25.000000', 'Hoàn Kiếm', 'tranthib@email.com', b'1', 'Trần Thị B', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345679', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_002', 'Lý Thái Tổ'),
-(6, '89 Đường Bà Triệu', '2025-11-29 03:40:25.000000', 'Hai Bà Trưng', 'levanc@email.com', b'1', 'Lê Văn C', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345680', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_003', 'Lê Đại Hành'),
-(7, '156 Phố Tôn Đức Thắng', '2025-12-02 03:40:25.000000', 'Đống Đa', 'phamthid@email.com', b'1', 'Phạm Thị D', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345681', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_004', 'Quốc Tử Giám'),
-(8, '78 Đường Giải Phóng', '2025-12-04 03:40:25.000000', 'Hoàng Mai', 'hoangvane@email.com', b'1', 'Hoàng Văn E', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345682', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_005', 'Giáp Bát'),
-(9, '45 Phố Hàng Đào', '2025-12-06 03:40:25.000000', 'Hoàn Kiếm', 'dangthif@email.com', b'1', 'Đặng Thị F', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345683', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_006', 'Hàng Đào'),
-(10, '67 Đường Kim Mã', '2025-12-09 03:40:25.000000', 'Ba Đình', 'vuongvang@email.com', b'1', 'Vương Văn G', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345684', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_007', 'Kim Mã'),
-(11, '123 Nguyễn Huệ', '2025-11-27 03:40:25.000000', 'Quận 1', 'nguyenvietf@email.com', b'1', 'Nguyễn Việt F', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654321', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_001', 'Bến Nghé'),
-(12, '456 Đường Lê Lợi', '2025-11-30 03:40:25.000000', 'Quận 1', 'trantieng@email.com', b'1', 'Trần Tiến G', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654322', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_002', 'Đa Kao'),
-(13, '789 Phố Tôn Đức Thắng', '2025-12-03 03:40:25.000000', 'Quận 1', 'levanh@email.com', b'1', 'Lê Văn H', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654323', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_003', 'Nguyễn Thái Bình'),
-(14, '321 Đường Võ Thị Sáu', '2025-12-05 03:40:25.000000', 'Quận 3', 'phamthui@email.com', b'1', 'Phạm Thu I', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654324', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_004', 'Võ Thị Sáu'),
-(15, '654 Đường Nguyễn Văn Cừ', '2025-12-07 03:40:25.000000', 'Quận 5', 'hoangminhj@email.com', b'1', 'Hoàng Minh J', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654325', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_005', 'Phường 14'),
-(16, '987 Đường Cách Mạng Tháng 8', '2025-12-10 03:40:25.000000', 'Quận 10', 'dangthank@email.com', b'1', 'Đặng Thanh K', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654326', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_006', 'Phường 1'),
-(17, '147 Đường Hồng Bàng', '2025-12-12 03:40:25.000000', 'Quận 5', 'buithil@email.com', b'1', 'Bùi Thị L', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654327', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_007', 'Phường 13'),
-(18, '234 Đường Pasteur', '2025-12-14 03:40:25.000000', 'Quận 3', 'nguyenvanduc@email.com', b'1', 'Nguyễn Văn Đức', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654328', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_008', 'Võ Thị Sáu'),
-(19, '567 Đường Nguyễn Đình Chiểu', '2025-12-16 03:40:25.000000', 'Quận 3', 'tranthiem@email.com', b'1', 'Trần Thị Em', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654329', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_009', 'Võ Thị Sáu'),
-(20, '890 Đường Lê Văn Sỹ', '2025-12-18 03:40:25.000000', 'Quận 3', 'levanphu@email.com', b'1', 'Lê Văn Phú', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654330', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_010', 'Phường 14'),
-(21, '123 Đường Bạch Đằng', '2025-12-01 03:40:25.000000', 'Hải Châu', 'nguyenducm@email.com', b'1', 'Nguyễn Đức M', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0923456789', 'USER', '2025-12-24 03:40:25.000000', 'user_dn_001', 'Hải Châu'),
-(22, '456 Đường Trần Phú', '2025-12-08 03:40:25.000000', 'Hải Châu', 'tranhoan@email.com', b'1', 'Trần Hoa N', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0923456790', 'USER', '2025-12-24 03:40:25.000000', 'user_dn_002', 'Phước Ninh'),
-(23, '789 Đường Nguyễn Văn Linh', '2025-12-11 03:40:25.000000', 'Thanh Khê', 'leminho@email.com', b'1', 'Lê Minh O', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0923456791', 'USER', '2025-12-24 03:40:25.000000', 'user_dn_003', 'Thanh Khê Tây'),
-(24, '123 Đường Lạch Tray', '2025-12-13 03:40:25.000000', 'Ngô Quyền', 'phamtup@email.com', b'1', 'Phạm Tú P', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0934567890', 'USER', '2025-12-24 03:40:25.000000', 'user_hp_001', 'Máy Chai'),
-(25, '123 Đường Trần Phú', '2025-12-15 03:40:25.000000', 'Thành phố Vũng Tàu', 'danghair@email.com', b'1', 'Đặng Hải R', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0945678901', 'USER', '2025-12-24 03:40:25.000000', 'user_vt_001', 'Thắng Tam'),
-(26, '123 Đường Hòa Bình', '2025-12-17 03:40:25.000000', 'Ninh Kiều', 'nguyenhuongt@email.com', b'1', 'Nguyễn Hương T', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0956789012', 'USER', '2025-12-24 03:40:25.000000', 'user_ct_001', 'Cái Khế'),
-(27, '123 Đường Lê Lợi', '2025-12-19 03:40:25.000000', 'Huế', 'tranbinhu@email.com', b'1', 'Trần Bình U', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0967890123', 'USER', '2025-12-24 03:40:25.000000', 'user_hue_001', 'Phú Hội'),
-(28, '123 Đường Trần Phú', '2025-12-20 03:40:25.000000', 'Nha Trang', 'lethuyv@email.com', b'1', 'Lê Thủy V', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0978901234', 'USER', '2025-12-24 03:40:25.000000', 'user_nt_001', 'Vĩnh Hải'),
-(29, '123 Đường Trần Hưng Đạo', '2025-12-21 03:40:25.000000', 'Đà Lạt', 'phamhongw@email.com', b'1', 'Phạm Hồng W', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989012345', 'USER', '2025-12-24 03:40:25.000000', 'user_dl_001', 'Phường 1'),
-(31, '45 Phố Hàng Đào', '2025-11-28 03:40:25.000000', 'Hoàn Kiếm', 'user008_hn@email.com', b'1', 'Nguyễn Thị Anh', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0913000001', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_008', 'Hàng Đào'),
-(32, '67 Đường Kim Mã', '2025-11-30 03:40:25.000000', 'Ba Đình', 'user009_hn@email.com', b'1', 'Trần Văn Bình', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0913000002', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_009', 'Kim Mã'),
-(33, '123 Đường Nguyễn Thị Minh Khai', '2025-12-02 03:40:25.000000', 'Quận 3', 'user011_hcm@email.com', b'1', 'Phạm Thị Giang', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000001', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_011', 'Đa Kao'),
-(34, '456 Đường Điện Biên Phủ', '2025-12-04 03:40:25.000000', 'Quận Bình Thạnh', 'user012_hcm@email.com', b'1', 'Hoàng Văn Hải', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000002', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_012', 'Phường 25'),
-(35, '789 Đường Xô Viết Nghệ Tĩnh', '2025-12-06 03:40:25.000000', 'Quận Bình Thạnh', 'user013_hcm@email.com', b'1', 'Đặng Thị Hoa', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000003', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_013', 'Phường 21'),
-(36, '321 Đường Tân Hương', '2025-12-08 03:40:25.000000', 'Quận Tân Phú', 'user014_hcm@email.com', b'1', 'Vương Văn Khang', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000004', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_014', 'Tân Sơn Nhì'),
-(37, '654 Đường Trường Chinh', '2025-12-10 03:40:25.000000', 'Quận Tân Bình', 'user015_hcm@email.com', b'1', 'Nguyễn Văn Lâm', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000005', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_015', 'Phường 4'),
-(38, '234 Đường Lê Duẩn', '2025-12-12 03:40:25.000000', 'Hải Châu', 'user004_dn@email.com', b'1', 'Nguyễn Thị Linh', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0924000001', 'USER', '2025-12-24 03:40:25.000000', 'user_dn_004', 'Thạch Thang'),
-(39, '567 Đường Phan Đăng Lưu', '2025-12-14 03:40:25.000000', 'Hải Châu', 'user005_dn@email.com', b'1', 'Trần Văn Mạnh', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0924000002', 'USER', '2025-12-24 03:40:25.000000', 'user_dn_005', 'Nam Dương'),
-(40, '234 Đường Điện Biên Phủ', '2025-12-16 03:40:25.000000', 'Ngô Quyền', 'user002_hp@email.com', b'1', 'Lê Thị Nga', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0935000001', 'USER', '2025-12-24 03:40:25.000000', 'user_hp_002', 'Cầu Đất'),
-(41, '234 Đường Hoàng Hoa Thám', '2025-12-18 03:40:25.000000', 'Thành phố Vũng Tàu', 'user002_vt@email.com', b'1', 'Hoàng Thị Phượng', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0946000001', 'USER', '2025-12-24 03:40:25.000000', 'user_vt_002', 'Thắng Tam'),
-(42, '234 Đường 3 Tháng 2', '2025-12-20 03:40:25.000000', 'Ninh Kiều', 'user002_ct@email.com', b'1', 'Đặng Văn Quang', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0957000001', 'USER', '2025-12-24 03:40:25.000000', 'user_ct_002', 'An Hòa'),
-(43, '234 Đường Nguyễn Huệ', '2025-12-22 03:40:25.000000', 'Huế', 'user002_hue@email.com', b'1', 'Vương Thị Quyên', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0968000001', 'USER', '2025-12-24 03:40:25.000000', 'user_hue_002', 'Phú Hội'),
-(44, '234 Đường Thống Nhất', '2025-12-23 03:40:25.000000', 'Nha Trang', 'user002_nt@email.com', b'1', 'Nguyễn Văn Rạng', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0979000001', 'USER', '2025-12-24 03:40:25.000000', 'user_nt_002', 'Vĩnh Phước'),
-(45, '234 Đường Phan Đình Phùng', '2025-12-24 03:40:25.000000', 'Đà Lạt', 'user002_dl@email.com', b'1', 'Trần Thị Sương', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0980000001', 'USER', '2025-12-24 03:40:25.000000', 'user_dl_002', 'Phường 1'),
-(46, '234 Đường Nguyễn Tất Thành', '2025-12-24 03:40:25.000000', 'Buôn Ma Thuột', 'user001_bmt@email.com', b'1', 'Lê Văn Tấn', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0991000001', 'USER', '2025-12-24 03:40:25.000000', 'user_bmt_001', 'Tân An'),
-(47, '234 Đường Ngô Mây', '2025-12-24 03:40:25.000000', 'Quy Nhơn', 'user001_qn@email.com', b'1', 'Phạm Thị Uyên', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912000001', 'USER', '2025-12-24 03:40:25.000000', 'user_qn_001', 'Lê Lợi'),
-(48, '234 Đường Phạm Văn Đồng', '2025-12-24 03:40:25.000000', 'Pleiku', 'user001_pk@email.com', b'1', 'Hoàng Văn Việt', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0913000003', 'USER', '2025-12-24 03:40:25.000000', 'user_pk_001', 'Diên Hồng'),
-(49, '123 Phố Hàng Mã', '2025-12-24 03:40:25.000000', 'Hoàn Kiếm', 'user010_hn@email.com', b'1', 'Đặng Thị Xuân', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0913000004', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_010', 'Hàng Mã'),
-(50, '567 Đường Trường Chinh', '2025-12-24 03:40:25.000000', 'Quận Tân Bình', 'user016_hcm@email.com', b'1', 'Vương Văn Yến', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000006', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_016', 'Phường 4');
+INSERT INTO `users` (`id`, `address`, `created_at`, `district`, `email`, `enabled`, `trust_score`, `full_name`, `password`, `phone`, `role`, `updated_at`, `username`, `ward`, `latitude`, `longitude`) VALUES
+(1, NULL, '2025-12-23 15:35:28.000000', NULL, 'admin@weather.com', b'1', 0, 'Administrator', '$2a$10$0oNcUixUWbAWPMiTGbrhl.W5RXRaMsWVtJXPN4Iu.Ltb2Z2eZ4Gby', NULL, 'ADMIN', '2025-12-23 15:35:28.000000', 'admin', NULL, NULL, NULL),
+(2, 'Lat: 10.762942, Lng: 106.701292', '2025-12-23 15:42:39.000000', NULL, '22110095@student.hcmute.edu.vn', b'1', 100, 'Phan Hoàng An', '$2a$10$bbkCD46Pneh8KjxLiQJVPOS6Pgg6xiqLSad5yQtmKE2BafCitx4pO', '0913869208', 'USER', '2025-12-23 15:42:39.000000', 'bob', NULL, NULL, NULL),
+(3, '456 Đường Trần Hưng Đạo', '2025-12-24 03:40:25.000000', 'Quận 1', 'admin1@weather.vn', b'1', 0, 'Nguyễn Văn Admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0901000002', 'ADMIN', '2025-12-24 03:40:25.000000', 'admin1', 'Bến Nghé', NULL, NULL),
+(4, '12 Phố Hàng Bông', '2025-11-24 03:40:25.000000', 'Hoàn Kiếm', 'nguyenvana@email.com', b'1', 0, 'Nguyễn Văn A', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345678', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_001', 'Hàng Gai', NULL, NULL),
+(5, '25 Phố Lý Quốc Sư', '2025-11-26 03:40:25.000000', 'Hoàn Kiếm', 'tranthib@email.com', b'1', 0, 'Trần Thị B', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345679', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_002', 'Lý Thái Tổ', NULL, NULL),
+(6, '89 Đường Bà Triệu', '2025-11-29 03:40:25.000000', 'Hai Bà Trưng', 'levanc@email.com', b'1', 0, 'Lê Văn C', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345680', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_003', 'Lê Đại Hành', NULL, NULL),
+(7, '156 Phố Tôn Đức Thắng', '2025-12-02 03:40:25.000000', 'Đống Đa', 'phamthid@email.com', b'1', 0, 'Phạm Thị D', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345681', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_004', 'Quốc Tử Giám', NULL, NULL),
+(8, '78 Đường Giải Phóng', '2025-12-04 03:40:25.000000', 'Hoàng Mai', 'hoangvane@email.com', b'1', 0, 'Hoàng Văn E', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345682', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_005', 'Giáp Bát', NULL, NULL),
+(9, '45 Phố Hàng Đào', '2025-12-06 03:40:25.000000', 'Hoàn Kiếm', 'dangthif@email.com', b'1', 0, 'Đặng Thị F', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345683', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_006', 'Hàng Đào', NULL, NULL),
+(10, '67 Đường Kim Mã', '2025-12-09 03:40:25.000000', 'Ba Đình', 'vuongvang@email.com', b'1', 0, 'Vương Văn G', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912345684', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_007', 'Kim Mã', NULL, NULL),
+(11, '123 Nguyễn Huệ', '2025-11-27 03:40:25.000000', 'Quận 1', 'nguyenvietf@email.com', b'1', 0, 'Nguyễn Việt F', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654321', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_001', 'Bến Nghé', NULL, NULL),
+(12, '456 Đường Lê Lợi', '2025-11-30 03:40:25.000000', 'Quận 1', 'trantieng@email.com', b'1', 0, 'Trần Tiến G', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654322', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_002', 'Đa Kao', NULL, NULL),
+(13, '789 Phố Tôn Đức Thắng', '2025-12-03 03:40:25.000000', 'Quận 1', 'levanh@email.com', b'1', 0, 'Lê Văn H', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654323', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_003', 'Nguyễn Thái Bình', NULL, NULL),
+(14, '321 Đường Võ Thị Sáu', '2025-12-05 03:40:25.000000', 'Quận 3', 'phamthui@email.com', b'1', 0, 'Phạm Thu I', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654324', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_004', 'Võ Thị Sáu', NULL, NULL),
+(15, '654 Đường Nguyễn Văn Cừ', '2025-12-07 03:40:25.000000', 'Quận 5', 'hoangminhj@email.com', b'1', 0, 'Hoàng Minh J', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654325', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_005', 'Phường 14', NULL, NULL),
+(16, '987 Đường Cách Mạng Tháng 8', '2025-12-10 03:40:25.000000', 'Quận 10', 'dangthank@email.com', b'1', 0, 'Đặng Thanh K', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654326', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_006', 'Phường 1', NULL, NULL),
+(17, '147 Đường Hồng Bàng', '2025-12-12 03:40:25.000000', 'Quận 5', 'buithil@email.com', b'1', 0, 'Bùi Thị L', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654327', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_007', 'Phường 13', NULL, NULL),
+(18, '234 Đường Pasteur', '2025-12-14 03:40:25.000000', 'Quận 3', 'nguyenvanduc@email.com', b'1', 0, 'Nguyễn Văn Đức', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654328', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_008', 'Võ Thị Sáu', NULL, NULL),
+(19, '567 Đường Nguyễn Đình Chiểu', '2025-12-16 03:40:25.000000', 'Quận 3', 'tranthiem@email.com', b'1', 0, 'Trần Thị Em', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654329', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_009', 'Võ Thị Sáu', NULL, NULL),
+(20, '890 Đường Lê Văn Sỹ', '2025-12-18 03:40:25.000000', 'Quận 3', 'levanphu@email.com', b'1', 0, 'Lê Văn Phú', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0987654330', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_010', 'Phường 14', NULL, NULL),
+(21, '123 Đường Bạch Đằng', '2025-12-01 03:40:25.000000', 'Hải Châu', 'nguyenducm@email.com', b'1', 0, 'Nguyễn Đức M', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0923456789', 'USER', '2025-12-24 03:40:25.000000', 'user_dn_001', 'Hải Châu', NULL, NULL),
+(22, '456 Đường Trần Phú', '2025-12-08 03:40:25.000000', 'Hải Châu', 'tranhoan@email.com', b'1', 0, 'Trần Hoa N', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0923456790', 'USER', '2025-12-24 03:40:25.000000', 'user_dn_002', 'Phước Ninh', NULL, NULL),
+(23, '789 Đường Nguyễn Văn Linh', '2025-12-11 03:40:25.000000', 'Thanh Khê', 'leminho@email.com', b'1', 0, 'Lê Minh O', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0923456791', 'USER', '2025-12-24 03:40:25.000000', 'user_dn_003', 'Thanh Khê Tây', NULL, NULL),
+(24, '123 Đường Lạch Tray', '2025-12-13 03:40:25.000000', 'Ngô Quyền', 'phamtup@email.com', b'1', 0, 'Phạm Tú P', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0934567890', 'USER', '2025-12-24 03:40:25.000000', 'user_hp_001', 'Máy Chai', NULL, NULL),
+(25, '123 Đường Trần Phú', '2025-12-15 03:40:25.000000', 'Thành phố Vũng Tàu', 'danghair@email.com', b'1', 0, 'Đặng Hải R', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0945678901', 'USER', '2025-12-24 03:40:25.000000', 'user_vt_001', 'Thắng Tam', NULL, NULL),
+(26, '123 Đường Hòa Bình', '2025-12-17 03:40:25.000000', 'Ninh Kiều', 'nguyenhuongt@email.com', b'1', 0, 'Nguyễn Hương T', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0956789012', 'USER', '2025-12-24 03:40:25.000000', 'user_ct_001', 'Cái Khế', NULL, NULL),
+(27, '123 Đường Lê Lợi', '2025-12-19 03:40:25.000000', 'Huế', 'tranbinhu@email.com', b'1', 0, 'Trần Bình U', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0967890123', 'USER', '2025-12-24 03:40:25.000000', 'user_hue_001', 'Phú Hội', NULL, NULL),
+(28, '123 Đường Trần Phú', '2025-12-20 03:40:25.000000', 'Nha Trang', 'lethuyv@email.com', b'1', 0, 'Lê Thủy V', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0978901234', 'USER', '2025-12-24 03:40:25.000000', 'user_nt_001', 'Vĩnh Hải', NULL, NULL),
+(29, '123 Đường Trần Hưng Đạo', '2025-12-21 03:40:25.000000', 'Đà Lạt', 'phamhongw@email.com', b'1', 0, 'Phạm Hồng W', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989012345', 'USER', '2025-12-24 03:40:25.000000', 'user_dl_001', 'Phường 1', NULL, NULL),
+(31, '45 Phố Hàng Đào', '2025-11-28 03:40:25.000000', 'Hoàn Kiếm', 'user008_hn@email.com', b'1', 0, 'Nguyễn Thị Anh', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0913000001', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_008', 'Hàng Đào', NULL, NULL),
+(32, '67 Đường Kim Mã', '2025-11-30 03:40:25.000000', 'Ba Đình', 'user009_hn@email.com', b'1', 0, 'Trần Văn Bình', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0913000002', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_009', 'Kim Mã', NULL, NULL),
+(33, '123 Đường Nguyễn Thị Minh Khai', '2025-12-02 03:40:25.000000', 'Quận 3', 'user011_hcm@email.com', b'1', 0, 'Phạm Thị Giang', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000001', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_011', 'Đa Kao', NULL, NULL),
+(34, '456 Đường Điện Biên Phủ', '2025-12-04 03:40:25.000000', 'Quận Bình Thạnh', 'user012_hcm@email.com', b'1', 0, 'Hoàng Văn Hải', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000002', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_012', 'Phường 25', NULL, NULL),
+(35, '789 Đường Xô Viết Nghệ Tĩnh', '2025-12-06 03:40:25.000000', 'Quận Bình Thạnh', 'user013_hcm@email.com', b'1', 0, 'Đặng Thị Hoa', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000003', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_013', 'Phường 21', NULL, NULL),
+(36, '321 Đường Tân Hương', '2025-12-08 03:40:25.000000', 'Quận Tân Phú', 'user014_hcm@email.com', b'1', 0, 'Vương Văn Khang', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000004', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_014', 'Tân Sơn Nhì', NULL, NULL),
+(37, '654 Đường Trường Chinh', '2025-12-10 03:40:25.000000', 'Quận Tân Bình', 'user015_hcm@email.com', b'1', 0, 'Nguyễn Văn Lâm', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000005', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_015', 'Phường 4', NULL, NULL),
+(38, '234 Đường Lê Duẩn', '2025-12-12 03:40:25.000000', 'Hải Châu', 'user004_dn@email.com', b'1', 0, 'Nguyễn Thị Linh', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0924000001', 'USER', '2025-12-24 03:40:25.000000', 'user_dn_004', 'Thạch Thang', NULL, NULL),
+(39, '567 Đường Phan Đăng Lưu', '2025-12-14 03:40:25.000000', 'Hải Châu', 'user005_dn@email.com', b'1', 0, 'Trần Văn Mạnh', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0924000002', 'USER', '2025-12-24 03:40:25.000000', 'user_dn_005', 'Nam Dương', NULL, NULL),
+(40, '234 Đường Điện Biên Phủ', '2025-12-16 03:40:25.000000', 'Ngô Quyền', 'user002_hp@email.com', b'1', 0, 'Lê Thị Nga', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0935000001', 'USER', '2025-12-24 03:40:25.000000', 'user_hp_002', 'Cầu Đất', NULL, NULL),
+(41, '234 Đường Hoàng Hoa Thám', '2025-12-18 03:40:25.000000', 'Thành phố Vũng Tàu', 'user002_vt@email.com', b'1', 0, 'Hoàng Thị Phượng', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0946000001', 'USER', '2025-12-24 03:40:25.000000', 'user_vt_002', 'Thắng Tam', NULL, NULL),
+(42, '234 Đường 3 Tháng 2', '2025-12-20 03:40:25.000000', 'Ninh Kiều', 'user002_ct@email.com', b'1', 0, 'Đặng Văn Quang', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0957000001', 'USER', '2025-12-24 03:40:25.000000', 'user_ct_002', 'An Hòa', NULL, NULL),
+(43, '234 Đường Nguyễn Huệ', '2025-12-22 03:40:25.000000', 'Huế', 'user002_hue@email.com', b'1', 0, 'Vương Thị Quyên', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0968000001', 'USER', '2025-12-24 03:40:25.000000', 'user_hue_002', 'Phú Hội', NULL, NULL),
+(44, '234 Đường Thống Nhất', '2025-12-23 03:40:25.000000', 'Nha Trang', 'user002_nt@email.com', b'1', 0, 'Nguyễn Văn Rạng', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0979000001', 'USER', '2025-12-24 03:40:25.000000', 'user_nt_002', 'Vĩnh Phước', NULL, NULL),
+(45, '234 Đường Phan Đình Phùng', '2025-12-24 03:40:25.000000', 'Đà Lạt', 'user002_dl@email.com', b'1', 0, 'Trần Thị Sương', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0980000001', 'USER', '2025-12-24 03:40:25.000000', 'user_dl_002', 'Phường 1', NULL, NULL),
+(46, '234 Đường Nguyễn Tất Thành', '2025-12-24 03:40:25.000000', 'Buôn Ma Thuột', 'user001_bmt@email.com', b'1', 0, 'Lê Văn Tấn', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0991000001', 'USER', '2025-12-24 03:40:25.000000', 'user_bmt_001', 'Tân An', NULL, NULL),
+(47, '234 Đường Ngô Mây', '2025-12-24 03:40:25.000000', 'Quy Nhơn', 'user001_qn@email.com', b'1', 0, 'Phạm Thị Uyên', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0912000001', 'USER', '2025-12-24 03:40:25.000000', 'user_qn_001', 'Lê Lợi', NULL, NULL),
+(48, '234 Đường Phạm Văn Đồng', '2025-12-24 03:40:25.000000', 'Pleiku', 'user001_pk@email.com', b'1', 0, 'Hoàng Văn Việt', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0913000003', 'USER', '2025-12-24 03:40:25.000000', 'user_pk_001', 'Diên Hồng', NULL, NULL),
+(49, '123 Phố Hàng Mã', '2025-12-24 03:40:25.000000', 'Hoàn Kiếm', 'user010_hn@email.com', b'1', 0, 'Đặng Thị Xuân', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0913000004', 'USER', '2025-12-24 03:40:25.000000', 'user_hn_010', 'Hàng Mã', NULL, NULL),
+(50, '567 Đường Trường Chinh', '2025-12-24 03:40:25.000000', 'Quận Tân Bình', 'user016_hcm@email.com', b'1', 0, 'Vương Văn Yến', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7itYdLB9S', '0989000006', 'USER', '2025-12-24 03:40:25.000000', 'user_hcm_016', 'Phường 4', NULL, NULL),
+(51, 'Bình Hưng, Thành phố Hồ Chí Minh, Phuong Chanh Hung, Việt Nam', '2025-12-24 22:44:35.000000', 'Lâm Đồng', 'mrlip2004@gmail.com', b'1', 0, 'bob', '$2a$10$ilvQpR/Op9TCUSNDrrMJ/uSiP2oqzL8TY/Q9q6h3ypTR6y7Saoxse', '011111111', 'USER', '2025-12-24 22:46:02.000000', 'bobby', 'Đạ Huoai 3', 10.73670942117967, 106.6680187559152);
 
 -- --------------------------------------------------------
 
@@ -341,6 +348,14 @@ CREATE TABLE `weather_alerts` (
   `ward` varchar(255) DEFAULT NULL,
   `admin_id` bigint(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `weather_alerts`
+--
+
+INSERT INTO `weather_alerts` (`id`, `active`, `city`, `created_at`, `district`, `end_time`, `latitude`, `level`, `longitude`, `message`, `radius`, `start_time`, `title`, `updated_at`, `ward`, `admin_id`) VALUES
+(1, b'1', 'Chư Păh', '2025-12-24 22:51:39.000000', '', '2025-12-25 15:51:00.000000', 14.368073994093038, 'DANGER', 108.20921574759535, 'rain', NULL, '2025-12-24 08:51:00.000000', 'rain', '2025-12-24 22:51:39.000000', 'Xa Ia Khuol', 1),
+(2, b'1', 'Phuong Xuan Hoa', '2025-12-24 22:59:43.000000', 'Thành phố Hồ Chí Minh', '2025-12-26 01:59:00.000000', 10.778818828493707, 'WARNING', 106.678108695872, 'b', NULL, '2025-12-24 18:59:00.000000', 'b', '2025-12-24 23:04:31.000000', 'Phuong Vuon Lai', 1);
 
 -- --------------------------------------------------------
 
@@ -547,7 +562,51 @@ INSERT INTO `weather_data` (`id`, `city`, `cloudiness`, `created_at`, `descripti
 (168, 'Việt Nam', 64, '2025-12-23 19:01:43.000000', 'Có mây', NULL, 21.5, 78, '☁️', 19.851888717559646, 101.38512651210803, 'Clouds', 1013.4, 0, '2025-12-22 19:01:43.000000', NULL, 20.8, 12.8, NULL, 152, 3.7),
 (169, 'Việt Nam', 87, '2025-12-23 19:01:43.000000', 'Nắng nóng', NULL, 26.2, 70, '☁️', 19.851888717559646, 101.38512651210803, 'Clouds', 1018.2, 0, '2025-12-23 01:01:43.000000', NULL, 27, 10.2, NULL, 256, 1.8),
 (170, 'Việt Nam', 70, '2025-12-23 19:01:43.000000', 'Có mây', NULL, 33.1, 76, '☀️', 19.851888717559646, 101.38512651210803, 'Sunny', 1017.4, 0, '2025-12-23 07:01:43.000000', NULL, 34.1, 13.1, NULL, 71, 3.5),
-(171, 'Việt Nam', 29, '2025-12-23 19:01:43.000000', 'Trời quang', NULL, 20.4, 70, '☀️', 19.851888717559646, 101.38512651210803, 'Clear', 1013.1, 0, '2025-12-23 13:01:43.000000', NULL, 21.2, 10.7, NULL, 186, 3);
+(171, 'Việt Nam', 29, '2025-12-23 19:01:43.000000', 'Trời quang', NULL, 20.4, 70, '☀️', 19.851888717559646, 101.38512651210803, 'Clear', 1013.1, 0, '2025-12-23 13:01:43.000000', NULL, 21.2, 10.7, NULL, 186, 3),
+(172, 'Hà Nội', 7, '2025-12-24 22:36:21.000000', 'Trời quang', 'Hoàn Kiếm', 21.8, 73, '☀️', 21.0285, 105.8542, 'Sunny', 1014.6, 0, '2025-12-24 22:36:21.000000', NULL, 20.5, 7.2, 'Tràng Tiền', 108, 4.7),
+(173, 'Hồ Chí Minh', 96, '2025-12-24 22:36:21.000000', 'Nắng', 'Quận 1', 26.1, 71, '☀️', 10.8231, 106.6297, 'Sunny', 1019.3, 0, '2025-12-24 22:36:21.000000', NULL, 25.4, 10.7, 'Bến Nghé', 228, 1.4),
+(174, 'Đà Nẵng', 78, '2025-12-24 22:36:21.000000', 'Nắng nóng', 'Hải Châu', 24.8, 64, '☀️', 16.0544, 108.2022, 'Clear', 1013.4, 0, '2025-12-24 22:36:21.000000', NULL, 23.4, 12.2, 'Hải Châu', 344, 1.1),
+(175, 'Hải Phòng', 92, '2025-12-24 22:36:21.000000', 'Có mây', 'Hồng Bàng', 25.2, 78, '☁️', 20.8449, 106.6881, 'Clouds', 1016.4, 0, '2025-12-24 22:36:21.000000', NULL, 24.6, 9, 'Máy Chai', 347, 3.9),
+(176, 'Vũng Tàu', 21, '2025-12-24 22:36:21.000000', 'Nắng nóng', 'Thành phố Vũng Tàu', 30.6, 68, '☁️', 10.346, 107.0843, 'Clouds', 1019.8, 0, '2025-12-24 22:36:21.000000', NULL, 32.1, 6.9, 'Thắng Tam', 15, 3.5),
+(177, NULL, 63, '2025-12-24 22:36:27.000000', 'Có mây ⛅', NULL, 25.3, 94, 'http://openweathermap.org/img/w/02n.png', 10.522581396472905, 107.40200042724611, 'Partly Cloudy', 1008.1, 0, '2025-12-24 22:36:27.000000', NULL, 25.3, 23.66, NULL, 63, 0.89),
+(178, 'Việt Nam', 54, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 20.9, 77, '☁️', 10.522581396472905, 107.40200042724611, 'Clouds', 1014.8, 0, '2025-12-17 22:36:27.000000', NULL, 20, 11.7, NULL, 226, 1.3),
+(179, 'Việt Nam', 49, '2025-12-24 22:36:27.000000', 'Nắng', NULL, 35.4, 68, '☀️', 10.522581396472905, 107.40200042724611, 'Sunny', 1014.9, 0, '2025-12-18 04:36:27.000000', NULL, 35, 9.5, NULL, 214, 3.2),
+(180, 'Việt Nam', 97, '2025-12-24 22:36:27.000000', 'Nắng', NULL, 24.2, 52, '☁️', 10.522581396472905, 107.40200042724611, 'Clouds', 1016.7, 0, '2025-12-18 10:36:27.000000', NULL, 24.4, 5.7, NULL, 271, 2.5),
+(181, 'Việt Nam', 7, '2025-12-24 22:36:27.000000', 'Có mây', NULL, 19.8, 71, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1018.4, 0, '2025-12-18 16:36:27.000000', NULL, 20.9, 11.6, NULL, 328, 1.8),
+(182, 'Việt Nam', 16, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 21, 78, '☀️', 10.522581396472905, 107.40200042724611, 'Sunny', 1017.7, 0, '2025-12-18 22:36:27.000000', NULL, 20.9, 9.3, NULL, 353, 3.4),
+(183, 'Việt Nam', 35, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 32.7, 70, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1014.8, 0, '2025-12-19 04:36:27.000000', NULL, 33.3, 6.3, NULL, 205, 1.3),
+(184, 'Việt Nam', 27, '2025-12-24 22:36:27.000000', 'Trời quang', NULL, 24.3, 58, '☀️', 10.522581396472905, 107.40200042724611, 'Sunny', 1015.2, 0, '2025-12-19 10:36:27.000000', NULL, 25.1, 11.1, NULL, 220, 3.9),
+(185, 'Việt Nam', 69, '2025-12-24 22:36:27.000000', 'Nắng', NULL, 21.3, 86, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1013.7, 0, '2025-12-19 16:36:27.000000', NULL, 21.3, 8.1, NULL, 348, 4.6),
+(186, 'Việt Nam', 58, '2025-12-24 22:36:27.000000', 'Nắng', NULL, 19.5, 87, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1019.2, 0, '2025-12-19 22:36:27.000000', NULL, 20, 5.2, NULL, 280, 1.4),
+(187, 'Việt Nam', 50, '2025-12-24 22:36:27.000000', 'Nắng', NULL, 35.5, 72, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1014, 0, '2025-12-20 04:36:27.000000', NULL, 34.7, 7.6, NULL, 275, 1.1),
+(188, 'Việt Nam', 48, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 23, 51, '☁️', 10.522581396472905, 107.40200042724611, 'Clouds', 1014.8, 0, '2025-12-20 10:36:27.000000', NULL, 23.8, 7.4, NULL, 185, 1.8),
+(189, 'Việt Nam', 36, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 18.9, 77, '☁️', 10.522581396472905, 107.40200042724611, 'Clouds', 1013, 0, '2025-12-20 16:36:27.000000', NULL, 20, 6.1, NULL, 62, 3.8),
+(190, 'Việt Nam', 0, '2025-12-24 22:36:27.000000', 'Trời quang', NULL, 19, 69, '☁️', 10.522581396472905, 107.40200042724611, 'Clouds', 1017.9, 0, '2025-12-20 22:36:27.000000', NULL, 20.3, 14.7, NULL, 11, 4.9),
+(191, 'Việt Nam', 43, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 35.9, 52, '☁️', 10.522581396472905, 107.40200042724611, 'Clouds', 1017.6, 0, '2025-12-21 04:36:27.000000', NULL, 35, 10.6, NULL, 85, 4.6),
+(192, 'Việt Nam', 47, '2025-12-24 22:36:27.000000', 'Trời quang', NULL, 24.4, 74, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1014.8, 0, '2025-12-21 10:36:27.000000', NULL, 23.6, 12.4, NULL, 289, 4.9),
+(193, 'Việt Nam', 37, '2025-12-24 22:36:27.000000', 'Nắng', NULL, 18.9, 76, '☁️', 10.522581396472905, 107.40200042724611, 'Clouds', 1019.8, 0, '2025-12-21 16:36:27.000000', NULL, 20, 6.6, NULL, 35, 3.3),
+(194, 'Việt Nam', 76, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 21.7, 65, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1013.2, 0, '2025-12-21 22:36:27.000000', NULL, 20.3, 13.3, NULL, 354, 2.2),
+(195, 'Việt Nam', 7, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 31.7, 60, '☀️', 10.522581396472905, 107.40200042724611, 'Sunny', 1019.5, 0, '2025-12-22 04:36:27.000000', NULL, 33, 5.7, NULL, 133, 1.5),
+(196, 'Việt Nam', 61, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 23.9, 63, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1014.1, 0, '2025-12-22 10:36:27.000000', NULL, 23.8, 8, NULL, 207, 2.4),
+(197, 'Việt Nam', 53, '2025-12-24 22:36:27.000000', 'Trời quang', NULL, 20.7, 79, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1018.1, 0, '2025-12-22 16:36:27.000000', NULL, 20, 14.3, NULL, 68, 2.6),
+(198, 'Việt Nam', 87, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 19.7, 87, '☀️', 10.522581396472905, 107.40200042724611, 'Sunny', 1016.7, 0, '2025-12-22 22:36:27.000000', NULL, 20, 10.7, NULL, 7, 1.9),
+(199, 'Việt Nam', 82, '2025-12-24 22:36:27.000000', 'Có mây', NULL, 35.7, 58, '☀️', 10.522581396472905, 107.40200042724611, 'Sunny', 1020, 0, '2025-12-23 04:36:27.000000', NULL, 34.8, 7.8, NULL, 323, 1.1),
+(200, 'Việt Nam', 27, '2025-12-24 22:36:27.000000', 'Có mây', NULL, 22.5, 65, '☁️', 10.522581396472905, 107.40200042724611, 'Clouds', 1019.1, 0, '2025-12-23 10:36:27.000000', NULL, 22.8, 14.1, NULL, 246, 2.1),
+(201, 'Việt Nam', 94, '2025-12-24 22:36:27.000000', 'Trời quang', NULL, 19.9, 73, '☀️', 10.522581396472905, 107.40200042724611, 'Sunny', 1018.9, 0, '2025-12-23 16:36:27.000000', NULL, 20, 8.1, NULL, 350, 4.4),
+(202, 'Việt Nam', 13, '2025-12-24 22:36:27.000000', 'Trời quang', NULL, 19.3, 80, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1019.1, 0, '2025-12-23 22:36:27.000000', NULL, 20.1, 11.2, NULL, 27, 4.4),
+(203, 'Việt Nam', 27, '2025-12-24 22:36:27.000000', 'Nắng nóng', NULL, 34.2, 52, '☀️', 10.522581396472905, 107.40200042724611, 'Sunny', 1016.4, 0, '2025-12-24 04:36:27.000000', NULL, 35, 8.8, NULL, 319, 1.1),
+(204, 'Việt Nam', 7, '2025-12-24 22:36:27.000000', 'Có mây', NULL, 24.6, 73, '☁️', 10.522581396472905, 107.40200042724611, 'Clouds', 1014.2, 0, '2025-12-24 10:36:27.000000', NULL, 24.2, 8.3, NULL, 330, 3.4),
+(205, 'Việt Nam', 71, '2025-12-24 22:36:27.000000', 'Trời quang', NULL, 19.9, 61, '☀️', 10.522581396472905, 107.40200042724611, 'Clear', 1016.6, 0, '2025-12-24 16:36:27.000000', NULL, 20, 7.7, NULL, 22, 4.7),
+(206, 'Hà Nội', 100, '2025-12-24 22:51:20.000000', 'Nắng nóng', 'Hoàn Kiếm', 21.4, 74, '☀️', 21.0285, 105.8542, 'Sunny', 1014.8, 0, '2025-12-24 22:51:20.000000', NULL, 22.4, 8.5, 'Tràng Tiền', 49, 1.5),
+(207, 'Hồ Chí Minh', 32, '2025-12-24 22:51:20.000000', 'Trời quang', 'Quận 1', 31.4, 54, '☀️', 10.8231, 106.6297, 'Sunny', 1016, 0, '2025-12-24 22:51:20.000000', NULL, 30.9, 5.2, 'Bến Nghé', 143, 4.9),
+(208, 'Đà Nẵng', 87, '2025-12-24 22:51:20.000000', 'Trời quang', 'Hải Châu', 28.9, 60, '☀️', 16.0544, 108.2022, 'Sunny', 1017.4, 0, '2025-12-24 22:51:20.000000', NULL, 29, 8.6, 'Hải Châu', 104, 2.1),
+(209, 'Hải Phòng', 25, '2025-12-24 22:51:20.000000', 'Trời quang', 'Hồng Bàng', 20.3, 76, '☁️', 20.8449, 106.6881, 'Clouds', 1016.7, 0, '2025-12-24 22:51:20.000000', NULL, 20.7, 13, 'Máy Chai', 156, 4.8),
+(210, 'Vũng Tàu', 23, '2025-12-24 22:51:20.000000', 'Nắng', 'Thành phố Vũng Tàu', 34, 76, '☁️', 10.346, 107.0843, 'Clouds', 1015.9, 0, '2025-12-24 22:51:20.000000', NULL, 33.2, 10.9, 'Thắng Tam', 123, 3.2),
+(211, 'Hà Nội', 39, '2025-12-24 22:58:19.000000', 'Nắng', 'Hoàn Kiếm', 28.2, 71, '☀️', 21.0285, 105.8542, 'Clear', 1014.9, 0, '2025-12-24 22:58:19.000000', NULL, 27.4, 9.9, 'Tràng Tiền', 37, 1.4),
+(212, 'Hồ Chí Minh', 17, '2025-12-24 22:58:19.000000', 'Nắng nóng', 'Quận 1', 29, 58, '☁️', 10.8231, 106.6297, 'Clouds', 1017, 0, '2025-12-24 22:58:19.000000', NULL, 27.6, 6.2, 'Bến Nghé', 201, 1.4),
+(213, 'Đà Nẵng', 26, '2025-12-24 22:58:19.000000', 'Có mây', 'Hải Châu', 28.5, 68, '☀️', 16.0544, 108.2022, 'Clear', 1018.6, 0, '2025-12-24 22:58:19.000000', NULL, 28.7, 5.6, 'Hải Châu', 129, 2.2),
+(214, 'Hải Phòng', 23, '2025-12-24 22:58:19.000000', 'Nắng nóng', 'Hồng Bàng', 24.8, 51, '☀️', 20.8449, 106.6881, 'Sunny', 1017.2, 0, '2025-12-24 22:58:19.000000', NULL, 23.8, 7.6, 'Máy Chai', 55, 4.4),
+(215, 'Vũng Tàu', 5, '2025-12-24 22:58:19.000000', 'Nắng nóng', 'Thành phố Vũng Tàu', 24.7, 64, '☀️', 10.346, 107.0843, 'Clear', 1013, 0, '2025-12-24 22:58:19.000000', NULL, 24.3, 6.2, 'Thắng Tam', 136, 2.2);
 
 -- --------------------------------------------------------
 
@@ -580,56 +639,55 @@ CREATE TABLE `weather_reports` (
 
 INSERT INTO `weather_reports` (`id`, `city`, `created_at`, `description`, `district`, `hidden`, `incident_time`, `latitude`, `longitude`, `severity`, `status`, `title`, `updated_at`, `ward`, `incident_type_id`, `user_id`) VALUES
 (1, 'Hồ Tràm', '2025-12-23 15:58:40.000000', 'a', 'Bà Rịa - Vũng Tàu', b'0', '2025-12-23 08:54:00.000000', 10.533083722466058, 107.39970758314224, 'LOW', 'RESOLVED', 'a', '2025-12-23 20:26:27.000000', 'Thành phố Hồ Chí Minh', 17, 2),
--- Thêm nhiều reports với nhiều loại sự cố và địa điểm
-(2, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 12 HOUR), 'Mưa lớn kéo dài từ sáng đến chiều, lượng mưa ước tính trên 80mm, gây ngập úng tại khu vực phố Hàng Bông và các phố xung quanh. Nhiều phương tiện bị kẹt, giao thông tê liệt. Nước ngập sâu đến 30-40cm tại một số điểm.', 'Hoàn Kiếm', b'0', DATE_SUB(NOW(), INTERVAL 12 HOUR), 21.0285, 105.8542, 'HIGH', 'APPROVED', 'Mưa lớn gây ngập tại Phố Hàng Bông', DATE_SUB(NOW(), INTERVAL 11 HOUR), 'Hàng Gai', 1, 4),
-(3, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 24 HOUR), 'Nước dâng cao trên 50cm tại nhiều tuyến đường trong Quận 1, nhiều cửa hàng và nhà dân bị ngập. Cần hỗ trợ khẩn cấp. Giao thông hoàn toàn tê liệt, nhiều phương tiện bị chết máy.', 'Quận 1', b'0', DATE_SUB(NOW(), INTERVAL 24 HOUR), 10.8231, 106.6297, 'CRITICAL', 'APPROVED', 'Lũ lụt tại khu vực Quận 1', DATE_SUB(NOW(), INTERVAL 22 HOUR), 'Bến Nghé', 3, 11),
-(4, 'Đà Nẵng', DATE_SUB(NOW(), INTERVAL 36 HOUR), 'Gió giật mạnh với tốc độ trên 60km/h đã làm đổ nhiều cây xanh trên đường Bạch Đằng. Một số phương tiện bị hư hỏng nhẹ. Cần xử lý gấp để đảm bảo an toàn giao thông.', 'Hải Châu', b'0', DATE_SUB(NOW(), INTERVAL 36 HOUR), 16.0544, 108.2022, 'MEDIUM', 'APPROVED', 'Gió mạnh làm đổ cây tại Đà Nẵng', DATE_SUB(NOW(), INTERVAL 34 HOUR), 'Hải Châu', 6, 21),
-(5, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 6 HOUR), 'Nhiệt độ lên đến 38°C, cảm giác như 42°C do độ ẩm cao. Nhiều người có dấu hiệu say nắng khi làm việc ngoài trời. Cần uống đủ nước và tránh làm việc ngoài trời vào giữa trưa.', 'Quận 1', b'0', DATE_SUB(NOW(), INTERVAL 6 HOUR), 10.8231, 106.6297, 'MEDIUM', 'PENDING', 'Nắng nóng cực đoan tại Hồ Chí Minh', NOW(), 'Đa Kao', 11, 12),
-(6, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 48 HOUR), 'Sau nhiều ngày mưa lớn, một đoạn đường tại phường Lê Đại Hành bị sạt lở, đất đá đổ xuống đường gây cản trở giao thông. Cần xử lý khẩn cấp để đảm bảo an toàn.', 'Hai Bà Trưng', b'0', DATE_SUB(NOW(), INTERVAL 48 HOUR), 21.0333, 105.8333, 'HIGH', 'APPROVED', 'Sạt lở đất tại khu vực Hai Bà Trưng', DATE_SUB(NOW(), INTERVAL 46 HOUR), 'Lê Đại Hành', 5, 6),
-(7, 'Hải Phòng', DATE_SUB(NOW(), INTERVAL 72 HOUR), 'Mưa dông lớn với sấm sét kéo dài hơn 2 giờ, lượng mưa đạt 60mm. Nhiều khu vực bị mất điện tạm thời. Giao thông bị ảnh hưởng nghiêm trọng.', 'Ngô Quyền', b'0', DATE_SUB(NOW(), INTERVAL 72 HOUR), 20.8449, 106.6881, 'MEDIUM', 'APPROVED', 'Mưa dông kèm sấm sét tại Hải Phòng', DATE_SUB(NOW(), INTERVAL 70 HOUR), 'Máy Chai', 2, 24),
-(8, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 18 HOUR), 'Nước đọng không thoát được gây ngập cục bộ tại nhiều tuyến đường trong Quận 5. Nhiều cửa hàng bị ảnh hưởng, giao thông bị cản trở.', 'Quận 5', b'0', DATE_SUB(NOW(), INTERVAL 18 HOUR), 10.7626, 106.6602, 'MEDIUM', 'APPROVED', 'Ngập úng tại Quận 5', DATE_SUB(NOW(), INTERVAL 16 HOUR), 'Phường 14', 4, 15),
-(9, 'Đà Nẵng', DATE_SUB(NOW(), INTERVAL 96 HOUR), 'Bão nhiệt đới với gió mạnh và mưa lớn đã đổ bộ vào Đà Nẵng. Giao thông tê liệt, nhiều nhà cửa bị hư hỏng. Cần đề phòng và di chuyển đến nơi an toàn.', 'Hải Châu', b'0', DATE_SUB(NOW(), INTERVAL 96 HOUR), 16.0544, 108.2022, 'CRITICAL', 'APPROVED', 'Bão đổ bộ vào Đà Nẵng', DATE_SUB(NOW(), INTERVAL 94 HOUR), 'Phước Ninh', 8, 22),
-(10, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 120 HOUR), 'Gió mạnh đã làm đổ một cây lớn trên đường Tôn Đức Thắng, cản trở giao thông. Cần xử lý gấp để đảm bảo an toàn.', 'Đống Đa', b'0', DATE_SUB(NOW(), INTERVAL 120 HOUR), 21.0198, 105.8360, 'LOW', 'RESOLVED', 'Cây đổ do gió mạnh tại Đống Đa', DATE_SUB(NOW(), INTERVAL 1 HOUR), 'Quốc Tử Giám', 23, 7),
-(11, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 3 HOUR), 'Sấm sét đánh liên tục trong khu vực Quận 3, có nguy cơ gây cháy nổ. Người dân cần cẩn thận, tránh ở ngoài trời khi có sấm sét.', 'Quận 3', b'0', DATE_SUB(NOW(), INTERVAL 3 HOUR), 10.7795, 106.6995, 'MEDIUM', 'PENDING', 'Sấm sét nguy hiểm tại Quận 3', NOW(), 'Võ Thị Sáu', 18, 14),
-(12, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 8 HOUR), 'Mưa lớn kéo dài gây ngập úng tại nhiều tuyến đường trong quận Hoàn Kiếm. Nhiều phương tiện bị kẹt, giao thông tê liệt.', 'Hoàn Kiếm', b'0', DATE_SUB(NOW(), INTERVAL 8 HOUR), 21.0285, 105.8542, 'HIGH', 'APPROVED', 'Mưa lớn gây ngập tại Hoàn Kiếm', DATE_SUB(NOW(), INTERVAL 7 HOUR), 'Tràng Tiền', 1, 5),
-(13, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 15 HOUR), 'Gió mạnh với tốc độ trên 50km/h đã làm đổ nhiều biển quảng cáo và cây cối. Một số nhà cửa bị hư hỏng nhẹ.', 'Quận 1', b'0', DATE_SUB(NOW(), INTERVAL 15 HOUR), 10.8231, 106.6297, 'MEDIUM', 'APPROVED', 'Gió mạnh tại Quận 1', DATE_SUB(NOW(), INTERVAL 14 HOUR), 'Bến Nghé', 6, 13),
-(14, 'Đà Nẵng', DATE_SUB(NOW(), INTERVAL 20 HOUR), 'Mưa lớn kéo dài gây ngập úng tại nhiều khu vực trong thành phố. Giao thông bị ảnh hưởng nghiêm trọng.', 'Hải Châu', b'0', DATE_SUB(NOW(), INTERVAL 20 HOUR), 16.0544, 108.2022, 'HIGH', 'APPROVED', 'Mưa lớn tại Đà Nẵng', DATE_SUB(NOW(), INTERVAL 19 HOUR), 'Hải Châu', 1, 23),
-(15, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 30 HOUR), 'Sương mù dày đặc làm giảm tầm nhìn xuống dưới 50m. Giao thông bị ảnh hưởng, nhiều phương tiện phải di chuyển chậm.', 'Hoàn Kiếm', b'0', DATE_SUB(NOW(), INTERVAL 30 HOUR), 21.0285, 105.8542, 'LOW', 'APPROVED', 'Sương mù dày đặc tại Hà Nội', DATE_SUB(NOW(), INTERVAL 29 HOUR), 'Hàng Gai', 15, 4),
-(16, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 10 HOUR), 'Mưa dông lớn với sấm sét kéo dài. Nhiều khu vực bị mất điện tạm thời, cây cối bị đổ.', 'Quận 3', b'0', DATE_SUB(NOW(), INTERVAL 10 HOUR), 10.7795, 106.6995, 'MEDIUM', 'PENDING', 'Mưa dông tại Quận 3', NOW(), 'Võ Thị Sáu', 2, 18),
-(17, 'Hải Phòng', DATE_SUB(NOW(), INTERVAL 25 HOUR), 'Gió mạnh với tốc độ cao đã làm đổ nhiều cây cối và biển quảng cáo. Cần xử lý gấp để đảm bảo an toàn.', 'Ngô Quyền', b'0', DATE_SUB(NOW(), INTERVAL 25 HOUR), 20.8449, 106.6881, 'MEDIUM', 'APPROVED', 'Gió mạnh tại Hải Phòng', DATE_SUB(NOW(), INTERVAL 24 HOUR), 'Máy Chai', 6, 40),
-(18, 'Vũng Tàu', DATE_SUB(NOW(), INTERVAL 5 HOUR), 'Nắng nóng với nhiệt độ lên đến 36°C. Nhiều người có dấu hiệu say nắng khi làm việc ngoài trời.', 'Thành phố Vũng Tàu', b'0', DATE_SUB(NOW(), INTERVAL 5 HOUR), 10.3460, 107.0843, 'LOW', 'PENDING', 'Nắng nóng tại Vũng Tàu', NOW(), 'Thắng Tam', 11, 25),
-(19, 'Cần Thơ', DATE_SUB(NOW(), INTERVAL 14 HOUR), 'Mưa lớn gây ngập úng tại nhiều tuyến đường. Nhiều phương tiện bị kẹt, giao thông tê liệt.', 'Ninh Kiều', b'0', DATE_SUB(NOW(), INTERVAL 14 HOUR), 10.0452, 105.7469, 'HIGH', 'APPROVED', 'Mưa lớn tại Cần Thơ', DATE_SUB(NOW(), INTERVAL 13 HOUR), 'Cái Khế', 1, 26),
-(20, 'Huế', DATE_SUB(NOW(), INTERVAL 22 HOUR), 'Mưa lớn kéo dài gây ngập úng. Nhiều khu vực bị ảnh hưởng, giao thông bị cản trở.', 'Huế', b'0', DATE_SUB(NOW(), INTERVAL 22 HOUR), 16.4637, 107.5909, 'MEDIUM', 'APPROVED', 'Mưa lớn tại Huế', DATE_SUB(NOW(), INTERVAL 21 HOUR), 'Phú Hội', 1, 27),
-(21, 'Nha Trang', DATE_SUB(NOW(), INTERVAL 16 HOUR), 'Gió mạnh với tốc độ trên 45km/h. Nhiều cây cối bị đổ, biển quảng cáo bị hư hỏng.', 'Nha Trang', b'0', DATE_SUB(NOW(), INTERVAL 16 HOUR), 12.2388, 109.1967, 'MEDIUM', 'APPROVED', 'Gió mạnh tại Nha Trang', DATE_SUB(NOW(), INTERVAL 15 HOUR), 'Vĩnh Hải', 6, 28),
-(22, 'Đà Lạt', DATE_SUB(NOW(), INTERVAL 28 HOUR), 'Sương mù dày đặc làm giảm tầm nhìn xuống dưới 30m. Giao thông bị ảnh hưởng nghiêm trọng.', 'Đà Lạt', b'0', DATE_SUB(NOW(), INTERVAL 28 HOUR), 11.9404, 108.4583, 'LOW', 'APPROVED', 'Sương mù dày đặc tại Đà Lạt', DATE_SUB(NOW(), INTERVAL 27 HOUR), 'Phường 1', 15, 29),
-(23, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 35 HOUR), 'Mưa đá với kích thước lớn đã gây thiệt hại về tài sản. Nhiều xe máy và ô tô bị hư hỏng.', 'Hoàn Kiếm', b'0', DATE_SUB(NOW(), INTERVAL 35 HOUR), 21.0285, 105.8542, 'HIGH', 'APPROVED', 'Mưa đá tại Hà Nội', DATE_SUB(NOW(), INTERVAL 34 HOUR), 'Tràng Tiền', 19, 8),
-(24, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 40 HOUR), 'Lốc xoáy với gió mạnh đã gây thiệt hại nghiêm trọng. Nhiều nhà cửa và tài sản bị hư hỏng.', 'Quận 5', b'0', DATE_SUB(NOW(), INTERVAL 40 HOUR), 10.7626, 106.6602, 'CRITICAL', 'APPROVED', 'Lốc xoáy tại Quận 5', DATE_SUB(NOW(), INTERVAL 39 HOUR), 'Phường 14', 10, 16),
-(25, 'Đà Nẵng', DATE_SUB(NOW(), INTERVAL 50 HOUR), 'Mưa phùn kéo dài gây ẩm ướt và tầm nhìn kém. Giao thông bị ảnh hưởng nhẹ.', 'Hải Châu', b'0', DATE_SUB(NOW(), INTERVAL 50 HOUR), 16.0544, 108.2022, 'LOW', 'APPROVED', 'Mưa phùn kéo dài tại Đà Nẵng', DATE_SUB(NOW(), INTERVAL 49 HOUR), 'Hải Châu', 16, 38),
-(26, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 60 HOUR), 'Rét đậm với nhiệt độ xuống dưới 10°C. Nhiều người già và trẻ em bị ảnh hưởng.', 'Hoàn Kiếm', b'0', DATE_SUB(NOW(), INTERVAL 60 HOUR), 21.0285, 105.8542, 'MEDIUM', 'APPROVED', 'Rét đậm rét hại tại Hà Nội', DATE_SUB(NOW(), INTERVAL 59 HOUR), 'Tràng Tiền', 21, 9),
-(27, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 2 HOUR), 'Bụi mù làm giảm tầm nhìn. Giao thông bị ảnh hưởng, nhiều người gặp vấn đề về hô hấp.', 'Quận 1', b'0', DATE_SUB(NOW(), INTERVAL 2 HOUR), 10.8231, 106.6297, 'LOW', 'PENDING', 'Bụi mù tại Quận 1', NOW(), 'Bến Nghé', 17, 11),
-(28, 'Hải Phòng', DATE_SUB(NOW(), INTERVAL 45 HOUR), 'Mưa lớn kéo dài gây ngập úng. Nhiều tuyến đường bị ngập, giao thông tê liệt.', 'Ngô Quyền', b'0', DATE_SUB(NOW(), INTERVAL 45 HOUR), 20.8449, 106.6881, 'HIGH', 'APPROVED', 'Mưa lớn tại Hải Phòng', DATE_SUB(NOW(), INTERVAL 44 HOUR), 'Máy Chai', 1, 24),
-(29, 'Vũng Tàu', DATE_SUB(NOW(), INTERVAL 55 HOUR), 'Gió giật mạnh đột ngột đã làm đổ nhiều cây cối. Cần xử lý gấp để đảm bảo an toàn.', 'Thành phố Vũng Tàu', b'0', DATE_SUB(NOW(), INTERVAL 55 HOUR), 10.3460, 107.0843, 'MEDIUM', 'APPROVED', 'Gió giật tại Vũng Tàu', DATE_SUB(NOW(), INTERVAL 54 HOUR), 'Thắng Tam', 7, 41),
-(30, 'Cần Thơ', DATE_SUB(NOW(), INTERVAL 65 HOUR), 'Lũ lụt với nước dâng cao trên 40cm. Nhiều nhà cửa bị ngập, cần hỗ trợ khẩn cấp.', 'Ninh Kiều', b'0', DATE_SUB(NOW(), INTERVAL 65 HOUR), 10.0452, 105.7469, 'CRITICAL', 'APPROVED', 'Lũ lụt tại Cần Thơ', DATE_SUB(NOW(), INTERVAL 64 HOUR), 'Cái Khế', 3, 42),
-(31, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 70 HOUR), 'Sạt lở đất tại một đoạn đường do mưa lớn kéo dài. Giao thông bị cản trở, cần xử lý khẩn cấp.', 'Hai Bà Trưng', b'0', DATE_SUB(NOW(), INTERVAL 70 HOUR), 21.0333, 105.8333, 'HIGH', 'APPROVED', 'Sạt lở đất tại Hai Bà Trưng', DATE_SUB(NOW(), INTERVAL 69 HOUR), 'Lê Đại Hành', 5, 6),
-(32, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 4 HOUR), 'Mưa lớn gây ngập úng tại Quận 10. Nhiều phương tiện bị kẹt, giao thông tê liệt.', 'Quận 10', b'0', DATE_SUB(NOW(), INTERVAL 4 HOUR), 10.7730, 106.6664, 'HIGH', 'PENDING', 'Mưa lớn tại Quận 10', NOW(), 'Phường 1', 1, 16),
-(33, 'Đà Nẵng', DATE_SUB(NOW(), INTERVAL 32 HOUR), 'Cây đổ do gió mạnh đã cản trở giao thông. Cần xử lý gấp để đảm bảo an toàn.', 'Hải Châu', b'0', DATE_SUB(NOW(), INTERVAL 32 HOUR), 16.0544, 108.2022, 'LOW', 'APPROVED', 'Cây đổ tại Đà Nẵng', DATE_SUB(NOW(), INTERVAL 31 HOUR), 'Hải Châu', 23, 21),
-(34, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 38 HOUR), 'Mất điện do thời tiết xấu. Nhiều khu vực bị mất điện tạm thời, ảnh hưởng đến sinh hoạt.', 'Hoàn Kiếm', b'0', DATE_SUB(NOW(), INTERVAL 38 HOUR), 21.0285, 105.8542, 'MEDIUM', 'APPROVED', 'Điện bị cắt tại Hoàn Kiếm', DATE_SUB(NOW(), INTERVAL 37 HOUR), 'Tràng Tiền', 24, 4),
-(35, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 42 HOUR), 'Thiếu nước sinh hoạt do hạn hán kéo dài. Nhiều khu vực bị ảnh hưởng, cần hỗ trợ.', 'Quận 3', b'0', DATE_SUB(NOW(), INTERVAL 42 HOUR), 10.7795, 106.6995, 'MEDIUM', 'APPROVED', 'Nước sinh hoạt thiếu tại Quận 3', DATE_SUB(NOW(), INTERVAL 41 HOUR), 'Võ Thị Sáu', 25, 14),
-(36, 'Hải Phòng', DATE_SUB(NOW(), INTERVAL 52 HOUR), 'Áp thấp nhiệt đới với mưa và gió mạnh. Giao thông bị ảnh hưởng, nhiều nhà cửa bị hư hỏng nhẹ.', 'Ngô Quyền', b'0', DATE_SUB(NOW(), INTERVAL 52 HOUR), 20.8449, 106.6881, 'MEDIUM', 'APPROVED', 'Áp thấp nhiệt đới tại Hải Phòng', DATE_SUB(NOW(), INTERVAL 51 HOUR), 'Máy Chai', 9, 40),
-(37, 'Vũng Tàu', DATE_SUB(NOW(), INTERVAL 58 HOUR), 'Mưa lớn gây ngập úng. Nhiều tuyến đường bị ngập, giao thông bị cản trở.', 'Thành phố Vũng Tàu', b'0', DATE_SUB(NOW(), INTERVAL 58 HOUR), 10.3460, 107.0843, 'HIGH', 'APPROVED', 'Mưa lớn tại Vũng Tàu', DATE_SUB(NOW(), INTERVAL 57 HOUR), 'Thắng Tam', 1, 41),
-(38, 'Cần Thơ', DATE_SUB(NOW(), INTERVAL 68 HOUR), 'Ngập úng do nước đọng không thoát được. Nhiều cửa hàng bị ảnh hưởng, giao thông bị cản trở.', 'Ninh Kiều', b'0', DATE_SUB(NOW(), INTERVAL 68 HOUR), 10.0452, 105.7469, 'MEDIUM', 'APPROVED', 'Ngập úng tại Cần Thơ', DATE_SUB(NOW(), INTERVAL 67 HOUR), 'Cái Khế', 4, 42),
-(39, 'Huế', DATE_SUB(NOW(), INTERVAL 75 HOUR), 'Mưa dông lớn với sấm sét. Nhiều khu vực bị mất điện tạm thời, cây cối bị đổ.', 'Huế', b'0', DATE_SUB(NOW(), INTERVAL 75 HOUR), 16.4637, 107.5909, 'MEDIUM', 'APPROVED', 'Mưa dông tại Huế', DATE_SUB(NOW(), INTERVAL 74 HOUR), 'Phú Hội', 2, 27),
-(40, 'Nha Trang', DATE_SUB(NOW(), INTERVAL 80 HOUR), 'Bão với gió mạnh và mưa lớn. Giao thông tê liệt, nhiều nhà cửa bị hư hỏng.', 'Nha Trang', b'0', DATE_SUB(NOW(), INTERVAL 80 HOUR), 12.2388, 109.1967, 'CRITICAL', 'APPROVED', 'Bão tại Nha Trang', DATE_SUB(NOW(), INTERVAL 79 HOUR), 'Vĩnh Hải', 8, 28),
-(41, 'Đà Lạt', DATE_SUB(NOW(), INTERVAL 85 HOUR), 'Rét đậm với nhiệt độ xuống dưới 8°C. Nhiều người già và trẻ em bị ảnh hưởng.', 'Đà Lạt', b'0', DATE_SUB(NOW(), INTERVAL 85 HOUR), 11.9404, 108.4583, 'MEDIUM', 'APPROVED', 'Rét đậm tại Đà Lạt', DATE_SUB(NOW(), INTERVAL 84 HOUR), 'Phường 1', 21, 29),
-(42, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 90 HOUR), 'Hạn hán kéo dài gây thiếu nước. Nhiều khu vực bị ảnh hưởng, cần hỗ trợ.', 'Hoàn Kiếm', b'0', DATE_SUB(NOW(), INTERVAL 90 HOUR), 21.0285, 105.8542, 'MEDIUM', 'APPROVED', 'Hạn hán tại Hà Nội', DATE_SUB(NOW(), INTERVAL 89 HOUR), 'Tràng Tiền', 12, 5),
-(43, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 95 HOUR), 'Khô hạn với độ ẩm thấp. Nhiều cây cối bị khô héo, thiếu nước tưới tiêu.', 'Quận 1', b'0', DATE_SUB(NOW(), INTERVAL 95 HOUR), 10.8231, 106.6297, 'LOW', 'APPROVED', 'Khô hạn tại Quận 1', DATE_SUB(NOW(), INTERVAL 94 HOUR), 'Bến Nghé', 14, 11),
-(44, 'Đà Nẵng', DATE_SUB(NOW(), INTERVAL 100 HOUR), 'Cháy rừng do thời tiết khô hanh. Nhiều khu vực bị ảnh hưởng, cần hỗ trợ khẩn cấp.', 'Hải Châu', b'0', DATE_SUB(NOW(), INTERVAL 100 HOUR), 16.0544, 108.2022, 'CRITICAL', 'APPROVED', 'Cháy rừng tại Đà Nẵng', DATE_SUB(NOW(), INTERVAL 99 HOUR), 'Hải Châu', 13, 22),
-(45, 'Hà Nội', DATE_SUB(NOW(), INTERVAL 105 HOUR), 'Đường sá hư hỏng do thời tiết xấu. Nhiều đoạn đường bị hư hỏng, giao thông bị cản trở.', 'Hoàn Kiếm', b'0', DATE_SUB(NOW(), INTERVAL 105 HOUR), 21.0285, 105.8542, 'MEDIUM', 'APPROVED', 'Đường sá hư hỏng tại Hoàn Kiếm', DATE_SUB(NOW(), INTERVAL 104 HOUR), 'Tràng Tiền', 22, 4),
-(46, 'Hồ Chí Minh', DATE_SUB(NOW(), INTERVAL 110 HOUR), 'Mưa lớn gây ngập úng tại Quận 5. Nhiều phương tiện bị kẹt, giao thông tê liệt.', 'Quận 5', b'0', DATE_SUB(NOW(), INTERVAL 110 HOUR), 10.7626, 106.6602, 'HIGH', 'APPROVED', 'Mưa lớn tại Quận 5', DATE_SUB(NOW(), INTERVAL 109 HOUR), 'Phường 14', 1, 15),
-(47, 'Hải Phòng', DATE_SUB(NOW(), INTERVAL 115 HOUR), 'Gió mạnh làm đổ nhiều cây cối. Cần xử lý gấp để đảm bảo an toàn giao thông.', 'Ngô Quyền', b'0', DATE_SUB(NOW(), INTERVAL 115 HOUR), 20.8449, 106.6881, 'MEDIUM', 'APPROVED', 'Gió mạnh làm đổ cây tại Hải Phòng', DATE_SUB(NOW(), INTERVAL 114 HOUR), 'Máy Chai', 6, 24),
-(48, 'Vũng Tàu', DATE_SUB(NOW(), INTERVAL 120 HOUR), 'Mưa dông với sấm sét. Nhiều khu vực bị mất điện tạm thời, cây cối bị đổ.', 'Thành phố Vũng Tàu', b'0', DATE_SUB(NOW(), INTERVAL 120 HOUR), 10.3460, 107.0843, 'MEDIUM', 'APPROVED', 'Mưa dông tại Vũng Tàu', DATE_SUB(NOW(), INTERVAL 119 HOUR), 'Thắng Tam', 2, 41),
-(49, 'Cần Thơ', DATE_SUB(NOW(), INTERVAL 125 HOUR), 'Lũ lụt với nước dâng cao. Nhiều nhà cửa bị ngập, cần hỗ trợ khẩn cấp.', 'Ninh Kiều', b'0', DATE_SUB(NOW(), INTERVAL 125 HOUR), 10.0452, 105.7469, 'CRITICAL', 'APPROVED', 'Lũ lụt tại Cần Thơ', DATE_SUB(NOW(), INTERVAL 124 HOUR), 'Cái Khế', 3, 42),
-(50, 'Huế', DATE_SUB(NOW(), INTERVAL 130 HOUR), 'Mưa lớn kéo dài gây ngập úng. Nhiều khu vực bị ảnh hưởng, giao thông bị cản trở.', 'Huế', b'0', DATE_SUB(NOW(), INTERVAL 130 HOUR), 16.4637, 107.5909, 'HIGH', 'APPROVED', 'Mưa lớn tại Huế', DATE_SUB(NOW(), INTERVAL 129 HOUR), 'Phú Hội', 1, 27);
+(2, 'Hà Nội', '2025-12-24 10:31:40.000000', 'Mưa lớn kéo dài từ sáng đến chiều, lượng mưa ước tính trên 80mm, gây ngập úng tại khu vực phố Hàng Bông và các phố xung quanh. Nhiều phương tiện bị kẹt, giao thông tê liệt. Nước ngập sâu đến 30-40cm tại một số điểm.', 'Hoàn Kiếm', b'0', '2025-12-24 10:31:40.000000', 21.0285, 105.8542, 'HIGH', 'APPROVED', 'Mưa lớn gây ngập tại Phố Hàng Bông', '2025-12-24 11:31:40.000000', 'Hàng Gai', 1, 4),
+(3, 'Hồ Chí Minh', '2025-12-23 22:31:40.000000', 'Nước dâng cao trên 50cm tại nhiều tuyến đường trong Quận 1, nhiều cửa hàng và nhà dân bị ngập. Cần hỗ trợ khẩn cấp. Giao thông hoàn toàn tê liệt, nhiều phương tiện bị chết máy.', 'Quận 1', b'0', '2025-12-23 22:31:40.000000', 10.8231, 106.6297, 'CRITICAL', 'APPROVED', 'Lũ lụt tại khu vực Quận 1', '2025-12-24 00:31:40.000000', 'Bến Nghé', 3, 11),
+(4, 'Đà Nẵng', '2025-12-23 10:31:40.000000', 'Gió giật mạnh với tốc độ trên 60km/h đã làm đổ nhiều cây xanh trên đường Bạch Đằng. Một số phương tiện bị hư hỏng nhẹ. Cần xử lý gấp để đảm bảo an toàn giao thông.', 'Hải Châu', b'0', '2025-12-23 10:31:40.000000', 16.0544, 108.2022, 'MEDIUM', 'APPROVED', 'Gió mạnh làm đổ cây tại Đà Nẵng', '2025-12-23 12:31:40.000000', 'Hải Châu', 6, 21),
+(5, 'Hồ Chí Minh', '2025-12-24 16:31:40.000000', 'Nhiệt độ lên đến 38°C, cảm giác như 42°C do độ ẩm cao. Nhiều người có dấu hiệu say nắng khi làm việc ngoài trời. Cần uống đủ nước và tránh làm việc ngoài trời vào giữa trưa.', 'Quận 1', b'0', '2025-12-24 16:31:40.000000', 10.8231, 106.6297, 'MEDIUM', 'PENDING', 'Nắng nóng cực đoan tại Hồ Chí Minh', '2025-12-24 22:31:40.000000', 'Đa Kao', 11, 12),
+(6, 'Hà Nội', '2025-12-22 22:31:40.000000', 'Sau nhiều ngày mưa lớn, một đoạn đường tại phường Lê Đại Hành bị sạt lở, đất đá đổ xuống đường gây cản trở giao thông. Cần xử lý khẩn cấp để đảm bảo an toàn.', 'Hai Bà Trưng', b'0', '2025-12-22 22:31:40.000000', 21.0333, 105.8333, 'HIGH', 'APPROVED', 'Sạt lở đất tại khu vực Hai Bà Trưng', '2025-12-23 00:31:40.000000', 'Lê Đại Hành', 5, 6),
+(7, 'Hải Phòng', '2025-12-21 22:31:40.000000', 'Mưa dông lớn với sấm sét kéo dài hơn 2 giờ, lượng mưa đạt 60mm. Nhiều khu vực bị mất điện tạm thời. Giao thông bị ảnh hưởng nghiêm trọng.', 'Ngô Quyền', b'0', '2025-12-21 22:31:40.000000', 20.8449, 106.6881, 'MEDIUM', 'APPROVED', 'Mưa dông kèm sấm sét tại Hải Phòng', '2025-12-22 00:31:40.000000', 'Máy Chai', 2, 24),
+(8, 'Hồ Chí Minh', '2025-12-24 04:31:40.000000', 'Nước đọng không thoát được gây ngập cục bộ tại nhiều tuyến đường trong Quận 5. Nhiều cửa hàng bị ảnh hưởng, giao thông bị cản trở.', 'Quận 5', b'0', '2025-12-24 04:31:40.000000', 10.7626, 106.6602, 'MEDIUM', 'APPROVED', 'Ngập úng tại Quận 5', '2025-12-24 06:31:40.000000', 'Phường 14', 4, 15),
+(9, 'Đà Nẵng', '2025-12-20 22:31:40.000000', 'Bão nhiệt đới với gió mạnh và mưa lớn đã đổ bộ vào Đà Nẵng. Giao thông tê liệt, nhiều nhà cửa bị hư hỏng. Cần đề phòng và di chuyển đến nơi an toàn.', 'Hải Châu', b'0', '2025-12-20 22:31:40.000000', 16.0544, 108.2022, 'CRITICAL', 'APPROVED', 'Bão đổ bộ vào Đà Nẵng', '2025-12-21 00:31:40.000000', 'Phước Ninh', 8, 22),
+(10, 'Hà Nội', '2025-12-19 22:31:40.000000', 'Gió mạnh đã làm đổ một cây lớn trên đường Tôn Đức Thắng, cản trở giao thông. Cần xử lý gấp để đảm bảo an toàn.', 'Đống Đa', b'0', '2025-12-19 22:31:40.000000', 21.0198, 105.836, 'LOW', 'RESOLVED', 'Cây đổ do gió mạnh tại Đống Đa', '2025-12-24 21:31:40.000000', 'Quốc Tử Giám', 23, 7),
+(11, 'Hồ Chí Minh', '2025-12-24 19:31:40.000000', 'Sấm sét đánh liên tục trong khu vực Quận 3, có nguy cơ gây cháy nổ. Người dân cần cẩn thận, tránh ở ngoài trời khi có sấm sét.', 'Quận 3', b'0', '2025-12-24 19:31:40.000000', 10.7795, 106.6995, 'MEDIUM', 'PENDING', 'Sấm sét nguy hiểm tại Quận 3', '2025-12-24 22:31:40.000000', 'Võ Thị Sáu', 18, 14),
+(12, 'Hà Nội', '2025-12-24 14:31:40.000000', 'Mưa lớn kéo dài gây ngập úng tại nhiều tuyến đường trong quận Hoàn Kiếm. Nhiều phương tiện bị kẹt, giao thông tê liệt.', 'Hoàn Kiếm', b'0', '2025-12-24 14:31:40.000000', 21.0285, 105.8542, 'HIGH', 'APPROVED', 'Mưa lớn gây ngập tại Hoàn Kiếm', '2025-12-24 15:31:40.000000', 'Tràng Tiền', 1, 5),
+(13, 'Hồ Chí Minh', '2025-12-24 07:31:40.000000', 'Gió mạnh với tốc độ trên 50km/h đã làm đổ nhiều biển quảng cáo và cây cối. Một số nhà cửa bị hư hỏng nhẹ.', 'Quận 1', b'0', '2025-12-24 07:31:40.000000', 10.8231, 106.6297, 'MEDIUM', 'APPROVED', 'Gió mạnh tại Quận 1', '2025-12-24 08:31:40.000000', 'Bến Nghé', 6, 13),
+(14, 'Đà Nẵng', '2025-12-24 02:31:40.000000', 'Mưa lớn kéo dài gây ngập úng tại nhiều khu vực trong thành phố. Giao thông bị ảnh hưởng nghiêm trọng.', 'Hải Châu', b'0', '2025-12-24 02:31:40.000000', 16.0544, 108.2022, 'HIGH', 'APPROVED', 'Mưa lớn tại Đà Nẵng', '2025-12-24 03:31:40.000000', 'Hải Châu', 1, 23),
+(15, 'Hà Nội', '2025-12-23 16:31:40.000000', 'Sương mù dày đặc làm giảm tầm nhìn xuống dưới 50m. Giao thông bị ảnh hưởng, nhiều phương tiện phải di chuyển chậm.', 'Hoàn Kiếm', b'0', '2025-12-23 16:31:40.000000', 21.0285, 105.8542, 'LOW', 'APPROVED', 'Sương mù dày đặc tại Hà Nội', '2025-12-23 17:31:40.000000', 'Hàng Gai', 15, 4),
+(16, 'Hồ Chí Minh', '2025-12-24 12:31:40.000000', 'Mưa dông lớn với sấm sét kéo dài. Nhiều khu vực bị mất điện tạm thời, cây cối bị đổ.', 'Quận 3', b'0', '2025-12-24 12:31:40.000000', 10.7795, 106.6995, 'MEDIUM', 'PENDING', 'Mưa dông tại Quận 3', '2025-12-24 22:31:40.000000', 'Võ Thị Sáu', 2, 18),
+(17, 'Hải Phòng', '2025-12-23 21:31:40.000000', 'Gió mạnh với tốc độ cao đã làm đổ nhiều cây cối và biển quảng cáo. Cần xử lý gấp để đảm bảo an toàn.', 'Ngô Quyền', b'0', '2025-12-23 21:31:40.000000', 20.8449, 106.6881, 'MEDIUM', 'APPROVED', 'Gió mạnh tại Hải Phòng', '2025-12-23 22:31:40.000000', 'Máy Chai', 6, 40),
+(18, 'Vũng Tàu', '2025-12-24 17:31:40.000000', 'Nắng nóng với nhiệt độ lên đến 36°C. Nhiều người có dấu hiệu say nắng khi làm việc ngoài trời.', 'Thành phố Vũng Tàu', b'0', '2025-12-24 17:31:40.000000', 10.346, 107.0843, 'LOW', 'PENDING', 'Nắng nóng tại Vũng Tàu', '2025-12-24 22:31:40.000000', 'Thắng Tam', 11, 25),
+(19, 'Cần Thơ', '2025-12-24 08:31:40.000000', 'Mưa lớn gây ngập úng tại nhiều tuyến đường. Nhiều phương tiện bị kẹt, giao thông tê liệt.', 'Ninh Kiều', b'0', '2025-12-24 08:31:40.000000', 10.0452, 105.7469, 'HIGH', 'APPROVED', 'Mưa lớn tại Cần Thơ', '2025-12-24 09:31:40.000000', 'Cái Khế', 1, 26),
+(20, 'Huế', '2025-12-24 00:31:40.000000', 'Mưa lớn kéo dài gây ngập úng. Nhiều khu vực bị ảnh hưởng, giao thông bị cản trở.', 'Huế', b'0', '2025-12-24 00:31:40.000000', 16.4637, 107.5909, 'MEDIUM', 'APPROVED', 'Mưa lớn tại Huế', '2025-12-24 01:31:40.000000', 'Phú Hội', 1, 27),
+(21, 'Nha Trang', '2025-12-24 06:31:40.000000', 'Gió mạnh với tốc độ trên 45km/h. Nhiều cây cối bị đổ, biển quảng cáo bị hư hỏng.', 'Nha Trang', b'0', '2025-12-24 06:31:40.000000', 12.2388, 109.1967, 'MEDIUM', 'APPROVED', 'Gió mạnh tại Nha Trang', '2025-12-24 07:31:40.000000', 'Vĩnh Hải', 6, 28),
+(22, 'Đà Lạt', '2025-12-23 18:31:40.000000', 'Sương mù dày đặc làm giảm tầm nhìn xuống dưới 30m. Giao thông bị ảnh hưởng nghiêm trọng.', 'Đà Lạt', b'0', '2025-12-23 18:31:40.000000', 11.9404, 108.4583, 'LOW', 'APPROVED', 'Sương mù dày đặc tại Đà Lạt', '2025-12-23 19:31:40.000000', 'Phường 1', 15, 29),
+(23, 'Hà Nội', '2025-12-23 11:31:40.000000', 'Mưa đá với kích thước lớn đã gây thiệt hại về tài sản. Nhiều xe máy và ô tô bị hư hỏng.', 'Hoàn Kiếm', b'0', '2025-12-23 11:31:40.000000', 21.0285, 105.8542, 'HIGH', 'APPROVED', 'Mưa đá tại Hà Nội', '2025-12-23 12:31:40.000000', 'Tràng Tiền', 19, 8),
+(24, 'Hồ Chí Minh', '2025-12-23 06:31:40.000000', 'Lốc xoáy với gió mạnh đã gây thiệt hại nghiêm trọng. Nhiều nhà cửa và tài sản bị hư hỏng.', 'Quận 5', b'0', '2025-12-23 06:31:40.000000', 10.7626, 106.6602, 'CRITICAL', 'APPROVED', 'Lốc xoáy tại Quận 5', '2025-12-23 07:31:40.000000', 'Phường 14', 10, 16),
+(25, 'Đà Nẵng', '2025-12-22 20:31:40.000000', 'Mưa phùn kéo dài gây ẩm ướt và tầm nhìn kém. Giao thông bị ảnh hưởng nhẹ.', 'Hải Châu', b'0', '2025-12-22 20:31:40.000000', 16.0544, 108.2022, 'LOW', 'APPROVED', 'Mưa phùn kéo dài tại Đà Nẵng', '2025-12-22 21:31:40.000000', 'Hải Châu', 16, 38),
+(26, 'Hà Nội', '2025-12-22 10:31:40.000000', 'Rét đậm với nhiệt độ xuống dưới 10°C. Nhiều người già và trẻ em bị ảnh hưởng.', 'Hoàn Kiếm', b'0', '2025-12-22 10:31:40.000000', 21.0285, 105.8542, 'MEDIUM', 'APPROVED', 'Rét đậm rét hại tại Hà Nội', '2025-12-22 11:31:40.000000', 'Tràng Tiền', 21, 9),
+(27, 'Hồ Chí Minh', '2025-12-24 20:31:40.000000', 'Bụi mù làm giảm tầm nhìn. Giao thông bị ảnh hưởng, nhiều người gặp vấn đề về hô hấp.', 'Quận 1', b'0', '2025-12-24 20:31:40.000000', 10.8231, 106.6297, 'LOW', 'PENDING', 'Bụi mù tại Quận 1', '2025-12-24 22:31:40.000000', 'Bến Nghé', 17, 11),
+(28, 'Hải Phòng', '2025-12-23 01:31:40.000000', 'Mưa lớn kéo dài gây ngập úng. Nhiều tuyến đường bị ngập, giao thông tê liệt.', 'Ngô Quyền', b'0', '2025-12-23 01:31:40.000000', 20.8449, 106.6881, 'HIGH', 'APPROVED', 'Mưa lớn tại Hải Phòng', '2025-12-23 02:31:40.000000', 'Máy Chai', 1, 24),
+(29, 'Vũng Tàu', '2025-12-22 15:31:40.000000', 'Gió giật mạnh đột ngột đã làm đổ nhiều cây cối. Cần xử lý gấp để đảm bảo an toàn.', 'Thành phố Vũng Tàu', b'0', '2025-12-22 15:31:40.000000', 10.346, 107.0843, 'MEDIUM', 'APPROVED', 'Gió giật tại Vũng Tàu', '2025-12-22 16:31:40.000000', 'Thắng Tam', 7, 41),
+(30, 'Cần Thơ', '2025-12-22 05:31:40.000000', 'Lũ lụt với nước dâng cao trên 40cm. Nhiều nhà cửa bị ngập, cần hỗ trợ khẩn cấp.', 'Ninh Kiều', b'0', '2025-12-22 05:31:40.000000', 10.0452, 105.7469, 'CRITICAL', 'APPROVED', 'Lũ lụt tại Cần Thơ', '2025-12-22 06:31:40.000000', 'Cái Khế', 3, 42),
+(31, 'Hà Nội', '2025-12-22 00:31:40.000000', 'Sạt lở đất tại một đoạn đường do mưa lớn kéo dài. Giao thông bị cản trở, cần xử lý khẩn cấp.', 'Hai Bà Trưng', b'0', '2025-12-22 00:31:40.000000', 21.0333, 105.8333, 'HIGH', 'APPROVED', 'Sạt lở đất tại Hai Bà Trưng', '2025-12-22 01:31:40.000000', 'Lê Đại Hành', 5, 6),
+(32, 'Hồ Chí Minh', '2025-12-24 18:31:40.000000', 'Mưa lớn gây ngập úng tại Quận 10. Nhiều phương tiện bị kẹt, giao thông tê liệt.', 'Quận 10', b'0', '2025-12-24 18:31:40.000000', 10.773, 106.6664, 'HIGH', 'PENDING', 'Mưa lớn tại Quận 10', '2025-12-24 22:31:40.000000', 'Phường 1', 1, 16),
+(33, 'Đà Nẵng', '2025-12-23 14:31:40.000000', 'Cây đổ do gió mạnh đã cản trở giao thông. Cần xử lý gấp để đảm bảo an toàn.', 'Hải Châu', b'0', '2025-12-23 14:31:40.000000', 16.0544, 108.2022, 'LOW', 'APPROVED', 'Cây đổ tại Đà Nẵng', '2025-12-23 15:31:40.000000', 'Hải Châu', 23, 21),
+(34, 'Hà Nội', '2025-12-23 08:31:40.000000', 'Mất điện do thời tiết xấu. Nhiều khu vực bị mất điện tạm thời, ảnh hưởng đến sinh hoạt.', 'Hoàn Kiếm', b'0', '2025-12-23 08:31:40.000000', 21.0285, 105.8542, 'MEDIUM', 'APPROVED', 'Điện bị cắt tại Hoàn Kiếm', '2025-12-23 09:31:40.000000', 'Tràng Tiền', 24, 4),
+(35, 'Hồ Chí Minh', '2025-12-23 04:31:40.000000', 'Thiếu nước sinh hoạt do hạn hán kéo dài. Nhiều khu vực bị ảnh hưởng, cần hỗ trợ.', 'Quận 3', b'0', '2025-12-23 04:31:40.000000', 10.7795, 106.6995, 'MEDIUM', 'APPROVED', 'Nước sinh hoạt thiếu tại Quận 3', '2025-12-23 05:31:40.000000', 'Võ Thị Sáu', 25, 14),
+(36, 'Hải Phòng', '2025-12-22 18:31:40.000000', 'Áp thấp nhiệt đới với mưa và gió mạnh. Giao thông bị ảnh hưởng, nhiều nhà cửa bị hư hỏng nhẹ.', 'Ngô Quyền', b'0', '2025-12-22 18:31:40.000000', 20.8449, 106.6881, 'MEDIUM', 'APPROVED', 'Áp thấp nhiệt đới tại Hải Phòng', '2025-12-22 19:31:40.000000', 'Máy Chai', 9, 40),
+(37, 'Vũng Tàu', '2025-12-22 12:31:40.000000', 'Mưa lớn gây ngập úng. Nhiều tuyến đường bị ngập, giao thông bị cản trở.', 'Thành phố Vũng Tàu', b'0', '2025-12-22 12:31:40.000000', 10.346, 107.0843, 'HIGH', 'APPROVED', 'Mưa lớn tại Vũng Tàu', '2025-12-22 13:31:40.000000', 'Thắng Tam', 1, 41),
+(38, 'Cần Thơ', '2025-12-22 02:31:40.000000', 'Ngập úng do nước đọng không thoát được. Nhiều cửa hàng bị ảnh hưởng, giao thông bị cản trở.', 'Ninh Kiều', b'0', '2025-12-22 02:31:40.000000', 10.0452, 105.7469, 'MEDIUM', 'APPROVED', 'Ngập úng tại Cần Thơ', '2025-12-22 03:31:40.000000', 'Cái Khế', 4, 42),
+(39, 'Huế', '2025-12-21 19:31:40.000000', 'Mưa dông lớn với sấm sét. Nhiều khu vực bị mất điện tạm thời, cây cối bị đổ.', 'Huế', b'0', '2025-12-21 19:31:40.000000', 16.4637, 107.5909, 'MEDIUM', 'APPROVED', 'Mưa dông tại Huế', '2025-12-21 20:31:40.000000', 'Phú Hội', 2, 27),
+(40, 'Nha Trang', '2025-12-21 14:31:40.000000', 'Bão với gió mạnh và mưa lớn. Giao thông tê liệt, nhiều nhà cửa bị hư hỏng.', 'Nha Trang', b'0', '2025-12-21 14:31:40.000000', 12.2388, 109.1967, 'CRITICAL', 'APPROVED', 'Bão tại Nha Trang', '2025-12-21 15:31:40.000000', 'Vĩnh Hải', 8, 28),
+(41, 'Đà Lạt', '2025-12-21 09:31:40.000000', 'Rét đậm với nhiệt độ xuống dưới 8°C. Nhiều người già và trẻ em bị ảnh hưởng.', 'Đà Lạt', b'0', '2025-12-21 09:31:40.000000', 11.9404, 108.4583, 'MEDIUM', 'APPROVED', 'Rét đậm tại Đà Lạt', '2025-12-21 10:31:40.000000', 'Phường 1', 21, 29),
+(42, 'Hà Nội', '2025-12-21 04:31:40.000000', 'Hạn hán kéo dài gây thiếu nước. Nhiều khu vực bị ảnh hưởng, cần hỗ trợ.', 'Hoàn Kiếm', b'0', '2025-12-21 04:31:40.000000', 21.0285, 105.8542, 'MEDIUM', 'APPROVED', 'Hạn hán tại Hà Nội', '2025-12-21 05:31:40.000000', 'Tràng Tiền', 12, 5),
+(43, 'Hồ Chí Minh', '2025-12-20 23:31:40.000000', 'Khô hạn với độ ẩm thấp. Nhiều cây cối bị khô héo, thiếu nước tưới tiêu.', 'Quận 1', b'0', '2025-12-20 23:31:40.000000', 10.8231, 106.6297, 'LOW', 'APPROVED', 'Khô hạn tại Quận 1', '2025-12-21 00:31:40.000000', 'Bến Nghé', 14, 11),
+(44, 'Đà Nẵng', '2025-12-20 18:31:40.000000', 'Cháy rừng do thời tiết khô hanh. Nhiều khu vực bị ảnh hưởng, cần hỗ trợ khẩn cấp.', 'Hải Châu', b'0', '2025-12-20 18:31:40.000000', 16.0544, 108.2022, 'CRITICAL', 'APPROVED', 'Cháy rừng tại Đà Nẵng', '2025-12-20 19:31:40.000000', 'Hải Châu', 13, 22),
+(45, 'Hà Nội', '2025-12-20 13:31:40.000000', 'Đường sá hư hỏng do thời tiết xấu. Nhiều đoạn đường bị hư hỏng, giao thông bị cản trở.', 'Hoàn Kiếm', b'0', '2025-12-20 13:31:40.000000', 21.0285, 105.8542, 'MEDIUM', 'APPROVED', 'Đường sá hư hỏng tại Hoàn Kiếm', '2025-12-20 14:31:40.000000', 'Tràng Tiền', 22, 4),
+(46, 'Hồ Chí Minh', '2025-12-20 08:31:40.000000', 'Mưa lớn gây ngập úng tại Quận 5. Nhiều phương tiện bị kẹt, giao thông tê liệt.', 'Quận 5', b'0', '2025-12-20 08:31:40.000000', 10.7626, 106.6602, 'HIGH', 'APPROVED', 'Mưa lớn tại Quận 5', '2025-12-20 09:31:40.000000', 'Phường 14', 1, 15),
+(47, 'Hải Phòng', '2025-12-20 03:31:40.000000', 'Gió mạnh làm đổ nhiều cây cối. Cần xử lý gấp để đảm bảo an toàn giao thông.', 'Ngô Quyền', b'0', '2025-12-20 03:31:40.000000', 20.8449, 106.6881, 'MEDIUM', 'APPROVED', 'Gió mạnh làm đổ cây tại Hải Phòng', '2025-12-20 04:31:40.000000', 'Máy Chai', 6, 24),
+(48, 'Vũng Tàu', '2025-12-19 22:31:40.000000', 'Mưa dông với sấm sét. Nhiều khu vực bị mất điện tạm thời, cây cối bị đổ.', 'Thành phố Vũng Tàu', b'0', '2025-12-19 22:31:40.000000', 10.346, 107.0843, 'MEDIUM', 'APPROVED', 'Mưa dông tại Vũng Tàu', '2025-12-19 23:31:40.000000', 'Thắng Tam', 2, 41),
+(49, 'Cần Thơ', '2025-12-19 17:31:40.000000', 'Lũ lụt với nước dâng cao. Nhiều nhà cửa bị ngập, cần hỗ trợ khẩn cấp.', 'Ninh Kiều', b'0', '2025-12-19 17:31:40.000000', 10.0452, 105.7469, 'CRITICAL', 'APPROVED', 'Lũ lụt tại Cần Thơ', '2025-12-19 18:31:40.000000', 'Cái Khế', 3, 42),
+(50, 'Huế', '2025-12-19 12:31:40.000000', 'Mưa lớn kéo dài gây ngập úng. Nhiều khu vực bị ảnh hưởng, giao thông bị cản trở.', 'Huế', b'0', '2025-12-19 12:31:40.000000', 16.4637, 107.5909, 'HIGH', 'APPROVED', 'Mưa lớn tại Huế', '2025-12-19 13:31:40.000000', 'Phú Hội', 1, 27);
 
 --
 -- Indexes for dumped tables
@@ -654,6 +712,7 @@ ALTER TABLE `report_images`
 ALTER TABLE `report_votes`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `unique_vote` (`report_id`,`user_id`),
+  ADD UNIQUE KEY `UKdr91c4wn5d8qaqx8a07hoihsk` (`report_id`,`user_id`),
   ADD KEY `user_id` (`user_id`);
 
 --
@@ -699,25 +758,25 @@ ALTER TABLE `incident_types`
 -- AUTO_INCREMENT for table `report_votes`
 --
 ALTER TABLE `report_votes`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
 
 --
 -- AUTO_INCREMENT for table `weather_alerts`
 --
 ALTER TABLE `weather_alerts`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `weather_data`
 --
 ALTER TABLE `weather_data`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=172;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=216;
 
 --
 -- AUTO_INCREMENT for table `weather_reports`
