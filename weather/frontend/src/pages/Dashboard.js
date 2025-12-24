@@ -162,8 +162,8 @@ const Dashboard = () => {
 
   const reportsByTypeData = Object.entries(displayStats.reportsByType || {})
     .map(([name, value]) => ({
-      name,
-      value,
+    name,
+    value,
     }))
     .sort((a, b) => b.value - a.value);
 
@@ -309,7 +309,7 @@ const Dashboard = () => {
                 <span className="metric-description">
                   {hasActiveFilters ? 'Đã lọc' : 'Tất cả báo cáo trong hệ thống'}
                 </span>
-              </div>
+            </div>
             </div>
           </div>
 
@@ -323,7 +323,7 @@ const Dashboard = () => {
               <div className="metric-footer">
                 <span className="metric-badge success">{approvalRate}%</span>
                 <span className="metric-description">tỷ lệ duyệt</span>
-              </div>
+            </div>
             </div>
           </div>
 
@@ -337,7 +337,7 @@ const Dashboard = () => {
               <div className="metric-footer">
                 <span className="metric-badge warning">{pendingRate}%</span>
                 <span className="metric-description">cần xử lý</span>
-              </div>
+            </div>
             </div>
           </div>
 
@@ -354,7 +354,7 @@ const Dashboard = () => {
                     ? `${Math.round(stats.totalReports / stats.totalUsers)}` 
                     : '0'} báo cáo/người
                 </span>
-              </div>
+            </div>
             </div>
           </div>
         </div>
@@ -401,19 +401,19 @@ const Dashboard = () => {
                       }}
                     />
                     <Legend wrapperStyle={{ fontSize: '14px', paddingTop: '20px' }} />
-                    <Line
-                      type="monotone"
-                      dataKey="count"
-                      stroke="#4A90E2"
-                      strokeWidth={3}
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#4A90E2"
+                  strokeWidth={3}
                       dot={{ fill: '#4A90E2', r: 5 }}
                       activeDot={{ r: 7 }}
-                      name="Số lượng báo cáo"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                  name="Số lượng báo cáo"
+                />
+              </LineChart>
+            </ResponsiveContainer>
               </div>
-            </div>
+          </div>
 
             <div className="chart-container medium">
               <div className="chart-header">
@@ -424,23 +424,23 @@ const Dashboard = () => {
               </div>
               <div className="chart-body">
                 <ResponsiveContainer width="100%" height={350}>
-                  <PieChart>
-                    <Pie
+              <PieChart>
+                <Pie
                       data={reportsByTypeData.slice(0, 10)}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
                       label={false}
                       outerRadius={120}
                       innerRadius={50}
-                      fill="#8884d8"
-                      dataKey="value"
+                  fill="#8884d8"
+                  dataKey="value"
                       paddingAngle={2}
-                    >
+                >
                       {reportsByTypeData.slice(0, 10).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'rgba(255, 255, 255, 0.98)',
@@ -454,8 +454,8 @@ const Dashboard = () => {
                         props.payload.name
                       ]}
                     />
-                  </PieChart>
-                </ResponsiveContainer>
+              </PieChart>
+            </ResponsiveContainer>
                 <div className="pie-legend-compact">
                   {reportsByTypeData.slice(0, 8).map((entry, index) => {
                     const percent = ((entry.value / stats.totalReports) * 100).toFixed(1);
@@ -516,10 +516,10 @@ const Dashboard = () => {
                       name="Số lượng"
                       radius={[8, 8, 0, 0]}
                     />
-                  </BarChart>
-                </ResponsiveContainer>
+              </BarChart>
+            </ResponsiveContainer>
               </div>
-            </div>
+          </div>
 
             <div className="chart-container medium">
               <div className="chart-header">
@@ -548,8 +548,8 @@ const Dashboard = () => {
                                 hour: '2-digit',
                                 minute: '2-digit'
                               })}
-                            </span>
-                          </div>
+                    </span>
+                  </div>
                         </div>
                         <div className={`report-status-badge status-${report.status?.toLowerCase()}`}>
                           {report.status}
@@ -559,8 +559,8 @@ const Dashboard = () => {
                   ) : (
                     <div className="empty-reports">Chưa có báo cáo nào</div>
                   )}
+                  </div>
                 </div>
-              </div>
             </div>
           </div>
         </div>
