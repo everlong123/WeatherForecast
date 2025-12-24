@@ -8,22 +8,27 @@ Nền tảng kết nối cộng đồng để cùng chia sẻ, theo dõi và c�
 
 - Java 17 hoặc cao hơn
 - Node.js 14+ và npm
-- MySQL 8.0+
+- XAMPP (MySQL/MariaDB) hoặc MySQL 8.0+
 - Gradle
 
 ## Cài đặt
 
-### 1. Database
+### 1. Database (XAMPP)
 
-Tạo database MySQL:
+1. Khởi động XAMPP Control Panel
+2. Start Apache và MySQL services
+3. Mở phpMyAdmin: http://localhost/phpmyadmin
+4. Tạo database mới:
 
 ```sql
-CREATE DATABASE weather_db;
+CREATE DATABASE weather_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Chạy migration scripts nếu database đã tồn tại:
-- `src/main/resources/migration_add_trust_score.sql` - Thêm trust_score column
-- `src/main/resources/migration_add_user_location.sql` - Thêm latitude/longitude columns
+5. Chạy migration scripts nếu database đã tồn tại:
+   - `src/main/resources/migration_add_trust_score.sql` - Thêm trust_score column
+   - `src/main/resources/migration_add_user_location.sql` - Thêm latitude/longitude columns
+
+**Lưu ý**: XAMPP thường sử dụng MySQL/MariaDB trên port 3306, username mặc định là `root` và password để trống.
 
 ### 2. Backend (Spring Boot)
 
@@ -33,7 +38,8 @@ cd weather
 ```
 
 2. Chỉnh sửa `src/main/resources/application.properties`:
-   - Thay đổi `spring.datasource.password` với password MySQL của bạn
+   - **XAMPP**: Thường không cần password, để trống `spring.datasource.password=`
+   - Nếu có password MySQL, thay đổi `spring.datasource.password` với password của bạn
    - Cấu hình JWT secret key (khuyến nghị dùng chuỗi ngẫu nhiên dài)
    - Thêm OpenWeather API key (tùy chọn, lấy tại https://openweathermap.org/api)
 
@@ -83,12 +89,13 @@ Frontend sẽ chạy tại: http://localhost:3000
 - ✅ Lọc báo cáo theo vị trí (GPS hoặc profile address)
 
 ### Cho Admin
-- ✅ Dashboard thống kê tổng quan
+- ✅ Dashboard thống kê tổng quan với bộ lọc (thời gian, trạng thái)
 - ✅ Quản lý báo cáo với gợi ý thông minh (duyệt/từ chối/giải quyết)
 - ✅ Quản lý người dùng (CRUD, khóa/mở khóa, xem trust score)
 - ✅ Quản lý loại sự cố (CRUD)
 - ✅ Quản lý cảnh báo thời tiết
 - ✅ Hệ thống gợi ý dựa trên priority score
+- ✅ Filter dashboard theo thời gian (7/30/90 ngày) và trạng thái
 
 ### Hệ thống thông minh
 - ✅ **Trust Score**: Độ tin cậy người dùng (bắt đầu từ 0, không giới hạn)
@@ -159,11 +166,13 @@ Frontend sẽ chạy tại: http://localhost:3000
 
 ## Ghi chú
 
-- Đảm bảo MySQL đang chạy trước khi khởi động backend
+- **XAMPP**: Đảm bảo MySQL service đang chạy trong XAMPP Control Panel trước khi khởi động backend
 - Backend cần chạy trước frontend
 - Trust score mặc định là 0 cho user mới
 - Vote chỉ hoạt động trong phạm vi 10km từ vị trí báo cáo
 - User có thể cập nhật location trong profile page
+- Dashboard có bộ lọc để xem thống kê theo thời gian và trạng thái
+- Map có thể di chuyển tự do, không bị giới hạn trong phạm vi Việt Nam
 
 ## Demo
 

@@ -6,7 +6,7 @@
 - **Mô hình**: Client-Server (SPA - Single Page Application)
 - **Backend**: Spring Boot REST API (Java 17)
 - **Frontend**: React 19 (SPA với React Router)
-- **Database**: MySQL 8.0
+- **Database**: MySQL 8.0 / MariaDB (qua XAMPP)
 - **Authentication**: JWT (JSON Web Token)
 - **File Storage**: Local filesystem (`uploads/` directory)
 
@@ -36,9 +36,14 @@
 - **Build Tool**: React Scripts 5.0.1
 
 #### Database
-- **RDBMS**: MySQL 8.0
+- **RDBMS**: MySQL 8.0 / MariaDB (qua XAMPP)
 - **Connection**: JDBC với connection pooling
 - **Schema Management**: Hibernate DDL auto-update
+- **XAMPP Setup**: 
+  - Port: 3306 (mặc định)
+  - Username: root (mặc định)
+  - Password: (thường để trống trong XAMPP)
+  - phpMyAdmin: http://localhost/phpmyadmin
 
 ---
 
@@ -233,7 +238,7 @@
 
 ### 5.1. Hiển thị bản đồ
 - **Library**: Leaflet + React Leaflet
-- **Tile Layer**: OpenStreetMap
+- **Tile Layer**: OpenStreetMap (có thể chuyển sang Satellite, Terrain)
 - **Features**:
   - Hiển thị tất cả báo cáo thời tiết dưới dạng markers
   - Click marker để xem chi tiết báo cáo
@@ -241,9 +246,11 @@
     - Loại sự cố
     - Trạng thái (PENDING, APPROVED, REJECTED, RESOLVED)
     - Mức độ nghiêm trọng (LOW, MEDIUM, HIGH, CRITICAL)
-  - Layer control: Bật/tắt các lớp báo cáo
-  - Zoom controls
+  - Layer control: Bật/tắt các lớp báo cáo, chọn loại bản đồ
+  - Zoom controls: minZoom=2, maxZoom=18 (có thể zoom out toàn cầu)
+  - **Không giới hạn bounds**: Có thể di chuyển map ra ngoài Việt Nam
   - Click trên map để chọn vị trí (khi tạo/chỉnh sửa báo cáo)
+  - Tự động lấy tất cả báo cáo (không bị giới hạn pagination)
 
 ### 5.2. Geocoding (Địa chỉ → Tọa độ)
 - **Endpoint**: `GET /api/locations/coordinates?city={city}&district={district}&ward={ward}`
@@ -284,10 +291,20 @@
   - Số báo cáo theo mức độ nghiêm trọng
   - Số người dùng theo role (USER, ADMIN)
   - Thống kê trust score (trung bình, cao nhất, thấp nhất)
+  - Xu hướng tuần này so với tuần trước (% thay đổi)
+- **Bộ lọc (Filter)**:
+  - **Thời gian**: Tất cả thời gian, 7 ngày qua, 30 ngày qua, 90 ngày qua
+  - **Trạng thái**: Tất cả, Đã duyệt, Đang chờ, Đã từ chối, Đã xử lý
+  - Filter panel có thể mở/đóng
+  - Tự động tính toán lại stats khi filter thay đổi
+  - Hiển thị badge khi có filter active
 - **Giao diện**: 
-  - Stat cards với icon và số liệu
-  - Biểu đồ (Recharts) trực quan hóa dữ liệu
+  - Header với title, subtitle và trend badge lớn
+  - 4 metric cards lớn, dễ nhìn với icons và badges
+  - Charts: Line chart (xu hướng 7 ngày), Pie chart (theo loại), Bar chart (theo quận/huyện)
+  - Recent reports list với styling hiện đại
   - Responsive grid layout
+  - Modern design với clean UI
 
 ### 6.2. Quản lý báo cáo
 - **Xem tất cả**: Danh sách tất cả báo cáo (kể cả chưa duyệt)
@@ -749,8 +766,12 @@ Dựa trên trust score, user được phân loại thành các level:
 
 ### 13.1. Backend Configuration
 - **Port**: 8080 (default)
-- **Database**: MySQL trên localhost:3306
+- **Database**: MySQL/MariaDB qua XAMPP trên localhost:3306
 - **Database Name**: `weather_db`
+- **XAMPP Setup**:
+  - Username: `root` (mặc định)
+  - Password: (thường để trống, hoặc password bạn đã set)
+  - phpMyAdmin: http://localhost/phpmyadmin
 - **JWT Secret**: Config trong `application.properties` (nên thay đổi trong production)
 - **API Keys**: Config trong `application.properties`
 
@@ -771,18 +792,18 @@ Dựa trên trust score, user được phân loại thành các level:
 ### 14.1. Stack Technology
 - **Backend**: Spring Boot 4.0.0 (Java 17) + Spring Security + JPA/Hibernate
 - **Frontend**: React 19.2.1 + React Router + Axios + Leaflet
-- **Database**: MySQL 8.0
+- **Database**: MySQL 8.0 / MariaDB (qua XAMPP)
 - **Build Tools**: Gradle (backend), npm/react-scripts (frontend)
 - **Authentication**: JWT
-- **Maps**: Leaflet + OpenStreetMap
+- **Maps**: Leaflet + OpenStreetMap (có thể chuyển sang Satellite, Terrain)
 
 ### 14.2. Main Features
 1. ✅ User Authentication & Authorization (Register, Login, JWT)
 2. ✅ Weather Current/Forecast/History (Multiple API sources)
 3. ✅ Weather Reports Management (CRUD, Admin approval)
-4. ✅ Interactive Map (Markers, Filters, Location picker)
+4. ✅ Interactive Map (Markers, Filters, Location picker, không giới hạn bounds)
 5. ✅ Geocoding & Reverse Geocoding (Multiple providers)
-6. ✅ Admin Dashboard (Stats, User management, Report management)
+6. ✅ Admin Dashboard với bộ lọc (Stats, Filter theo thời gian/trạng thái, User management, Report management)
 7. ✅ File Upload (Images for reports)
 8. ✅ Real-time Clock & Location Display
 9. ✅ Responsive UI với modern design
@@ -791,6 +812,7 @@ Dựa trên trust score, user được phân loại thành các level:
 12. ✅ Admin Suggestion Logic (Gợi ý quyết định)
 13. ✅ User Profile với map để cập nhật location
 14. ✅ Location-based Filtering (GPS hoặc profile address)
+15. ✅ Dashboard Filter System (Lọc theo thời gian: 7/30/90 ngày, trạng thái: APPROVED/PENDING/REJECTED/RESOLVED)
 
 ### 14.3. API Endpoints Summary
 - **Auth**: 
