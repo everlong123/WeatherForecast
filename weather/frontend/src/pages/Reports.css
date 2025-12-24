@@ -587,22 +587,33 @@
 /* Map container trong modal */
 .map-container-wrapper {
   position: relative;
-  z-index: 1;
+  z-index: 100;
+  min-height: 400px;
 }
 
 .map-container-wrapper .leaflet-container {
   height: 100% !important;
   width: 100% !important;
-  z-index: 1;
+  z-index: 100 !important;
   border-radius: 12px;
+  position: relative !important;
 }
 
 .map-container-wrapper .leaflet-tile-container {
-  z-index: 1;
+  z-index: 100 !important;
 }
 
 .map-container-wrapper .leaflet-pane {
-  z-index: 1;
+  z-index: 100 !important;
+}
+
+.map-container-wrapper .leaflet-control-container {
+  z-index: 1000 !important;
+}
+
+.map-container-wrapper .leaflet-top,
+.map-container-wrapper .leaflet-bottom {
+  z-index: 1000 !important;
 }
 
 .btn {

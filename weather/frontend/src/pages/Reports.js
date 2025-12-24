@@ -27,6 +27,17 @@ const MapClickHandler = ({ onMapClick }) => {
   return null;
 };
 
+// Component để resize map khi modal mở
+const MapResizer = () => {
+  const map = useMapEvents({});
+  useEffect(() => {
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+  }, [map]);
+  return null;
+};
+
 // Memoized component for incident type select
 const IncidentTypeSelect = React.memo(({ value, onChange, incidentTypes, required }) => {
   const options = useMemo(() => {
@@ -152,6 +163,19 @@ const Reports = () => {
       fetchUserLocation();
     }
   }, [locationSource]);
+
+  // Re-initialize map khi modal mở
+  useEffect(() => {
+    if (showForm) {
+      // Đảm bảo map được render khi modal mở
+      // Leaflet cần thời gian để khởi tạo trong modal
+      setTimeout(() => {
+        if (window.L) {
+          window.L.map('map-container')?.invalidateSize();
+        }
+      }, 100);
+    }
+  }, [showForm]);
 
   // Fetch và geocode địa chỉ user thành lat/lng
   // Có 2 options: GPS hiện tại hoặc địa chỉ trong profile
@@ -895,22 +919,32 @@ const Reports = () => {
                 Click trên bản đồ để chọn vị trí sự cố
               </p>
               
-              <div className="map-container-wrapper" style={{ 
-                marginBottom: '15px', 
-                border: '2px solid #ddd', 
-                borderRadius: '12px', 
-                overflow: 'hidden',
-                height: '400px',
-                backgroundColor: '#e8f4f8',
-                position: 'relative',
-                zIndex: 1
-              }}>
+              <div 
+                id="map-container"
+                className="map-container-wrapper" 
+                style={{ 
+                  marginBottom: '15px', 
+                  border: '2px solid #ddd', 
+                  borderRadius: '12px', 
+                  overflow: 'visible',
+                  height: '400px',
+                  backgroundColor: '#e8f4f8',
+                  position: 'relative',
+                  zIndex: 100
+                }}
+              >
                 <MapContainer
                   center={mapCenter}
                   zoom={mapZoom}
-                  style={{ height: '100%', width: '100%', zIndex: 1 }}
+                  style={{ height: '100%', width: '100%' }}
                   scrollWheelZoom={true}
-                  key={`${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
+                  key={`map-${showForm}-${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
+                  whenCreated={(mapInstance) => {
+                    // Đảm bảo map được resize đúng cách trong modal
+                    setTimeout(() => {
+                      mapInstance.invalidateSize();
+                    }, 100);
+                  }}
                 >
                   <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
