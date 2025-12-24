@@ -122,6 +122,7 @@ const Admin = () => {
     name: '',
     description: '',
     icon: '',
+    color: '#001f3f',
   });
 
   useEffect(() => {
@@ -324,16 +325,35 @@ const Admin = () => {
   const handleSaveIncidentType = async (e) => {
     e.preventDefault();
     try {
+      console.log('Saving incident type:', incidentTypeForm);
+      console.log('Is editing:', !!editingIncidentType);
+      
+      const dataToSend = {
+        name: incidentTypeForm.name?.trim() || '',
+        description: incidentTypeForm.description || '',
+        icon: incidentTypeForm.icon || '',
+        color: incidentTypeForm.color || '#001f3f'
+      };
+      
+      console.log('Data to send:', dataToSend);
+      
+      let response;
       if (editingIncidentType) {
-        await adminAPI.updateIncidentType(editingIncidentType.id, incidentTypeForm);
+        response = await adminAPI.updateIncidentType(editingIncidentType.id, dataToSend);
       } else {
-        await adminAPI.createIncidentType(incidentTypeForm);
+        response = await adminAPI.createIncidentType(dataToSend);
       }
+      
+      console.log('Response:', response);
+      console.log('Created/Updated incident type:', response.data);
+      
       setShowIncidentTypeForm(false);
       setEditingIncidentType(null);
-      setIncidentTypeForm({ name: '', description: '', icon: '' });
+      setIncidentTypeForm({ name: '', description: '', icon: '', color: '' });
       fetchIncidentTypes();
     } catch (error) {
+      console.error('Error saving incident type:', error);
+      console.error('Error response:', error.response);
       alert('Lỗi: ' + (error.response?.data?.message || error.message || 'Đã xảy ra lỗi'));
     }
   };
@@ -355,6 +375,7 @@ const Admin = () => {
       name: type.name || '',
       description: type.description || '',
       icon: type.icon || '',
+      color: type.color || '#001f3f',
     });
     setShowIncidentTypeForm(true);
   };
@@ -694,7 +715,7 @@ const Admin = () => {
               <div>
                 <button className="btn btn-primary" onClick={() => {
                   setEditingIncidentType(null);
-                  setIncidentTypeForm({ name: '', description: '', icon: '' });
+                  setIncidentTypeForm({ name: '', description: '', icon: '', color: '#001f3f' });
                   setShowIncidentTypeForm(true);
                 }}>
                   <FiPlus /> Tạo loại sự cố
@@ -1387,7 +1408,7 @@ const Admin = () => {
                   <button type="button" className="btn btn-secondary" onClick={() => {
                     setShowIncidentTypeForm(false);
                     setEditingIncidentType(null);
-                    setIncidentTypeForm({ name: '', description: '', icon: '' });
+                    setIncidentTypeForm({ name: '', description: '', icon: '', color: '#001f3f' });
                   }}>
                     Hủy
                   </button>

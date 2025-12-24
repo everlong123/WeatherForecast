@@ -272,7 +272,7 @@ const Profile = () => {
             </div>
             <div className="trust-level-info">
               <span className="trust-level-label" style={{ color: trustLevel.color }}>
-                {trustLevel.icon} {trustLevel.label}
+                {trustLevel.label}
               </span>
             </div>
             <div className="trust-score-description">

@@ -25,7 +25,8 @@ public class IncidentType {
     private String icon;
     private String color;
 
-    @OneToMany(mappedBy = "incidentType")
+    @OneToMany(mappedBy = "incidentType", fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<WeatherReport> reports;
 
     private LocalDateTime createdAt;

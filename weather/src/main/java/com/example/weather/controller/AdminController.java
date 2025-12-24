@@ -340,21 +340,35 @@ public class AdminController {
     }
 
     @PostMapping("/incident-types")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<IncidentType> createIncidentType(@RequestBody Map<String, Object> typeData) {
+        System.out.println("Creating incident type with data: " + typeData);
         String name = (String) typeData.get("name");
         if (name == null || name.trim().isEmpty()) {
-            throw new RuntimeException("TÃªn loáº¡i sá»± cá»‘ khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng");
+            System.err.println("Error: Name is null or empty");
+            throw new RuntimeException("Tên loại sự cố không được để trống");
         }
+        
         if (incidentTypeRepository.existsByName(name)) {
-            throw new RuntimeException("Loáº¡i sá»± cá»‘ '" + name + "' Ä‘Ã£ tá»“n táº¡i");
+            System.err.println("Error: Incident type '" + name + "' already exists");
+            throw new RuntimeException("Loại sự cố '" + name + "' đã tồn tại");
         }
         
         IncidentType type = new IncidentType();
-        type.setName(name);
+        type.setName(name.trim());
         type.setDescription((String) typeData.get("description"));
         type.setIcon((String) typeData.get("icon"));
         type.setColor((String) typeData.getOrDefault("color", "#001f3f"));
-        return ResponseEntity.ok(incidentTypeRepository.save(type));
+        
+        System.out.println("Saving incident type: " + type.getName());
+        IncidentType saved = incidentTypeRepository.save(type);
+        System.out.println("Saved incident type with ID: " + saved.getId());
+        
+        // Verify it was saved
+        long count = incidentTypeRepository.count();
+        System.out.println("Total incident types in DB after save: " + count);
+        
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/incident-types/{id}")

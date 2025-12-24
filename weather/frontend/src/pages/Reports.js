@@ -3,7 +3,7 @@ import { reportAPI, incidentTypeAPI, locationAPI, uploadAPI, authAPI } from '../
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock, FiCheck, FiThumbsUp, FiX } from 'react-icons/fi';
 import { incidentTypes as defaultIncidentTypes } from '../data/incidentTypes';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import { isAdmin, getUser } from '../utils/auth';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -29,11 +29,19 @@ const MapClickHandler = ({ onMapClick }) => {
 
 // Component để resize map khi modal mở
 const MapResizer = () => {
-  const map = useMapEvents({});
+  const map = useMap();
   useEffect(() => {
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
+    // Gọi invalidateSize nhiều lần với delay khác nhau để đảm bảo map được resize đúng
+    const timeouts = [
+      setTimeout(() => map.invalidateSize(), 100),
+      setTimeout(() => map.invalidateSize(), 300),
+      setTimeout(() => map.invalidateSize(), 500),
+      setTimeout(() => map.invalidateSize(), 1000),
+    ];
+    
+    return () => {
+      timeouts.forEach(timeout => clearTimeout(timeout));
+    };
   }, [map]);
   return null;
 };
@@ -111,6 +119,7 @@ const Reports = () => {
   const [incidentTypes, setIncidentTypes] = useState(defaultIncidentTypes);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [editingReport, setEditingReport] = useState(null);
   const [error, setError] = useState('');
   const [loadingAddress, setLoadingAddress] = useState(false);
@@ -167,13 +176,18 @@ const Reports = () => {
   // Re-initialize map khi modal mở
   useEffect(() => {
     if (showForm) {
-      // Đảm bảo map được render khi modal mở
-      // Leaflet cần thời gian để khởi tạo trong modal
-      setTimeout(() => {
-        if (window.L) {
-          window.L.map('map-container')?.invalidateSize();
-        }
+      // Đợi modal render xong trước khi render map
+      setMapReady(false);
+      const timeout = setTimeout(() => {
+        setMapReady(true);
       }, 100);
+      
+      return () => {
+        clearTimeout(timeout);
+        setMapReady(false);
+      };
+    } else {
+      setMapReady(false);
     }
   }, [showForm]);
 
@@ -388,9 +402,17 @@ const Reports = () => {
   const fetchIncidentTypes = async () => {
     try {
       const response = await incidentTypeAPI.getAll();
+      console.log('Incident types response:', response);
+      console.log('Incident types data:', response.data);
+      console.log('Number of incident types:', response.data?.length);
       if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        console.log('Setting incident types:', response.data.length, 'types');
+        response.data.forEach((type, index) => {
+          console.log(`  ${index + 1}. ID: ${type.id}, Name: ${type.name}`);
+        });
         setIncidentTypes(response.data);
       } else {
+        console.warn('No incident types from API, using defaults');
         setIncidentTypes(defaultIncidentTypes);
       }
     } catch (error) {
@@ -926,35 +948,45 @@ const Reports = () => {
                   marginBottom: '15px', 
                   border: '2px solid #ddd', 
                   borderRadius: '12px', 
-                  overflow: 'visible',
+                  overflow: 'hidden',
                   height: '400px',
+                  width: '100%',
                   backgroundColor: '#e8f4f8',
                   position: 'relative',
                   zIndex: 100
                 }}
               >
-                <MapContainer
-                  center={mapCenter}
-                  zoom={mapZoom}
-                  style={{ height: '100%', width: '100%' }}
-                  scrollWheelZoom={true}
-                  key={`map-${showForm}-${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
-                  whenCreated={(mapInstance) => {
-                    // Đảm bảo map được resize đúng cách trong modal
-                    setTimeout(() => {
-                      mapInstance.invalidateSize();
-                    }, 100);
-                  }}
-                >
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  />
-                  <MapClickHandler onMapClick={handleMapClick} />
-                  {formData.latitude && formData.longitude && (
-                    <Marker position={[formData.latitude, formData.longitude]} />
-                  )}
-                </MapContainer>
+                {showForm && mapReady && (
+                  <MapContainer
+                    center={mapCenter}
+                    zoom={mapZoom}
+                    style={{ height: '400px', width: '100%', minHeight: '400px' }}
+                    scrollWheelZoom={true}
+                    key={`map-modal-${showForm}-${mapReady}`}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    />
+                    <MapResizer />
+                    <MapClickHandler onMapClick={handleMapClick} />
+                    {formData.latitude && formData.longitude && (
+                      <Marker position={[formData.latitude, formData.longitude]} />
+                    )}
+                  </MapContainer>
+                )}
+                {showForm && !mapReady && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    height: '100%',
+                    color: '#666',
+                    fontSize: '14px'
+                  }}>
+                    Đang tải bản đồ...
+                  </div>
+                )}
               </div>
 
               {/* Hiển thị địa chỉ từ reverse geocoding */}
