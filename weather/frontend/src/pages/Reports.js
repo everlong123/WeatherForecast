@@ -5,6 +5,7 @@ import { FiPlus, FiEdit, FiTrash2, FiMapPin, FiAlertCircle, FiClock, FiCheck, Fi
 import { incidentTypes as defaultIncidentTypes } from '../data/incidentTypes';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import { isAdmin, getUser } from '../utils/auth';
+import Pagination from '../components/Pagination';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './Reports.css';
@@ -132,6 +133,13 @@ const Reports = () => {
     // Lấy từ localStorage hoặc mặc định là 'profile'
     return localStorage.getItem('locationSource') || 'profile';
   }); // 'gps' hoặc 'profile'
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -375,15 +383,30 @@ const Reports = () => {
     return 'Chưa có địa điểm';
   };
 
-  const fetchData = async () => {
+  const fetchData = async (page = currentPage) => {
     try {
+      setLoading(true);
       let response;
       if (viewMode === 'all') {
-        response = await reportAPI.getAll();
+        response = await reportAPI.getAll(page, pageSize);
       } else {
-        response = await reportAPI.getMyReports();
+        response = await reportAPI.getMyReports(page, pageSize);
       }
-      setReports(response.data);
+      
+      // Kiểm tra xem response có phải là paginated response không
+      if (response.data && response.data.content) {
+        // Paginated response
+        setReports(response.data.content);
+        setTotalPages(response.data.totalPages);
+        setTotalElements(response.data.totalElements);
+        setCurrentPage(response.data.page);
+      } else {
+        // Backward compatibility: non-paginated response
+        setReports(Array.isArray(response.data) ? response.data : []);
+        setTotalPages(1);
+        setTotalElements(Array.isArray(response.data) ? response.data.length : 0);
+        setCurrentPage(0);
+      }
     } catch (error) {
       console.error('Error fetching reports:', error);
       if (error.response?.status === 401) {
@@ -394,10 +417,21 @@ const Reports = () => {
     }
   };
 
-  // Re-fetch khi viewMode thay đổi
+  // Re-fetch khi viewMode hoặc currentPage thay đổi
   useEffect(() => {
-    fetchData();
+    setCurrentPage(0); // Reset về trang đầu khi đổi viewMode
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode]);
+  
+  useEffect(() => {
+    fetchData(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, currentPage]);
+  
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const fetchIncidentTypes = async () => {
     try {
@@ -1308,8 +1342,19 @@ const Reports = () => {
               );
             })
           );
-        })()}
-      </div>
+          })()}
+        </div>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalElements={totalElements}
+            pageSize={pageSize}
+          />
+        )}
       </div>
     </div>
   );

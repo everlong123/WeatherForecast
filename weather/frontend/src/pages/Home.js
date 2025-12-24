@@ -170,10 +170,22 @@ const Home = () => {
 
   const fetchRecentReports = async () => {
     try {
-      const response = await reportAPI.getAll();
-      setRecentReports(response.data.slice(0, 6));
+      // Lấy trang đầu tiên với 5 items cho "báo cáo gần đây"
+      const response = await reportAPI.getAll(0, 5);
+      
+      // Kiểm tra xem response có phải là paginated response không
+      if (response.data && response.data.content) {
+        // Paginated response
+        setRecentReports(response.data.content);
+      } else if (Array.isArray(response.data)) {
+        // Backward compatibility: non-paginated response
+        setRecentReports(response.data.slice(0, 5));
+      } else {
+        setRecentReports([]);
+      }
     } catch (error) {
       console.error('Error fetching reports:', error);
+      setRecentReports([]);
     }
   };
 

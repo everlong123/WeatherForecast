@@ -1,5 +1,6 @@
 package com.example.weather.service;
 
+import com.example.weather.dto.PageResponse;
 import com.example.weather.dto.WeatherReportDTO;
 import com.example.weather.entity.IncidentType;
 import com.example.weather.entity.ReportVote;
@@ -9,6 +10,10 @@ import com.example.weather.repository.IncidentTypeRepository;
 import com.example.weather.repository.UserRepository;
 import com.example.weather.repository.WeatherReportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -68,6 +73,28 @@ public class WeatherReportService {
                 .map(r -> convertToDTO(r, currentUsername))
                 .collect(Collectors.toList());
     }
+    
+    /**
+     * Lấy tất cả reports với pagination
+     */
+    public PageResponse<WeatherReportDTO> getAllReports(String currentUsername, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id"));
+        Page<WeatherReport> reportPage = reportRepository.findByHiddenNotTrueOrHiddenIsNull(pageable);
+        
+        List<WeatherReportDTO> content = reportPage.getContent().stream()
+                .map(r -> convertToDTO(r, currentUsername))
+                .collect(Collectors.toList());
+        
+        return new PageResponse<>(
+            content,
+            reportPage.getNumber(),
+            reportPage.getSize(),
+            reportPage.getTotalElements(),
+            reportPage.getTotalPages(),
+            reportPage.isFirst(),
+            reportPage.isLast()
+        );
+    }
 
     public List<WeatherReportDTO> getUserReports(String username) {
         return getUserReports(username, username);
@@ -86,6 +113,31 @@ public class WeatherReportService {
                 ))
                 .map(r -> convertToDTO(r, currentUsername))
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Lấy reports của user với pagination
+     */
+    public PageResponse<WeatherReportDTO> getUserReports(String username, String currentUsername, int page, int size) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id", "createdAt"));
+        Page<WeatherReport> reportPage = reportRepository.findByUser(user, pageable);
+        
+        List<WeatherReportDTO> content = reportPage.getContent().stream()
+                .map(r -> convertToDTO(r, currentUsername))
+                .collect(Collectors.toList());
+        
+        return new PageResponse<>(
+            content,
+            reportPage.getNumber(),
+            reportPage.getSize(),
+            reportPage.getTotalElements(),
+            reportPage.getTotalPages(),
+            reportPage.isFirst(),
+            reportPage.isLast()
+        );
     }
 
     public WeatherReportDTO getReportById(Long id) {

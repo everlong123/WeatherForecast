@@ -3,6 +3,7 @@ import { adminAPI, reportAPI, incidentTypeAPI, locationAPI } from '../utils/api'
 import { isAdmin } from '../utils/auth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import Pagination from '../components/Pagination';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { 
@@ -163,11 +164,17 @@ const Admin = () => {
     }
   };
 
-  const fetchData = async () => {
+  // Pagination state for reports
+  const [reportsPage, setReportsPage] = useState(0);
+  const [reportsPageSize] = useState(20);
+  const [reportsTotalPages, setReportsTotalPages] = useState(0);
+  const [reportsTotalElements, setReportsTotalElements] = useState(0);
+
+  const fetchData = async (page = reportsPage) => {
     try {
       console.log('Fetching admin data...');
       const [reportsRes, usersRes, statsRes] = await Promise.all([
-        adminAPI.getAllReports ? adminAPI.getAllReports() : reportAPI.getAll(),
+        adminAPI.getAllReports ? adminAPI.getAllReports(page, reportsPageSize) : reportAPI.getAll(page, reportsPageSize),
         adminAPI.getAllUsers(),
         adminAPI.getStats(),
       ]);
@@ -180,7 +187,26 @@ const Admin = () => {
       console.log('Users data type:', typeof usersRes.data);
       console.log('Is array?', Array.isArray(usersRes.data));
       console.log('Users data:', usersRes.data);
-      setReports(Array.isArray(reportsRes.data) ? reportsRes.data : []);
+      
+      // Handle paginated response for reports
+      if (reportsRes.data && reportsRes.data.content) {
+        setReports(Array.isArray(reportsRes.data.content) ? reportsRes.data.content : []);
+        const totalPages = reportsRes.data.totalPages || 0;
+        const totalElements = reportsRes.data.totalElements || 0;
+        const currentPage = reportsRes.data.page || 0;
+        setReportsTotalPages(totalPages);
+        setReportsTotalElements(totalElements);
+        setReportsPage(currentPage);
+        console.log('Reports pagination:', { totalPages, totalElements, currentPage, pageSize: reportsPageSize });
+      } else {
+        // Backward compatibility
+        setReports(Array.isArray(reportsRes.data) ? reportsRes.data : []);
+        setReportsTotalPages(1);
+        setReportsTotalElements(Array.isArray(reportsRes.data) ? reportsRes.data.length : 0);
+        setReportsPage(0);
+        console.log('Reports (non-paginated):', reportsRes.data?.length || 0);
+      }
+      
       setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
       setStats(statsRes.data || null);
     } catch (error) {
@@ -198,6 +224,12 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
+  };
+  
+  const handleReportsPageChange = (newPage) => {
+    setReportsPage(newPage);
+    fetchData(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleApprove = async (id) => {
@@ -745,8 +777,8 @@ const Admin = () => {
                     <div style={{ marginTop: '10px', fontSize: '12px', color: '#999' }}>
                       ID: {type.id}
                     </div>
-                  </div>
-                ))
+                </div>
+              ))
               )}
             </div>
           </div>
@@ -941,6 +973,25 @@ const Admin = () => {
                 </div>
               )))}
             </div>
+            {/* Pagination for Reports */}
+            {reportsTotalPages > 0 && (
+              <div style={{ 
+                marginTop: '20px', 
+                marginBottom: '20px',
+                display: 'flex', 
+                justifyContent: 'center',
+                width: '100%',
+                padding: '0 20px'
+              }}>
+                <Pagination
+                  currentPage={reportsPage}
+                  totalPages={reportsTotalPages}
+                  onPageChange={handleReportsPageChange}
+                  totalElements={reportsTotalElements}
+                  pageSize={reportsPageSize}
+                />
+              </div>
+            )}
           </div>
         )}
 

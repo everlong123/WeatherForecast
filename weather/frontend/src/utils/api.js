@@ -45,8 +45,18 @@ export const authAPI = {
 };
 
 export const reportAPI = {
-  getAll: () => api.get('/reports'),
-  getMyReports: () => api.get('/reports/my-reports'),
+  getAll: (page, size) => {
+    const params = {};
+    if (page !== undefined && page !== null) params.page = page;
+    if (size !== undefined && size !== null) params.size = size;
+    return api.get('/reports', { params });
+  },
+  getMyReports: (page, size) => {
+    const params = {};
+    if (page !== undefined && page !== null) params.page = page;
+    if (size !== undefined && size !== null) params.size = size;
+    return api.get('/reports/my-reports', { params });
+  },
   getById: (id) => api.get(`/reports/${id}`),
   create: (data) => api.post('/reports', data),
   update: (id, data) => api.put(`/reports/${id}`, data),
@@ -119,7 +129,12 @@ export const adminAPI = {
     api.put(`/admin/reports/${id}/resolve`),
   hideReport: (id) => api.put(`/admin/reports/${id}/hide`),
   unhideReport: (id) => api.put(`/admin/reports/${id}/unhide`),
-  getAllReports: () => api.get('/admin/reports'),
+  getAllReports: (page, size) => {
+    const params = {};
+    if (page !== undefined && page !== null) params.page = page;
+    if (size !== undefined && size !== null) params.size = size;
+    return api.get('/admin/reports', { params });
+  },
   getAllUsers: () => api.get('/admin/users'),
   toggleUserStatus: (id) => api.put(`/admin/users/${id}/toggle`),
   updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),

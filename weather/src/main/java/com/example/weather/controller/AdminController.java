@@ -1,6 +1,7 @@
 package com.example.weather.controller;
 
 import com.example.weather.dto.IncidentTypeDTO;
+import com.example.weather.dto.PageResponse;
 import com.example.weather.dto.UserDTO;
 import com.example.weather.dto.WeatherAlertDTO;
 import com.example.weather.dto.WeatherReportDTO;
@@ -141,9 +142,47 @@ public class AdminController {
     }
 
     @GetMapping("/reports")
-    public ResponseEntity<List<WeatherReportDTO>> getAllReports(Authentication authentication) {
+    public ResponseEntity<?> getAllReports(
+            Authentication authentication,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
         String username = authentication != null ? authentication.getName() : null;
-        // Admin có thể xem tất cả reports kể cả đã ẩn
+        
+        // Nếu có page và size, trả về paginated response
+        if (page >= 0 && size > 0) {
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                page, size, 
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt", "id")
+            );
+            org.springframework.data.domain.Page<WeatherReport> reportPage = reportRepository.findAll(pageable);
+            
+            List<WeatherReportDTO> content = reportPage.getContent().stream()
+                    .map(r -> {
+                        WeatherReportDTO dto = weatherReportService.convertToDTO(r, username);
+                        // Thêm admin suggestions
+                        if (adminSuggestionService != null) {
+                            AdminSuggestionService.AdminSuggestion suggestion = adminSuggestionService.getSuggestion(r);
+                            dto.setPriorityScore(suggestion.getPriorityScore());
+                            dto.setSuggestedStatus(suggestion.getSuggestedAction());
+                        }
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+            
+            PageResponse<WeatherReportDTO> pageResponse = new PageResponse<>(
+                content,
+                reportPage.getNumber(),
+                reportPage.getSize(),
+                reportPage.getTotalElements(),
+                reportPage.getTotalPages(),
+                reportPage.isFirst(),
+                reportPage.isLast()
+            );
+            
+            return ResponseEntity.ok(pageResponse);
+        }
+        
+        // Ngược lại, trả về list đầy đủ (backward compatibility)
         List<WeatherReportDTO> reports = reportRepository.findAll().stream()
                 // Sắp xếp theo thời gian tạo giảm dần (mới nhất trước)
                 .sorted((a, b) -> {

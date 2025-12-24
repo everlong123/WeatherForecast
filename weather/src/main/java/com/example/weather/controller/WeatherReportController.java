@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -25,14 +24,34 @@ public class WeatherReportController {
     private ReportVoteService voteService;
 
     @GetMapping
-    public ResponseEntity<List<WeatherReportDTO>> getAllReports(Authentication authentication) {
+    public ResponseEntity<?> getAllReports(
+            Authentication authentication,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
         String username = authentication != null ? authentication.getName() : null;
+        
+        // Nếu có page và size, trả về paginated response
+        if (page >= 0 && size > 0) {
+            return ResponseEntity.ok(reportService.getAllReports(username, page, size));
+        }
+        
+        // Ngược lại, trả về list đầy đủ (backward compatibility)
         return ResponseEntity.ok(reportService.getAllReports(username));
     }
 
     @GetMapping("/my-reports")
-    public ResponseEntity<List<WeatherReportDTO>> getMyReports(Authentication authentication) {
+    public ResponseEntity<?> getMyReports(
+            Authentication authentication,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
         String username = authentication != null ? authentication.getName() : null;
+        
+        // Nếu có page và size, trả về paginated response
+        if (page >= 0 && size > 0) {
+            return ResponseEntity.ok(reportService.getUserReports(authentication.getName(), username, page, size));
+        }
+        
+        // Ngược lại, trả về list đầy đủ (backward compatibility)
         return ResponseEntity.ok(reportService.getUserReports(authentication.getName(), username));
     }
 

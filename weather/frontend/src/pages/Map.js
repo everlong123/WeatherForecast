@@ -155,14 +155,55 @@ const Map = () => {
 
   const fetchReports = async () => {
     try {
-      const response = await reportAPI.getAll();
-      console.log('Fetched reports:', response.data?.length || 0);
-      const reportsData = response.data || [];
+      // Gọi với size lớn để lấy tất cả báo cáo (hoặc có thể gọi nhiều lần nếu cần)
+      const response = await reportAPI.getAll(0, 10000);
+      
+      // Xử lý paginated response hoặc non-paginated response
+      let reportsData = [];
+      let totalElementsFromAPI = 0;
+      
+      if (response.data && response.data.content) {
+        // Paginated response
+        reportsData = response.data.content || [];
+        const totalPages = response.data.totalPages || 1;
+        totalElementsFromAPI = response.data.totalElements || 0;
+        console.log(`Fetched reports: ${reportsData.length} / ${totalElementsFromAPI} (page 0/${totalPages})`);
+        
+        // Nếu còn nhiều trang, lấy thêm các trang còn lại
+        if (totalPages > 1) {
+          const allReports = [...reportsData];
+          for (let page = 1; page < totalPages; page++) {
+            try {
+              const pageResponse = await reportAPI.getAll(page, 10000);
+              if (pageResponse.data && pageResponse.data.content) {
+                allReports.push(...pageResponse.data.content);
+                console.log(`Fetched page ${page}: ${pageResponse.data.content.length} reports`);
+              }
+            } catch (err) {
+              console.error(`Error fetching page ${page}:`, err);
+            }
+          }
+          reportsData = allReports;
+          console.log(`Fetched all reports: ${reportsData.length} / ${totalElementsFromAPI} total`);
+          
+          // Kiểm tra xem có thiếu báo cáo không
+          if (reportsData.length < totalElementsFromAPI) {
+            console.warn(`Warning: Fetched ${reportsData.length} reports but API says there are ${totalElementsFromAPI} total. Some reports may be missing.`);
+          }
+        }
+      } else {
+        // Non-paginated response (backward compatibility)
+        reportsData = Array.isArray(response.data) ? response.data : [];
+        totalElementsFromAPI = reportsData.length;
+        console.log('Fetched reports (non-paginated):', reportsData.length);
+      }
+      
       // Log để debug
       const reportsWithCoords = reportsData.filter(r => r.latitude && r.longitude);
       const reportsWithoutCoords = reportsData.filter(r => !r.latitude || !r.longitude);
       console.log('Reports with coordinates:', reportsWithCoords.length);
       console.log('Reports without coordinates:', reportsWithoutCoords.length);
+      console.log('Total fetched:', reportsData.length, 'Total from API:', totalElementsFromAPI);
       if (reportsWithCoords.length > 0) {
         console.log('Sample report with coords:', reportsWithCoords[0]);
       }
