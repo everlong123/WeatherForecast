@@ -538,9 +538,11 @@ const Dashboard = () => {
                           <div className="report-title-new">{report.title || 'Không có tiêu đề'}</div>
                           <div className="report-meta-new">
                             <span className="meta-badge type">{report.type || 'N/A'}</span>
-                            <span className="meta-badge location">
-                              <FiMapPin /> {report.district || 'N/A'}
-                            </span>
+                            {(report.district || report.displayAddress) && (
+                              <span className="meta-badge location">
+                                <FiMapPin /> {report.district || report.displayAddress}
+                              </span>
+                            )}
                             <span className="meta-badge time">
                               <FiClock /> {new Date(report.createdAt).toLocaleDateString('vi-VN', {
                                 day: '2-digit',

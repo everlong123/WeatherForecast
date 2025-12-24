@@ -60,9 +60,16 @@ const Admin = () => {
     address: '',
     district: '',
     ward: '',
+    latitude: null,
+    longitude: null,
+    displayAddress: '',
     role: 'USER',
     enabled: true,
   });
+  const [showUserMap, setShowUserMap] = useState(false);
+  const [userMapCenter, setUserMapCenter] = useState([16.0583, 108.2772]);
+  const [userMapZoom, setUserMapZoom] = useState(6);
+  const [loadingUserAddress, setLoadingUserAddress] = useState(false);
 
   const [reportForm, setReportForm] = useState({
     title: '',
@@ -305,15 +312,26 @@ const Admin = () => {
   const handleSaveUser = async (e) => {
     e.preventDefault();
     try {
-      console.log('Saving user:', userForm);
+      // Chuẩn bị dữ liệu để gửi
+      const userData = {
+        ...userForm,
+        address: userForm.displayAddress || userForm.address || null,
+        latitude: userForm.latitude || null,
+        longitude: userForm.longitude || null,
+      };
+      
+      console.log('Saving user:', userData);
       if (editingUser) {
-        await adminAPI.updateUser(editingUser.id, userForm);
+        await adminAPI.updateUser(editingUser.id, userData);
       } else {
-        await adminAPI.createUser(userForm);
+        await adminAPI.createUser(userData);
       }
       setShowUserForm(false);
       setEditingUser(null);
-      setUserForm({ username: '', email: '', password: '', fullName: '', phone: '', address: '', district: '', ward: '', role: 'USER', enabled: true });
+      setUserForm({ username: '', email: '', password: '', fullName: '', phone: '', address: '', district: '', ward: '', latitude: null, longitude: null, displayAddress: '', role: 'USER', enabled: true });
+      setShowUserMap(false);
+      setUserMapCenter([16.0583, 108.2772]);
+      setUserMapZoom(6);
       fetchData();
     } catch (error) {
       console.error('Error saving user:', error);
@@ -335,6 +353,8 @@ const Admin = () => {
 
   const handleEditUser = (user) => {
     setEditingUser(user);
+    const latitude = user.latitude || null;
+    const longitude = user.longitude || null;
     setUserForm({
       username: user.username || '',
       email: user.email || '',
@@ -344,9 +364,20 @@ const Admin = () => {
       address: user.address || '',
       district: user.district || '',
       ward: user.ward || '',
+      latitude: latitude,
+      longitude: longitude,
+      displayAddress: user.address || '',
       role: user.role || 'USER',
       enabled: user.enabled !== undefined ? user.enabled : true,
     });
+    // Set map center nếu có tọa độ
+    if (latitude && longitude) {
+      setUserMapCenter([latitude, longitude]);
+      setUserMapZoom(15);
+    } else {
+      setUserMapCenter([16.0583, 108.2772]);
+      setUserMapZoom(6);
+    }
     setShowUserForm(true);
   };
 
@@ -602,6 +633,43 @@ const Admin = () => {
     }
   };
 
+  const reverseGeocodeUser = async (lat, lng) => {
+    if (!lat || !lng) return;
+    setLoadingUserAddress(true);
+    try {
+      const response = await locationAPI.getLocationFromCoordinates(lat, lng);
+      if (response.data) {
+        const { city, district, ward, display_name } = response.data;
+        const address = display_name || [ward, district, city].filter(Boolean).join(', ') || '';
+        setUserForm(prev => ({
+          ...prev,
+          city: city || '',
+          district: district || '',
+          ward: ward || '',
+          address: address,
+          displayAddress: address,
+        }));
+      }
+    } catch (error) {
+      console.error('Error reverse geocoding user:', error);
+    } finally {
+      setLoadingUserAddress(false);
+    }
+  };
+
+  const handleUserMapClick = async (latlng) => {
+    const lat = latlng.lat;
+    const lng = latlng.lng;
+    setUserForm(prev => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng,
+    }));
+    setUserMapCenter([lat, lng]);
+    setUserMapZoom(15);
+    await reverseGeocodeUser(lat, lng);
+  };
+
   const handleMapClick = async (latlng) => {
     const lat = latlng.lat;
     const lng = latlng.lng;
@@ -790,7 +858,6 @@ const Admin = () => {
               <h2>Quản lý Báo cáo</h2>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div className="filter-group">
-                  <FiFilter style={{ marginRight: '5px', color: '#666' }} />
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
@@ -829,7 +896,6 @@ const Admin = () => {
                   </select>
                 </div>
                 <div className="filter-group">
-                  <FiSliders style={{ marginRight: '5px', color: '#666' }} />
                   <select
                     value={reportSortBy}
                     onChange={(e) => setReportSortBy(e.target.value)}
@@ -868,7 +934,9 @@ const Admin = () => {
                     <div className="report-meta">
                       <span>Loại: {report.incidentTypeName}</span>
                       <span>Mức độ: {report.severity}</span>
-                      <span>Địa điểm: {report.district || 'N/A'}</span>
+                      {(report.district || report.displayAddress || (report.ward && report.city)) && (
+                        <span>Địa điểm: {report.district || report.displayAddress || [report.ward, report.city].filter(Boolean).join(', ')}</span>
+                      )}
                       <span>Người báo: {report.username}</span>
                       {report.userTrustScore !== undefined && report.userTrustScore !== null && (
                         <span 
@@ -1001,7 +1069,6 @@ const Admin = () => {
               <h2>Quản lý Người dùng</h2>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div className="filter-group">
-                  <FiFilter style={{ marginRight: '5px', color: '#666' }} />
                   <select
                     value={userRoleFilter}
                     onChange={(e) => setUserRoleFilter(e.target.value)}
@@ -1024,7 +1091,6 @@ const Admin = () => {
                   </select>
                 </div>
                 <div className="filter-group">
-                  <FiSliders style={{ marginRight: '5px', color: '#666' }} />
                   <select
                     value={userSortBy}
                     onChange={(e) => setUserSortBy(e.target.value)}
@@ -1044,10 +1110,13 @@ const Admin = () => {
                 >
                   {userSortOrder === 'asc' ? <FiArrowUp /> : <FiArrowDown />}
                 </button>
-                <button className="btn btn-primary" onClick={() => {
+                <button className="btn btn-success" onClick={() => {
                   setEditingUser(null);
-                  setUserForm({ username: '', email: '', password: '', fullName: '', phone: '', address: '', district: '', ward: '', role: 'USER', enabled: true });
+                  setUserForm({ username: '', email: '', password: '', fullName: '', phone: '', address: '', district: '', ward: '', latitude: null, longitude: null, displayAddress: '', role: 'USER', enabled: true });
                   setShowUserForm(true);
+                  setShowUserMap(false);
+                  setUserMapCenter([16.0583, 108.2772]);
+                  setUserMapZoom(6);
                 }}>
                   <FiPlus /> Tạo người dùng
                 </button>
@@ -1070,7 +1139,7 @@ const Admin = () => {
                     <div className="user-meta">
                       <span>Họ tên: {user.fullName || 'N/A'}</span>
                       <span>Địa chỉ: {user.address || 'N/A'}</span>
-                      <span>Quận: {user.district || 'N/A'}</span>
+                      {user.district && <span>Quận: {user.district}</span>}
                       <span>Đăng ký: {new Date(user.createdAt).toLocaleDateString('vi-VN')}</span>
                     </div>
                     {user.trustScore !== undefined && user.trustScore !== null && (
@@ -1198,30 +1267,81 @@ const Admin = () => {
                   onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
                   className="input"
                 />
-                <label className="form-label">Địa chỉ</label>
-                <input
-                  type="text"
-                  placeholder="Nhập địa chỉ"
-                  value={userForm.address}
-                  onChange={(e) => setUserForm({ ...userForm, address: e.target.value })}
-                  className="input"
-                />
-                <label className="form-label">Quận/Huyện</label>
-                <input
-                  type="text"
-                  placeholder="Nhập quận/huyện"
-                  value={userForm.district}
-                  onChange={(e) => setUserForm({ ...userForm, district: e.target.value })}
-                  className="input"
-                />
-                <label className="form-label">Phường/Xã</label>
-                <input
-                  type="text"
-                  placeholder="Nhập phường/xã"
-                  value={userForm.ward}
-                  onChange={(e) => setUserForm({ ...userForm, ward: e.target.value })}
-                  className="input"
-                />
+                <label className="form-label">Vị trí</label>
+                <div style={{ marginBottom: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowUserMap(!showUserMap)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      backgroundColor: showUserMap ? '#e3f2fd' : '#f5f5f5',
+                      border: '2px solid #ddd',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: showUserMap ? '#1976d2' : '#666',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <FiMapPin />
+                    {showUserMap ? 'Ẩn bản đồ' : 'Chọn vị trí trên bản đồ'}
+                  </button>
+                  
+                  {showUserMap && (
+                    <div style={{ 
+                      marginTop: '12px', 
+                      border: '2px solid #ddd', 
+                      borderRadius: '12px', 
+                      overflow: 'hidden',
+                      height: '300px',
+                      backgroundColor: '#e8f4f8'
+                    }}>
+                      <MapContainer
+                        center={userMapCenter}
+                        zoom={userMapZoom}
+                        style={{ height: '100%', width: '100%' }}
+                        scrollWheelZoom={true}
+                        key={`${userMapCenter[0]}-${userMapCenter[1]}-${userMapZoom}`}
+                      >
+                        <TileLayer
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        />
+                        <MapClickHandler onMapClick={handleUserMapClick} />
+                        {userForm.latitude && userForm.longitude && (
+                          <Marker position={[userForm.latitude, userForm.longitude]} />
+                        )}
+                      </MapContainer>
+                    </div>
+                  )}
+                  
+                  {userForm.latitude && userForm.longitude && (
+                    <div style={{ 
+                      marginTop: '10px', 
+                      padding: '12px', 
+                      backgroundColor: '#f0f9ff', 
+                      borderRadius: '8px', 
+                      fontSize: '13px',
+                      color: '#0369a1'
+                    }}>
+                      {loadingUserAddress ? (
+                        <span>Đang tìm địa chỉ...</span>
+                      ) : (
+                        <div>
+                          <strong>Địa chỉ:</strong> {userForm.displayAddress || userForm.address || 'Chưa có địa chỉ'}
+                          <br />
+                          <small>Lat: {userForm.latitude.toFixed(6)}, Lng: {userForm.longitude.toFixed(6)}</small>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <label className="form-label">Vai trò</label>
                 <select
                   value={userForm.role}

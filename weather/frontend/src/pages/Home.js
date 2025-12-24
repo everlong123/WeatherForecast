@@ -249,22 +249,41 @@ const Home = () => {
   return (
     <div className="home-container">
       <div className="hero-section">
+        <div className="hero-background-effects">
+          <div className="floating-shape shape-1"></div>
+          <div className="floating-shape shape-2"></div>
+          <div className="floating-shape shape-3"></div>
+        </div>
         <div className="hero-content fade-in">
-          <h1 className="hero-title">
-            <span className="gradient-text">ClimateShare</span>
-            <br />
-            <span style={{ fontSize: '0.85em', fontWeight: '500' }}>Cộng đồng chia sẻ thông tin thời tiết</span>
-          </h1>
-          <p className="hero-subtitle">
-            Nền tảng kết nối cộng đồng để chia sẻ, theo dõi và cảnh báo về các sự cố thời tiết tại Việt Nam
-          </p>
-          <div className="hero-buttons">
-            <Link to="/map" className="btn btn-primary">
-              Xem Bản đồ
-            </Link>
-            <Link to="/reports" className="btn btn-secondary">
-              Báo cáo Sự cố
-            </Link>
+          <div className="hero-layout">
+            <div className="hero-left">
+              <div className="hero-logo-wrapper">
+                <span className="hero-logo-icon">🌍</span>
+                <h1 className="hero-title-main">
+                  <span className="hero-title-line-1">Climate</span>
+                  <span className="hero-title-line-2">Share</span>
+                </h1>
+              </div>
+            </div>
+            <div className="hero-right">
+              <h2 className="hero-subtitle-main">
+                <span className="hero-subtitle-line-1">Cộng đồng chia sẻ</span>
+                <span className="hero-subtitle-line-2">thông tin thời tiết</span>
+              </h2>
+              <p className="hero-description">
+                Nền tảng kết nối cộng đồng để chia sẻ, theo dõi và cảnh báo về các sự cố thời tiết tại Việt Nam
+              </p>
+              <div className="hero-buttons">
+                <Link to="/map" className="btn btn-hero-primary">
+                  <span>Xem Bản đồ</span>
+                  <FiArrowRight className="btn-icon" />
+                </Link>
+                <Link to="/reports" className="btn btn-hero-secondary">
+                  <span>Báo cáo Sự cố</span>
+                  <FiAlertCircle className="btn-icon" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -722,9 +741,11 @@ const Home = () => {
                   <h3 className="report-title">{report.title}</h3>
                   <p className="report-description">{report.description}</p>
                   <div className="report-footer">
-                    <span className="report-location">
-                      <FiMapPin /> {report.district || 'N/A'}
-                    </span>
+                    {(report.district || report.displayAddress || (report.ward && report.city)) && (
+                      <span className="report-location">
+                        <FiMapPin /> {report.district || report.displayAddress || [report.ward, report.city].filter(Boolean).join(', ')}
+                      </span>
+                    )}
                     <span className="report-time">
                       {new Date(report.createdAt).toLocaleDateString('vi-VN')}
                     </span>

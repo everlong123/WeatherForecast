@@ -1235,22 +1235,24 @@ const Reports = () => {
                 </div>
               )}
 
-              <div className="report-location">
-                <FiMapPin />
-                <span>
-                  {getReportAddress(report)}
-                  {distance !== null && (
-                    <span style={{ 
-                      marginLeft: '8px', 
-                      fontSize: '0.9em', 
-                      color: '#666',
-                      fontWeight: '500'
-                    }}>
-                      ({distance.toFixed(1)} km)
-                    </span>
-                  )}
-                </span>
-              </div>
+              {getReportAddress(report) !== 'Chưa có địa điểm' && (
+                <div className="report-location">
+                  <FiMapPin />
+                  <span>
+                    {getReportAddress(report)}
+                    {distance !== null && (
+                      <span style={{ 
+                        marginLeft: '8px', 
+                        fontSize: '0.9em', 
+                        color: '#666',
+                        fontWeight: '500'
+                      }}>
+                        ({distance.toFixed(1)} km)
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
 
               <div className="report-time">
                 <FiClock />

@@ -196,18 +196,40 @@
 
 .section-header > div {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 44px;
+  overflow: visible;
+  width: 100%;
+}
+
+/* Ensure filter groups with icons don't cause premature wrapping */
+.section-header > div > .filter-group {
+  flex: 0 1 auto;
+  /* Allow filter-group to shrink if needed, but maintain consistent sizing */
 }
 
 /* Button Styles - Đồng bộ với style chung */
 .admin-page .btn,
 .admin-page button.btn,
 .admin-page a.btn {
-  padding: 14px 28px;
+  padding: 0 16px;
   border: none;
-  border-radius: 999px; /* pill shape for all buttons */
-  font-size: 16px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
+  height: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  vertical-align: middle;
+  line-height: 1;
+  flex-shrink: 0;
+  white-space: nowrap;
   cursor: pointer;
   transition: all 0.3s ease;
   display: inline-flex;
@@ -274,6 +296,58 @@
 .admin-page a.btn-primary:active {
   transform: translateY(-1px);
   box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+}
+
+.admin-page .btn-success,
+.admin-page button.btn-success,
+.admin-page a.btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.7);
+  font-weight: 600;
+  font-size: 16px;
+  padding: 16px 32px;
+  border-radius: 999px;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-page .btn-success::before,
+.admin-page button.btn-success::before,
+.admin-page a.btn-success::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.admin-page .btn-success:hover::before,
+.admin-page button.btn-success:hover::before,
+.admin-page a.btn-success:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.admin-page .btn-success:hover,
+.admin-page button.btn-success:hover,
+.admin-page a.btn-success:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.5);
+}
+
+.admin-page .btn-success:active,
+.admin-page button.btn-success:active,
+.admin-page a.btn-success:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
 }
 
 .admin-page .btn-secondary,
@@ -567,7 +641,7 @@
 .btn-icon {
   background: none;
   border: none;
-  color: #666;
+  color: #fdfdfd;
   cursor: pointer;
   padding: 8px;
   border-radius: 8px;
@@ -635,32 +709,116 @@
 
 /* Filter and Sort Styles */
 .filter-group {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 5px;
+  height: 44px;
+  vertical-align: middle;
+  flex-shrink: 1;
+  flex-basis: auto;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-group svg {
+  flex-shrink: 0;
+  height: 18px;
+  width: 18px;
+  min-width: 18px;
+  max-width: 18px;
+  margin: 0 !important;
+  vertical-align: middle;
+  display: inline-block;
+  box-sizing: border-box;
+  /* Remove any inline margin-right, gap will handle spacing */
 }
 
 .filter-select {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 31, 63, 0.2);
+  padding: 10px 14px !important;
+  border-radius: 10px;
+  border: 2px solid rgba(74, 144, 226, 0.3);
   background: white;
   color: #001f3f;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-width: 150px;
+  min-width: 160px;
+  width: auto;
+  height: 44px;
+  box-sizing: border-box;
+  line-height: 24px;
+  vertical-align: middle;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  flex-shrink: 1;
+  flex-basis: auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Override .input padding when used with .filter-select */
+.input.filter-select {
+  padding: 10px 14px !important;
+  width: auto !important;
+  border-radius: 10px !important;
+  border: 2px solid rgba(74, 144, 226, 0.3) !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+}
+
+/* Make buttons in filter row same height as selects */
+.section-header > div > .btn,
+.section-header > div > button.btn {
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding: 0 20px !important;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  line-height: 1;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  gap: 8px;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.section-header > div > .btn:hover,
+.section-header > div > button.btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3) !important;
+}
+
+.section-header > div > .btn:active,
+.section-header > div > button.btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2) !important;
 }
 
 .filter-select:hover {
-  border-color: rgba(74, 144, 226, 0.5);
-  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
+  border-color: rgba(74, 144, 226, 0.6);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+  transform: translateY(-1px);
+  background: #f8faff;
 }
 
 .filter-select:focus {
   outline: none;
   border-color: #4a90e2;
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.15), 0 4px 12px rgba(74, 144, 226, 0.2);
+  background: white;
+}
+
+.filter-select:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(74, 144, 226, 0.2);
 }
 
 .action-card {

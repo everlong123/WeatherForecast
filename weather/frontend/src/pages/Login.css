@@ -85,8 +85,9 @@
 .logo-text {
   font-size: 36px;
   margin: 0;
-  color: #ffffff;
+  color: #4a90e2;
   font-weight: 700;
+  text-shadow: 0 2px 4px rgba(74, 144, 226, 0.2);
 }
 
 .login-header p {

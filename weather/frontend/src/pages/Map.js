@@ -363,9 +363,11 @@ const Map = () => {
                     </span>
                   </div>
                   <div className="report-item-title">{report.title}</div>
-                  <div className="report-item-location">
-                    <FiMapPin /> {report.district || 'N/A'}
-                  </div>
+                  {(report.district || report.displayAddress || (report.ward && report.city)) && (
+                    <div className="report-item-location">
+                      <FiMapPin /> {report.district || report.displayAddress || [report.ward, report.city].filter(Boolean).join(', ')}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -564,12 +566,14 @@ const Map = () => {
                 <span className="detail-label">Mức độ:</span>
                 <span className="detail-value">{selectedReport.severity}</span>
               </div>
-              <div className="detail-row">
-                <span className="detail-label">Địa điểm:</span>
-                <span className="detail-value">
-                  {selectedReport.address || selectedReport.district || 'N/A'}
-                </span>
-              </div>
+              {(selectedReport.address || selectedReport.district || selectedReport.displayAddress || (selectedReport.ward && selectedReport.city)) && (
+                <div className="detail-row">
+                  <span className="detail-label">Địa điểm:</span>
+                  <span className="detail-value">
+                    {selectedReport.address || selectedReport.district || selectedReport.displayAddress || [selectedReport.ward, selectedReport.city].filter(Boolean).join(', ')}
+                  </span>
+                </div>
+              )}
               <div className="detail-row">
                 <span className="detail-label">Mô tả:</span>
                 <span className="detail-value">{selectedReport.description}</span>
